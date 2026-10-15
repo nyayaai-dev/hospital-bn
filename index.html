@@ -58,6 +58,16 @@ button { cursor: pointer; }
 .brand small { display: block; color: var(--muted); font-size: .8rem; }
 .clock { display: grid; line-height: 1.2; }
 .clock .num { font-size: 1rem; font-weight: 500; }
+.clock .tiny { font-size: .72rem; color: var(--muted); }
+.nowstrip { display: grid; grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr)); gap: 12px; }
+.nowstrip > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.nowstrip .nowmain { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.nowstrip .nowmain .eyebrow { color: color-mix(in srgb, var(--accent-ink) 75%, transparent); }
+.nowstrip .nowmain b { font-size: 1.05rem; }
+.bigclock { font-size: clamp(1.7rem, 3.4vw, 2.4rem); font-weight: 500; letter-spacing: .02em; line-height: 1.1; }
+.nowstrip .cd b { font-size: 1.35rem; line-height: 1.2; }
+@media (max-width: 980px) { .nowstrip { grid-template-columns: repeat(3, minmax(0, 1fr)); } .nowstrip .nowmain { grid-column: 1 / -1; } }
+@media (max-width: 640px) { .nowstrip { grid-template-columns: minmax(0, 1fr); } }
 .ctrls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: auto; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: inherit; }
 .btn:hover { border-color: var(--accent); }
@@ -314,7 +324,7 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
       <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="var(--accent)"/><path d="M5 17h5l2.5-6 4 11 3-8 1.5 3H25" fill="none" stroke="var(--accent-ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <div><b>Surge Watch Mumbai</b><small id="hospLine"></small></div>
     </div>
-    <div class="clock"><span class="eyebrow">Hospital time</span><span class="num" id="clock"></span></div>
+    <div class="clock"><span class="eyebrow">Mumbai · IST</span><span class="num" id="liveClock"></span><span class="tiny" id="clock"></span></div>
     <div class="ctrls">
       <label class="sr" for="focusHosp">Hospital</label>
       <select class="in" id="focusHosp" aria-label="Hospital to forecast"></select>
@@ -348,6 +358,13 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
   <div id="epiBanner" hidden></div>
   <div id="scenarioBanner" hidden></div>
   <div class="viewhead"><h1 id="viewTitle">Overview</h1><p id="viewSub"></p></div>
+
+  <section class="nowstrip" data-view="overview" aria-label="Date, time and countdowns">
+    <div class="nowmain"><span class="eyebrow">Today in Mumbai</span><b id="nowDate"></b><span class="bigclock num" id="nowTime" aria-live="off"></span></div>
+    <div class="cd"><span class="eyebrow">Next re-forecast</span><b class="num" id="cdForecast"></b><span class="small muted" id="cdForecastNote"></span></div>
+    <div class="cd"><span class="eyebrow">Live weather &amp; AQI refresh</span><b class="num" id="cdFeeds"></b><span class="small muted" id="cdFeedsNote"></span></div>
+    <div class="cd"><span class="eyebrow">Next public holiday</span><b id="cdHoliday"></b><span class="small muted" id="cdHolidayNote"></span></div>
+  </section>
 
   <section class="sec" aria-labelledby="h-avail" data-view="overview">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Right now</span><h2 id="h-avail">Availability</h2></div><span class="muted small" id="availNote"></span></div>
@@ -954,7 +971,7 @@ function render() {
 }
 function renderBar() {
   $('hospLine').textContent = `${A.setup.name} · ${A.setup.type} · ${A.imported ? 'imported census data' : 'simulated load'}`;
-  $('clock').textContent = fmtT(A.now);
+  $('clock').textContent = (A.mode === 'fast' ? 'Simulated: ' : 'Forecast as of ') + fmtT(A.now);
   $('liveLbl').textContent = A.live ? (A.mode === 'real' ? 'Live · pause' : 'Pause') : A.mode === 'real' ? 'Follow real time' : 'Run';
   $('mode').value = A.mode;
   $('bar').classList.toggle('is-live', A.live);
@@ -1411,6 +1428,7 @@ async function getJSON(url) {
 }
 const isoDay = t => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 async function fetchFeeds(quiet) {
+  A.lastFetch = Date.now();
   const c = S.MUMBAI, v = A.feedVals, today = isoDay(Date.now()), stamp = hh(new Date()) + ' ' + today, changes = [];
   try {
     const w = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&daily=precipitation_sum,temperature_2m_max&past_days=40&forecast_days=7&timezone=Asia%2FKolkata`);
@@ -1772,9 +1790,45 @@ function recordFeed(kind) {
 }
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { renderChart(); renderSeason(); }, 150); });
 
+/* ---------------- real date, clock and countdowns (IST) ---------------- */
+const IST = 'Asia/Kolkata';
+const fDate = new Intl.DateTimeFormat('en-IN', { timeZone: IST, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const fTime = new Intl.DateTimeFormat('en-GB', { timeZone: IST, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+const fHM = new Intl.DateTimeFormat('en-GB', { timeZone: IST, hour: '2-digit', minute: '2-digit', hour12: false });
+const fDay = new Intl.DateTimeFormat('en-CA', { timeZone: IST, year: 'numeric', month: '2-digit', day: '2-digit' });
+const countdown = ms => { const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), x = t % 60; return (h ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(x).padStart(2, '0'); };
+function tick() {
+  const now = new Date(), nowMs = now.getTime();
+  $('liveClock').textContent = fTime.format(now);
+  $('nowDate').textContent = fDate.format(now);
+  $('nowTime').textContent = fTime.format(now) + ' IST';
+  if (A.mode === 'real') {
+    const next = S.floorHour(nowMs) + S.HOUR;
+    $('cdForecast').textContent = A.live ? countdown(next - nowMs) : 'Paused';
+    $('cdForecastNote').textContent = A.live ? `Re-forecasts every hour · next at ${fHM.format(new Date(next))}` : 'Press "Follow real time" to resume hourly updates';
+  } else {
+    $('cdForecast').textContent = A.live ? 'Running' : 'Paused';
+    $('cdForecastNote').textContent = 'Fast-forward demo: one simulated hour every 2.5 s';
+  }
+  if (A.lastFetch) {
+    const next = A.lastFetch + 30 * 60e3, live = A.src.weather.live || A.src.air.live;
+    $('cdFeeds').textContent = A.mode === 'real' && A.live ? countdown(next - nowMs) : 'Paused';
+    $('cdFeedsNote').textContent = live ? `Open-Meteo · last fetched ${fHM.format(new Date(A.lastFetch))}` : 'Live data could not be reached from here; will retry';
+  } else { $('cdFeeds').textContent = '…'; $('cdFeedsNote').textContent = 'Fetching Open-Meteo'; }
+  const today = new Date(fDay.format(now) + 'T00:00').getTime();
+  const nextHol = S.HOLIDAYS.find(([t]) => t >= today);
+  if (nextHol) {
+    const days = Math.round((nextHol[0] - today) / S.DAY);
+    $('cdHoliday').textContent = nextHol[1];
+    $('cdHolidayNote').textContent = (days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`) + ' · ' + new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(nextHol[0])) + ' · fewer discharges expected';
+  } else { $('cdHoliday').textContent = '—'; $('cdHolidayNote').textContent = 'No holiday list beyond 2027'; }
+}
+
 boot();
 fillSetup();
 route();
+tick();
+setInterval(tick, 1000);
 fetchFeeds(true);
 })();
 </script>
