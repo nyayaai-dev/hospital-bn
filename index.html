@@ -166,7 +166,7 @@ table.cmp { width: 100%; border-collapse: collapse; font-size: .88rem; }
 table.cmp th, table.cmp td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; vertical-align: top; }
 table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
 table.cmp th { color: var(--muted); font-weight: 700; font-size: .76rem; letter-spacing: .04em; text-transform: uppercase; }
-table.cmp td.wrap { white-space: normal; text-align: left; min-width: 180px; }
+table.cmp td.tw { white-space: normal; text-align: left; min-width: 180px; max-width: 340px; }
 table.cmp tr.focus td { background: var(--accent-soft); }
 .up { color: var(--crit); }
 .down { color: var(--good); }
@@ -258,6 +258,21 @@ details.setup > summary { cursor: pointer; list-style: none; display: flex; flex
 details.setup > summary::-webkit-details-marker { display: none; }
 details.setup > summary h2::before { content: "▸ "; color: var(--muted); }
 details.setup[open] > summary h2::before { content: "▾ "; }
+.kb { display: inline-grid; place-items: center; min-width: 18px; height: 16px; padding: 0 4px; border-radius: 4px; font-family: var(--f-data); font-size: .66rem; font-weight: 700; vertical-align: 1px; margin-left: 4px; border: 1px solid transparent; cursor: help; }
+.kb.k-P { background: var(--accent); color: var(--accent-ink); }
+.kb.k-D { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
+.kb.k-L { background: var(--good); color: #fff; }
+.kb.k-R { background: var(--warn-soft); color: var(--ink); border-color: color-mix(in srgb, var(--warn) 70%, transparent); }
+.kb.k-U { background: var(--crit-soft); color: var(--ink); border-color: var(--crit); }
+.kb.k-X { background: var(--surface-2); color: var(--ink-2); border: 1px dashed var(--muted); }
+.kb.k-H { background: var(--ink); color: var(--bg); }
+table.cmp td.mc { text-align: right; font-family: var(--f-data); font-size: .76rem; padding: 4px 6px; }
+table.cmp td.mc.k-X { color: var(--muted); font-style: italic; }
+table.cmp td.mc.k-D { color: var(--ink-2); }
+table.cmp td.mc.k-P { font-weight: 700; }
+table.cmp td.mc.now { box-shadow: inset 0 -2px 0 var(--accent); }
+ol.srcs { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: .84rem; }
+ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
 .foot { color: var(--muted); font-size: .82rem; max-width: 92ch; }
 .toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: .88rem; z-index: 50; max-width: calc(100vw - 32px); }
 </style>
@@ -344,7 +359,7 @@ details.setup[open] > summary h2::before { content: "▾ "; }
 
   <section class="panel sec" aria-labelledby="h-dis">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Mumbai</span><h2 id="h-dis">Seasonal infections and diseases that fill beds</h2></div>
-      <p>Each illness is modelled with its own Mumbai season, admission rate, ICU share and resource needs. "Beds added" is the extra beds that illness occupies at its peak in the forecast window at this hospital.</p></div>
+      <p>Monthly notified cases in Mumbai for 2026, from BMC data and the IDSP dengue series, with each figure's working on hover. These drive the seasonal part of every forecast.</p></div>
     <div class="scroll-x"><table class="cmp" id="diseases"></table></div>
   </section>
 
@@ -442,6 +457,17 @@ details.setup[open] > summary h2::before { content: "▾ "; }
     <div class="scroll-x"><table class="cmp" id="acc"></table></div>
   </section>
 
+  <section class="panel sec" aria-labelledby="h-data" id="data">
+    <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Where every number comes from</span><h2 id="h-data">Data sources and completeness</h2></div>
+      <p>Every input to the forecast for this hospital, with its source. Forecasts, free beds and waiting times are model outputs calculated from these inputs. Mumbai hospitals do not publish live occupancy, so the current state is simulated until census data is imported.</p></div>
+    <div class="legend" id="kindLegend"></div>
+    <div class="scroll-x"><table class="cmp" id="provTable"></table></div>
+    <h3>Needed from the hospital (not published anywhere)</h3>
+    <ul id="unpub" class="small ink2" style="margin:0;padding-left:20px;display:grid;gap:4px"></ul>
+    <h3>Sources</h3>
+    <ol class="srcs" id="srcList"></ol>
+  </section>
+
   <details class="panel setup" id="setupBox">
     <summary><h2>Hospital setup and data</h2><span class="muted small">Capacities, staffing, oxygen, ambulances, and your own census data</span></summary>
     <div class="sec" style="margin-top:14px">
@@ -449,7 +475,11 @@ details.setup[open] > summary h2::before { content: "▾ "; }
       <form id="setupForm" class="sec" autocomplete="off">
         <div class="form">
           <label class="field"><span>Display name</span><input class="in" id="s-name"></label>
-          <label class="field"><span>ED arrivals on a normal day</span><input class="in" id="s-arr" type="number" min="20" max="5000"></label>
+          <label class="field"><span>Casualty attendances / day</span><input class="in" id="s-arr" type="number" min="5" max="5000"></label>
+          <label class="field"><span>Admissions / day</span><input class="in" id="s-adm" type="number" min="1" max="5000" step="0.1"></label>
+          <label class="field"><span>Average length of stay (days)</span><input class="in" id="s-alos" type="number" min="0.5" max="60" step="0.1"></label>
+          <label class="field"><span>Bed occupancy now (%)</span><input class="in" id="s-bor" type="number" min="5" max="150" step="0.1"></label>
+          <label class="field"><span>Casualty stay per patient (hours)</span><input class="in" id="s-edlos" type="number" min="0.2" max="48" step="0.1"></label>
           <label class="field"><span>ED treatment spaces</span><input class="in" id="s-ed" type="number" min="4" max="1000"></label>
           <label class="field"><span>Ambulances (own + linked 108)</span><input class="in" id="s-amb" type="number" min="1" max="500"></label>
         </div>
@@ -504,6 +534,7 @@ details.setup[open] > summary h2::before { content: "▾ "; }
 </main>
 <div id="toast" class="toast" hidden></div>
 
+<script src="data.js"></script>
 <script src="model.js"></script>
 <script>
 (function () {
@@ -548,11 +579,19 @@ const DEFAULT_PEOPLE = [
 ];
 let A;
 function simulatedFeeds() {
-  return { dengueCases: 120, dengueAvg: 110, malariaCases: 260, malariaAvg: 250, ili: 0.9, rainLag: 70, rain7: 10, tmax: 33, pm25: 52, pm10: 105, aqi: S.indianAQI(52, 105), rainDays: {}, rainToday: 0, rainNext: 0, heavyRecent: 0 };
+  // No invented readings: weather and air quality stay empty until the live feed answers.
+  return { dengueWeekly: null, malariaWeekly: null, rainLag: null, rain7: null, tmax: null, pm25: null, pm10: null, aqi: null, rainDays: {}, rainToday: 0, rainNext: 0, heavyRecent: 0 };
 }
+const SETUP_KEYS = { edLOS: 's-edlos', arrPerDay: 's-arr', admissionsPerDay: 's-adm', alos: 's-alos', bor: 's-bor', edSpaces: 's-ed', ambulances: 's-amb', MED: 's-MED', SURG: 's-SURG', ICU: 's-ICU', PEDS: 's-PEDS', ISO: 's-ISO', vents: 's-vents',
+  nurses: ['s-n0', 's-n1', 's-n2'], docs: ['s-d0', 's-d1', 's-d2'], lab: ['s-labd', 's-labn'], xray: ['s-xrd', 's-xrn'], img: ['s-imgd', 's-imgn'], o2Capacity: 's-o2c', o2Delivery: 's-o2d', plateletSupply: 's-pltS', plateletStock: 's-pltN' };
 function setupForId(id) {
-  const h = S.HOSPITALS.find(x => x.id === id) || S.HOSPITALS[0];
-  return Object.assign(S.setupFor(h), (store.get('overrides', {}) || {})[h.id] || {});
+  const h = S.HOSPITALS.find(x => x.id === id) || S.HOSPITALS[0], base = S.setupFor(h);
+  const ov = (store.get('overrides', {}) || {})[h.id];
+  if (!ov) return base;
+  const out = Object.assign({}, base, ov, { beds: Object.assign({}, base.beds, ov.beds), prov: Object.assign({}, base.prov) });
+  for (const k of ov.changed || []) out.prov[k] = { kind: 'H', src: null, note: 'Entered by hospital staff in Surge Watch' };
+  out.startOcc = out.bor;
+  return out;
 }
 function freshApp(keep) {
   const hid = store.get('hospital', 'kem');
@@ -567,7 +606,7 @@ function freshApp(keep) {
     drill: (keep && keep.drill) || null, det: null, epiFit: null, epiAlertLevel: 0, worst: null, net: null, netAt: -999
   };
 }
-const feeds = () => S.feedFactors(A.feedVals);
+const feeds = () => S.feedFactors(Object.assign({}, A.feedVals, { now: S.START + A.now * S.HOUR }));
 function activeActions() { return A.approved.map(a => ({ id: a.id, lead: Math.max(0, a.at + S.ACTION_BY_ID[a.id].lead - A.now) })); }
 function baseRun(extra) { return Object.assign({ levers: A.levers, actions: activeActions(), feeds: feeds(), nowcast: A.nowcast, flags: {}, epi: A.epiFit }, extra || {}); }
 function obsRun() { return { levers: S.defaultLevers(), actions: activeActions(), feeds: feeds(), rand: A.rand, epi: A.drill, noShock: true }; }
@@ -778,21 +817,45 @@ function explain(unitId) {
   return { full, fullAt, drivers: res, s };
 }
 function diseaseText(se) {
-  const v = A.feedVals;
-  if (se.id === 'dengue') return `${se.why} Reported cases are ${Math.round((v.dengueCases / v.dengueAvg - 1) * 100)}% vs the usual for this week; ${Math.round(v.rainLag)} mm of rain fell 2–5 weeks ago.`;
-  if (se.id === 'malaria') return `${se.why} Reported cases are ${Math.round((v.malariaCases / v.malariaAvg - 1) * 100)}% vs the usual for this week.`;
-  if (se.id === 'lepto') return `${se.why} ${v.heavyRecent ? v.heavyRecent + ' heavy-rain day(s) in the last 2 weeks.' : 'No heavy rain in the last 2 weeks.'}`;
-  if (se.id === 'aqi') return `${se.why} AQI forecast: ${v.aqi} (${S.aqiBand(v.aqi)}).`;
-  if (se.id === 'heat') return `${se.why} Forecast maximum: ${Math.round(v.tmax)} °C.`;
-  return se.why;
+  const t = S.START + A.now * S.HOUR, mo = new Date(t).getMonth(), cell = S.SER[se.id].ms[mo];
+  return `${se.why} Mumbai: ${loc(cell.c)} notified cases in ${MON[mo]} ${S.DATA.YEAR} (${KIND[cell.kind]}).`;
 }
 const LEVER_NAMES = { arrivalPct: 'arrival change', seasonScale: 'seasonal surge', outbreak: 'outbreak', flood: 'Mumbai flood', nurseShortPct: 'nurse shortage', docShortPct: 'ED doctor shortage', medBedsClosed: 'Medicine beds closed', ventsDown: 'ventilators out of service', labDownPct: 'lab capacity lost', xrayDownPct: 'X-ray capacity lost', imgDownPct: 'CT/USG capacity lost', plateletCutPct: 'platelet supply cut', o2CutPct: 'oxygen supply cut', ambDownPct: 'ambulances off road' };
+
+/* ---------------- provenance ---------------- */
+const KIND = { P: 'published', D: 'derived from published figures', R: "another Mumbai hospital's published figure used as reference", U: 'not published: placeholder to replace', X: 'projection beyond the last published month', H: 'entered by hospital staff', L: 'live data' };
+const kb = (k, title) => k ? `<span class="kb k-${k}" title="${esc((title ? title + ' — ' : '') + KIND[k])}">${k}</span>` : '';
+const srcLink = id => { const s = id && S.DATA.SOURCES[id]; return s ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a> <span class="muted">(${esc(s.date)})</span>` : ''; };
+const UNIT_INPUTS = { ED: ['edSpaces', 'arrPerDay', 'edLOS'], MED: ['MED', 'admissionsPerDay', 'alos'], SURG: ['SURG', 'admissionsPerDay', 'alos'], PEDS: ['PEDS', 'admissionsPerDay', 'alos'], ICU: ['ICU', 'vents', 'alos'], ISO: ['ISO'],
+  O2: ['o2Capacity', 'o2Delivery'], AMB: ['ambulances'], LAB: ['lab'], XRAY: ['xray'], IMG: ['img'], NUR: ['nurses'], BLOOD: ['plateletSupply', 'plateletStock'] };
+const RANK = { U: 4, R: 3, X: 2, D: 1, P: 0, H: 0, L: 0 };
+function unitQuality(id) { const pv = A.setup.prov || {}; let worst = 'P'; const weak = []; for (const k of UNIT_INPUTS[id] || []) { const kd = (pv[k] || {}).kind || 'P'; if (RANK[kd] > RANK[worst]) worst = kd; if (kd === 'U' || kd === 'R') weak.push(PROV_LABEL[k] + ' (' + KIND[kd] + ')'); } return { worst, weak }; }
+const qualityNote = id => { const q = unitQuality(id); return q.worst === 'U' ? `<span class="small" style="color:var(--crit)">${kb('U')} Rests on unpublished placeholder inputs: ${esc(q.weak.join('; '))}. Replace them in setup.</span>` : q.worst === 'R' ? `<span class="small ink2">${kb('R')} Uses another hospital's published figures: ${esc(q.weak.join('; '))}.</span>` : `<span class="small ink2">${kb('P')} Inputs published or derived from published figures.</span>`; };
+const PROV_LABEL = { beds: 'Total beds', MED: 'Medicine-group beds', SURG: 'Surgical and obstetric beds', PEDS: 'Paediatric beds', ICU: 'Adult ICU beds', ISO: 'Isolation beds', admissionsPerDay: 'Admissions per day', arrPerDay: 'Casualty attendances per day',
+  alos: 'Average length of stay (days)', bor: 'Bed occupancy', edSpaces: 'Emergency / casualty beds', edLOS: 'Casualty stay per patient (hours)', vents: 'Ventilators', nurses: 'Nurses per shift (night/day/evening)', docs: 'Casualty doctors per shift', lab: 'Lab tests per hour (day/night)',
+  xray: 'X-ray studies per hour (day/night)', img: 'CT + ultrasound studies per hour (day/night)', o2Capacity: 'Oxygen storage (D-type cylinder equivalents)', o2Delivery: 'Oxygen refills per day', ambulances: 'Ambulances', plateletSupply: 'Platelet units prepared per day', plateletStock: 'Platelet units in stock' };
+function provValue(k, s) {
+  const v = k in s.beds ? s.beds[k] : k === 'beds' ? s.totalBeds : s[k];
+  if (k === 'bor') return pct(v);
+  if (Array.isArray(v)) return v.map(x => loc(x)).join(' / ');
+  if (v && typeof v === 'object') return `${loc(v.day)} / ${loc(v.night)}`;
+  return typeof v === 'number' ? (Number.isInteger(v) ? loc(v) : v.toFixed(1)) : esc(v);
+}
+function renderData() {
+  const s = A.setup, pv = s.prov || {}, counts = {};
+  for (const k in pv) counts[pv[k].kind] = (counts[pv[k].kind] || 0) + 1;
+  $('kindLegend').innerHTML = ['P', 'D', 'R', 'U', 'H', 'X', 'L'].map(k => `<span>${kb(k)} ${esc(KIND[k])}${counts[k] ? ` · <b>${counts[k]}</b> inputs here` : ''}</span>`).join('');
+  $('provTable').innerHTML = `<thead><tr><th>Input for ${esc(s.name)}</th><th>Value</th><th>Kind</th><th>Source and working</th></tr></thead><tbody>` +
+    Object.keys(PROV_LABEL).filter(k => pv[k]).map(k => `<tr><td>${esc(PROV_LABEL[k])}</td><td class="num">${provValue(k, s)}</td><td>${kb(pv[k].kind)}</td><td class="tw small">${esc(pv[k].note)}${pv[k].src ? '<br>' + srcLink(pv[k].src) : ''}</td></tr>`).join('') + '</tbody>';
+  $('unpub').innerHTML = S.DATA.UNPUBLISHED.map(u => `<li><b>${esc(u.label)}.</b> ${esc(u.why)}</li>`).join('');
+  $('srcList').innerHTML = Object.values(S.DATA.SOURCES).map(x => `<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a> <span class="muted">— ${esc(x.date)}</span></li>`).join('');
+}
 
 /* ---------------- rendering ---------------- */
 function render() {
   renderBar(); renderEpiBanner(); renderBanner(); renderTiles(); renderHeadline(); renderCards(); renderTabs(); renderChart(); renderWhy();
   renderHeat(); renderNetwork(); renderDiseases(); renderEpidemic(); renderCascade(); renderLevers(); renderCompare(); renderActions();
-  renderSeason(); renderFeeds(); renderAlerts(); renderPeople(); renderLog(); renderFoot();
+  renderSeason(); renderFeeds(); renderAlerts(); renderPeople(); renderLog(); renderFoot(); renderData(); markSetup();
 }
 function renderBar() {
   $('hospLine').textContent = `${A.setup.name} · ${A.setup.type} · ${A.imported ? 'imported census data' : 'simulated load'}`;
@@ -861,8 +924,8 @@ function renderTiles() {
   mx = maxOf(x => x.imgTAT);
   tile('IMG', 'CT / ultrasound wait', now.imgTAT.toFixed(1) + ' h', 'target 3', `worst in 72 h: ${mx[0].toFixed(1)} h`, now.p.IMG);
   tile('BLOOD', 'Platelets in stock', loc(now.plt), 'units', `${(now.pltDemand * 24).toFixed(0)} used/day`, now.p.BLOOD);
-  $('tiles').innerHTML = T.map(t => `<button class="tile ${t.sev === 'critical' || t.sev === 'warning' ? t.sev : ''}" type="button" data-unit="${t.unit}"><span class="lbl">${esc(t.label)} ${t.sev !== 'ok' ? pill(t.sev) : ''}</span><span class="val">${t.val} <small>${esc(t.small)}</small></span><span class="sub">${esc(t.sub)}</span></button>`).join('');
-  $('availNote').textContent = `Next hour at ${A.setup.name}${A.imported ? '' : ' (simulated)'}`;
+  $('tiles').innerHTML = T.map(t => `<button class="tile ${t.sev === 'critical' || t.sev === 'warning' ? t.sev : ''}" type="button" data-unit="${t.unit}"><span class="lbl">${esc(t.label)}${kb(unitQuality(t.unit).worst, 'Weakest input behind this figure')} ${t.sev !== 'ok' ? pill(t.sev) : ''}</span><span class="val">${t.val} <small>${esc(t.small)}</small></span><span class="sub">${esc(t.sub)}</span></button>`).join('');
+  $('availNote').innerHTML = `Model output for the next hour at ${esc(A.setup.name)}, from the inputs in <a href="#data">Data sources</a>`;
 }
 function renderHeadline() {
   const r = ranked(), c = r.filter(x => x.sev === 'critical').length, w = r.length - c;
@@ -877,7 +940,7 @@ function renderCards() {
   let html = r.map(s => { const e = s.firstSerious; return `<button class="card" type="button" data-unit="${s.unit}" aria-pressed="${A.selUnit === s.unit}">
       <div class="card-top"><b>${esc(UID[s.unit].long)}</b>${pill(s.sev)}</div>
       <dl class="kv"><dt>Starts</dt><dd><b>${rel(e.start)}</b> · ${fmtT(A.now + e.start)}</dd><dt>Peak</dt><dd class="num">${pct(s.worst.peak)} · ${fmtT(A.now + s.worst.peakAt)}</dd><dt>Above 95%</dt><dd>${s.hours} h${s.episodes > 1 ? ` in ${s.episodes} episodes` : ''}</dd></dl>
-      ${probRow(`Chance of passing 105% in ${A.horizonDays} days`, s.pCrit)}<span class="muted" style="font-size:.76rem">Share of ${n} simulated futures.</span></button>`; }).join('');
+      ${probRow(`Chance of passing 105% in ${A.horizonDays} days`, s.pCrit)}<span class="muted" style="font-size:.76rem">Share of ${n} simulated futures.</span>${qualityNote(s.unit)}</button>`; }).join('');
   for (const id of Object.keys(risk).sort((a, b) => risk[b].pw - risk[a].pw).slice(0, 3)) html += `<button class="card" type="button" data-unit="${id}" aria-pressed="${A.selUnit === id}"><div class="card-top"><b>${esc(UID[id].long)}</b>${pill('watch', 'At risk')}</div><p class="ink2 small">Below 95% in the expected forecast, but passes it in ${Math.round(risk[id].pw * 100)}% of simulated futures.</p>${probRow('Chance of passing 95%', risk[id].pw)}</button>`;
   $('cards').innerHTML = html || `<div class="empty">All units stay below 95% in every simulated future. Try a longer window or a what-if scenario to stress-test the plan.</div>`;
 }
@@ -999,8 +1062,8 @@ function renderNetwork() {
   const beds = S.HOSPITALS.reduce((a, h) => a + h.beds, 0), genFree = N.reduce((a, r) => a + r.genFree, 0), icuFree = N.reduce((a, r) => a + r.icuFree, 0), isoFree = N.reduce((a, r) => a + r.isoFree, 0);
   const full = N.filter(r => r.peak >= S.THRESH.crit).length;
   $('cityTiles').innerHTML = [
-    ['Hospitals tracked', N.length, `${loc(beds)} beds (public sources)`],
-    ['General beds free (est.)', loc(genFree), 'across tracked hospitals'], ['ICU beds free (est.)', loc(icuFree), ''], ['Isolation beds free (est.)', loc(isoFree), `+ ${S.ISOLATION_RESERVE[0].beds} at Kasturba`],
+    ['Hospitals tracked', N.length, `${loc(beds)} beds (published) of ${loc(S.CITY_BEDS)} in Mumbai (BMC budget 2025–26)`],
+    ['General beds free · model', loc(genFree), 'across tracked hospitals'], ['ICU beds free · model', loc(icuFree), ''], ['Isolation beds free · model', loc(isoFree), `+ ${S.ISOLATION_RESERVE[0].beds} at Kasturba (published, 2020)`],
     ['Expected to pass 105% in 7 days', full, 'hospitals']
   ].map(([l, v, s]) => `<div class="tile"><span class="lbl">${esc(l)}</span><span class="val">${v}</span><span class="sub">${esc(s)}</span></div>`).join('');
   // schematic map from latitude/longitude
@@ -1015,28 +1078,40 @@ function renderNetwork() {
       <text x="${X(r.h.lon)}" y="${Y(r.h.lat) + 3.5}" text-anchor="middle" style="fill:${r.sev === 'critical' || r.sev === 'ok' ? '#fff' : '#241a00'};font-weight:700;font-size:10px;font-family:var(--f-data);pointer-events:none">${rank.get(r.h.id)}</text></g>`;
   }
   $('map').innerHTML = `<svg viewBox="0 0 ${W} ${Hm}" role="img" aria-label="Schematic map of tracked Mumbai hospitals coloured by expected peak load">${g}</svg><p class="muted" style="font-size:.74rem;margin-top:4px">Schematic, positions approximate. Numbers match the table; size = beds; colour = expected peak in 7 days. Click a marker to forecast that hospital.</p>`;
-  $('net').innerHTML = `<thead><tr><th>Hospital</th><th>Beds</th><th>Load now</th><th>Free: ward / ICU / isolation</th><th>Oxygen</th><th>Ambulances free</th><th>Expected peak, 7 d</th><th>Status</th></tr></thead><tbody>` +
-    rows.map((r, i) => `<tr class="${r.focus ? 'focus' : ''}"><td class="wrap"><span class="rank">${i + 1}</span><b>${esc(r.h.name)}</b><br><span class="muted small">${esc(r.h.area)} · ${esc(r.h.type)} · <span title="${esc(r.h.src)}">source</span></span></td><td class="num" title="${esc(r.h.src)}">${loc(r.h.beds)}</td><td class="num">${pct(r.load)}</td><td class="num">${loc(r.genFree)} / ${loc(r.icuFree)} / ${loc(r.isoFree)}</td><td class="num">${r.o2Days >= 30 ? '30+ d' : r.o2Days.toFixed(1) + ' d'}</td><td class="num">${loc(r.ambFree)}/${loc(r.fleet)}</td><td class="num">${pct(r.peak)} · ${fmtD(A.now + r.peakAt)}</td><td>${pill(r.sev)} ${r.focus ? '' : `<button class="btn small ghost" type="button" data-hosp="${r.h.id}">Forecast</button>`}</td></tr>`).join('') + '</tbody>';
+  const factLine = h => { const F = h.facts, bits = [];
+    if (F.admissionsPerDay) bits.push(`${loc(F.admissionsPerDay.v)} admissions/day${kb(F.admissionsPerDay.kind, F.admissionsPerDay.note)}`);
+    if (F.casualtyPerDay) bits.push(`${loc(F.casualtyPerDay.v)} casualty/day${kb(F.casualtyPerDay.kind, F.casualtyPerDay.note)}`);
+    if (F.alos) bits.push(`${F.alos.v.toFixed(1)}-day stay${kb('P', F.alos.note)}`);
+    if (F.bor) bits.push(`${pct(F.bor.v)} occupied${kb(F.bor.kind, F.bor.note)}`);
+    if (F.icuAdult) bits.push(`${loc(F.icuAdult.v)} ICU${kb('P', F.icuAdult.note)}`);
+    if (F.emergencyBeds) bits.push(`${loc(F.emergencyBeds.v)} emergency beds${kb('P', F.emergencyBeds.note)}`);
+    if (F.xrayUnits) bits.push(`${F.xrayUnits.v} X-ray, ${F.ctUnits.v} CT, ${F.usgUnits.v} USG${kb('P')}`);
+    if (F.bloodUnitsPerDay) bits.push(`75–80 blood units/day${kb('P')}`);
+    return bits.join(' · ') || '<span class="muted">Only the bed count is published</span>'; };
+  const inputMix = h => { const pv = S.setupFor(h).prov, c = { real: 0, ref: 0, gap: 0 }; for (const k in pv) { const kd = pv[k].kind; if (kd === 'P' || kd === 'D') c.real++; else if (kd === 'R') c.ref++; else c.gap++; } return `${c.real}${kb('P')} ${c.ref}${kb('R')} ${c.gap}${kb('U')}`; };
+  $('net').innerHTML = `<thead><tr><th>Hospital</th><th>Beds</th><th>Published operating data</th><th>Inputs by kind</th><th>Load now · model</th><th>Free ward / ICU / iso · model</th><th>Expected peak, 7 d · model</th><th>Status</th></tr></thead><tbody>` +
+    rows.map((r, i) => `<tr class="${r.focus ? 'focus' : ''}"><td class="tw"><span class="rank">${i + 1}</span><b>${esc(r.h.name)}</b><br><span class="muted small">${esc(r.h.area)} · ${esc(r.h.type)}</span></td><td class="num">${loc(r.h.beds)}${kb(r.h.facts.beds.kind, r.h.facts.beds.note + ' — ' + r.h.src)}</td><td class="tw small">${factLine(r.h)}</td><td class="num small">${inputMix(r.h)}</td><td class="num">${pct(r.load)}</td><td class="num">${loc(r.genFree)} / ${loc(r.icuFree)} / ${loc(r.isoFree)}</td><td class="num">${pct(r.peak)} · ${fmtD(A.now + r.peakAt)}</td><td>${pill(r.sev)} ${r.focus ? '' : `<button class="btn small ghost" type="button" data-hosp="${r.h.id}">Forecast</button>`}</td></tr>`).join('') + '</tbody>';
   const spare = rows.filter(r => !r.focus).sort((a, b) => b.genFree - a.genFree).slice(0, 3).map(r => `${r.h.name} (${loc(r.genFree)} ward beds, ${loc(r.icuFree)} ICU)`).join('; ');
-  $('netReserve').innerHTML = `Most spare capacity now (estimated): ${esc(spare)}. Isolation reserve: ${esc(S.ISOLATION_RESERVE[0].note)} Upcoming: ${esc(S.UPCOMING.beds + ' beds — ' + S.UPCOMING.note)}`;
+  $('netReserve').innerHTML = `Most spare capacity now (model): ${esc(spare)}. Isolation reserve: ${esc(S.ISOLATION_RESERVE[0].note)} Upcoming: ${esc(S.UPCOMING.beds + ' beds — ' + S.UPCOMING.note)}`;
 }
 
 /* diseases */
 function renderDiseases() {
-  const F = A.F, f = feeds(), nowT = S.START + A.now * S.HOUR, h = F.mid.length;
+  const F = A.F, h = F.mid.length, nowMo = new Date(S.START + A.now * S.HOUR).getMonth();
   const bedsOf = x => S.WARDS.reduce((a, u) => a + x.occ[u] + x.bd[u], 0);
   const rows = S.DISEASES.map(se => {
     const off = S.simulate(A.state, A.now, h, baseRun({ off: { [se.id]: true } }));
-    let maxB = 0, at = 0, icu = 0;
-    for (let i = 0; i < h; i += 3) { const d = bedsOf(F.mid[i]) - bedsOf(off[i]); if (d > maxB) { maxB = d; at = i; } icu = Math.max(icu, F.mid[i].occ.ICU + F.mid[i].bd.ICU - off[i].occ.ICU - off[i].bd.ICU); }
-    const nowV = S.seasonRaw(se, nowT) * (f[se.id] || 1), later = S.seasonRaw(se, nowT + 14 * S.DAY) * (f[se.id] || 1);
-    const trend = later > nowV * 1.15 + 0.02 ? '↑ rising' : later < nowV * 0.85 - 0.02 ? '↓ falling' : '→ steady';
-    return { se, maxB, at, icu, nowV, trend };
-  }).sort((a, b) => b.maxB - a.maxB || b.nowV - a.nowV);
-  $('diseases').innerHTML = `<thead><tr><th>Illness</th><th>Mumbai season</th><th>Activity now</th><th>Next 2 weeks</th><th>Beds added at peak</th><th>ICU beds added</th><th>Puts pressure on</th><th>Mumbai data</th></tr></thead><tbody>` +
-    rows.map(r => `<tr><td class="wrap"><b>${esc(r.se.name)}</b><br><span class="muted small">${esc(r.se.why)}</span></td><td>${esc(r.se.months)}</td><td class="num">${r.nowV < 0.05 ? '<span class="muted">off season</span>' : Math.round(Math.min(2, r.nowV) * 100) + '% of usual peak'}</td><td>${esc(r.trend)}</td><td class="num">${r.maxB >= 0.5 ? loc(r.maxB) + ' · ' + fmtD(A.now + r.at) : '—'}</td><td class="num">${r.icu >= 0.5 ? loc(r.icu) : '—'}</td><td class="wrap small">${esc(r.se.needs.join(', '))}</td><td class="wrap small muted">${esc(r.se.mumbai)}</td></tr>`).join('') +
-    `<tr><td class="wrap"><b>Tuberculosis</b><br><span class="muted small">Year-round load, not seasonal; occupies Medicine and isolation beds.</span></td><td>All year</td><td colspan="6" class="wrap small muted">Included in the normal (non-seasonal) admission rate rather than as a surge.</td></tr>` +
-    `<tr><td class="wrap"><b>COVID-19 and new epidemics</b><br><span class="muted small">Not seasonal; watched by the outbreak detector below.</span></td><td>Any time</td><td colspan="6" class="wrap small muted">Detected from excess respiratory, fever or diarrhoeal patients; once detected, growth is carried into every forecast.</td></tr></tbody>`;
+    let maxB = 0, at = 0;
+    for (let i = 0; i < h; i += 3) { const d = bedsOf(F.mid[i]) - bedsOf(off[i]); if (d > maxB) { maxB = d; at = i; } }
+    return { se, maxB, at, tot: S.SER[se.id].total };
+  }).sort((a, b) => b.tot - a.tot);
+  const head = `<thead><tr><th>Illness (Mumbai, ${S.DATA.YEAR})</th>${MON.map((m, i) => `<th class="${i === nowMo ? 'now' : ''}">${m}</th>`).join('')}<th>Year</th><th>Beds above average here · model</th><th>Admitted share used</th><th>Puts pressure on</th></tr></thead>`;
+  const body = rows.map(r => { const ser = S.SER[r.se.id], src = S.DATA.DISEASE_SERIES[r.se.id].src;
+    return `<tr><td class="tw"><b>${esc(r.se.name)}</b><br><span class="muted small">${esc(r.se.why)}</span><br><span class="small">${src.map(x => `<a href="${esc(S.DATA.SOURCES[x].url)}" target="_blank" rel="noopener">${esc(S.DATA.SOURCES[x].title.split(':')[0])}</a>`).join(' · ')}</span></td>` +
+      ser.ms.map((c, i) => `<td class="mc k-${c.kind}${i === nowMo ? ' now' : ''}" title="${esc(KIND[c.kind] + ': ' + c.note)}">${loc(c.c)}</td>`).join('') +
+      `<td class="mc">${loc(r.tot)}</td><td class="num">${r.maxB >= 0.5 ? '+' + loc(r.maxB) + ' · ' + fmtD(A.now + r.at) : '—'}</td><td class="num">${Math.round(r.se.admit * 100)}%${kb('U', 'BMC publishes notified cases, not admissions')}</td><td class="tw small">${esc(r.se.needs.join(', '))}</td></tr>`; }).join('');
+  const nm = S.NOT_MODELLED.map(n => `<tr><td class="tw"><b>${esc(n.name)}</b></td><td colspan="17" class="tw small muted">${esc(n.note)}</td></tr>`).join('');
+  $('diseases').innerHTML = head + '<tbody>' + body + `<tr><td colspan="18" class="tw small ink2" style="max-width:none">Bold = published monthly figure; plain = derived from published totals; italic = projection after the last published date (15 Sep ${S.DATA.YEAR}). Hover a cell for its working. Notified cases are under-counts of true infections. Each case is spread across hospitals by their share of Mumbai's ${loc(S.CITY_BEDS)} beds; only the difference from the yearly average is added, because a hospital's published admissions already include the average.</td></tr>` + nm + '</tbody>';
 }
 
 /* epidemic */
@@ -1194,40 +1269,42 @@ function renderActions() {
 
 /* seasonal */
 function renderSeason() {
-  const host = $('seasonChart'), W = Math.max(300, host.clientWidth || 600), Hh = 150, m = { l: 36, r: 10, t: 14, b: 22 };
+  const host = $('seasonChart'), W = Math.max(300, host.clientWidth || 600), Hh = 150, m = { l: 40, r: 10, t: 14, b: 22 };
   const d0 = -30, d1 = 90, f = feeds(), nowT = S.START + A.now * S.HOUR, pts = [];
-  for (let d = d0; d <= d1; d++) { const t = nowT + d * S.DAY; let up = 0; for (const se of S.DISEASES) up += se.amp * S.seasonRaw(se, t) * (f[se.id] || 1) * A.levers.seasonScale; pts.push([d, up * 100]); }
-  const yMax = Math.max(40, Math.ceil(Math.max(...pts.map(p => p[1])) / 10) * 10);
+  const lastPub = new Date(S.DATA.YEAR, 8, 15).getTime();
+  for (let d = d0; d <= d1; d++) { const t = nowT + d * S.DAY; let c = 0; for (const se of S.DISEASES) c += S.rateAt(se.id, t) * (f[se.id] || 1); pts.push([d, c, t > lastPub]); }
+  const yMax = Math.max(50, Math.ceil(Math.max(...pts.map(p => p[1])) / 50) * 50);
   const X = d => m.l + (d - d0) / (d1 - d0) * (W - m.l - m.r), Y = v => m.t + (1 - v / yMax) * (Hh - m.t - m.b);
   let g = '';
-  for (let v = 0; v <= yMax; v += yMax > 60 ? 20 : 10) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${m.l - 5}" y="${Y(v) + 4}" text-anchor="end">+${v}%</text>`;
+  for (let v = 0; v <= yMax; v += yMax > 200 ? 100 : 50) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${m.l - 5}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
   for (let d = d0; d <= d1; d++) { const dt = new Date(nowT + d * S.DAY); if (dt.getDate() === 1) g += `<text x="${X(d) + 2}" y="${Hh - 6}">${MON[dt.getMonth()]}</text><line x1="${X(d)}" x2="${X(d)}" y1="${Hh - m.b}" y2="${Hh - m.b + 4}" stroke="var(--line)"/>`; }
   for (const [ht, name] of S.HOLIDAYS) { const dd = (ht - nowT) / S.DAY; if (dd > d0 && dd < d1) g += `<line x1="${X(dd)}" x2="${X(dd)}" y1="${Hh - m.b - 6}" y2="${Hh - m.b}" stroke="var(--accent)" stroke-width="2"><title>${esc(name)}</title></line>`; }
-  g += `<path d="M${X(d0)} ${Y(0)}${pts.map(p => `L${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join('')}L${X(d1)} ${Y(0)}Z" fill="var(--accent)" opacity=".15"/><path d="${pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  const pub = pts.filter(p => !p[2]), proj = pts.filter((p, i) => p[2] || (pts[i + 1] && pts[i + 1][2]));
+  if (pub.length) g += `<path d="${pub.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  if (proj.length) g += `<path d="${proj.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>`;
   g += `<rect x="${X(0)}" y="${m.t}" width="${X(A.horizonDays) - X(0)}" height="${Hh - m.t - m.b}" fill="var(--ink)" opacity=".05"/><line x1="${X(0)}" x2="${X(0)}" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--ink)"/><text x="${X(0) + 4}" y="${m.t + 8}" style="fill:var(--ink)">Today</text>`;
-  for (const e of S.DIWALI) { const dw = (e - nowT) / S.DAY; if (dw > d0 && dw < d1) g += `<line x1="${X(dw)}" x2="${X(dw)}" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--muted)" stroke-dasharray="3 3"/><text x="${X(dw) + 4}" y="${m.t + 8}">Diwali</text>`; }
-  host.innerHTML = `<p class="ink2" style="font-size:.85rem;margin-bottom:4px">Expected extra ED demand from Mumbai's seasonal illness, % above a non-seasonal day (shaded: forecast window; ticks: public holidays)</p><svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Seasonal uplift on ED demand over 120 days">${g}</svg>`;
+  host.innerHTML = `<p class="ink2" style="font-size:.85rem;margin-bottom:4px">Mumbai notified cases per day, all 7 tracked diseases (BMC data; dashed = projection after 15 Sep ${S.DATA.YEAR}; ticks = public holidays)</p><svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Mumbai notified cases per day">${g}</svg>`;
   const n = d1 - d0 + 1;
   $('strips').innerHTML = S.DISEASES.map(se => {
     let r = '';
     for (let d = d0; d <= d1; d++) { const v = Math.min(1, S.seasonRaw(se, nowT + d * S.DAY) * (f[se.id] || 1)); if (v > 0.03) r += `<rect x="${(d - d0) / n * 100}%" y="2" width="${100 / n + 0.05}%" height="16" fill="var(--accent)" opacity="${(0.12 + v * 0.85).toFixed(2)}"/>`; }
     r += `<line x1="${(0 - d0) / n * 100}%" x2="${(0 - d0) / n * 100}%" y1="0" y2="20" stroke="var(--ink)" stroke-width="1.5"/>`;
-    return `<div class="strip"><div class="nm">${esc(se.name)}<small>${esc(se.months)}</small></div><svg role="img" aria-label="${esc(se.name)} intensity"><rect x="0" y="2" width="100%" height="16" fill="var(--surface-2)"/>${r}</svg></div>`;
+    return `<div class="strip"><div class="nm">${esc(se.name)}<small>${esc(se.months)} · ${loc(S.rateAt(se.id, nowT) * 7)} cases/week now</small></div><svg role="img" aria-label="${esc(se.name)} intensity"><rect x="0" y="2" width="100%" height="16" fill="var(--surface-2)"/>${r}</svg></div>`;
   }).join('');
 }
 function srcLine(s) { return `<span class="srcdot ${s.live ? 'live' : ''}"></span>${esc(s.msg)}`; }
 function renderFeeds() {
-  const v = A.feedVals, f = feeds();
-  const dr = Math.round((v.dengueCases / v.dengueAvg - 1) * 100), mr = Math.round((v.malariaCases / v.malariaAvg - 1) * 100);
-  $('feedStatus').innerHTML = 'Weather and air quality for Mumbai come from Open-Meteo when the page can reach it. Disease counts are entered from BMC / IDSP weekly reports.';
+  const v = A.feedVals, nowT = S.START + A.now * S.HOUR, mo = new Date(nowT).getMonth();
+  const na = '<span class="muted">not received</span>';
+  $('feedStatus').innerHTML = 'Rain, temperature and air quality are live from Open-Meteo when the page can reach it. Disease counts come from the BMC figures in the table above; enter this week\'s BMC count when it is released to replace the projection.';
+  const dz = id => { const c = S.SER[id].ms[mo]; return `${loc(S.rateAt(id, nowT) * 7)}/week now · ${MON[mo]} ${S.DATA.YEAR}: ${loc(c.c)} ${kb(c.kind, c.note)}`; };
   $('feeds').innerHTML = [
-    `<div class="feed"><span class="eyebrow">Rain today and next 3 days</span><span class="v">${Math.round(v.rainToday)} / ${Math.round(v.rainNext)} mm</span><span class="ink2 small">Today: ${S.rainClass(v.rainToday)} · worst coming day: ${S.rainClass(v.rainNext)} (IMD). Heavy rain slows ambulances.</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
-    `<div class="feed"><span class="eyebrow">Rain 2–5 weeks ago · heavy-rain days (14 d)</span><span class="v">${Math.round(v.rainLag)} mm · ${v.heavyRecent}</span><span class="ink2 small">Mosquito breeding lag (dengue ×${f.rainF.toFixed(2)}); heavy rain drives leptospirosis 1–2 weeks later.</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
-    `<div class="feed"><span class="eyebrow">AQI forecast, next 3 days</span><span class="v">${v.aqi}</span><span class="ink2 small">${S.aqiBand(v.aqi)} · PM2.5 ${Math.round(v.pm25)}, PM10 ${Math.round(v.pm10)} µg/m³ (Indian AQI)</span><div class="row"><input class="in num" id="fd-aqi" type="number" min="0" max="500" value="${v.aqi}" aria-label="AQI override"><button class="btn small" type="button" data-feed="aqi">Override</button></div><span class="src">${srcLine(A.src.air)}</span></div>`,
-    `<div class="feed"><span class="eyebrow">Max temperature, next 3 days</span><span class="v">${Math.round(v.tmax)} °C</span><span class="ink2 small">Heat-illness factor ×${f.heat.toFixed(2)}</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
-    `<div class="feed"><span class="eyebrow">Dengue cases, Mumbai, this week</span><span class="v">${v.dengueCases}</span><span class="ink2 small">${dr >= 0 ? '+' : '−'}${Math.abs(dr)}% vs usual (${v.dengueAvg})</span><div class="row"><input class="in num" id="fd-dengue" type="number" min="0" max="50000" value="${v.dengueCases}" aria-label="Dengue weekly cases"><button class="btn small" type="button" data-feed="dengue">Record</button></div><span class="src"><span class="srcdot"></span>Enter from the BMC weekly monsoon-illness report</span></div>`,
-    `<div class="feed"><span class="eyebrow">Malaria cases, Mumbai, this week</span><span class="v">${v.malariaCases}</span><span class="ink2 small">${mr >= 0 ? '+' : '−'}${Math.abs(mr)}% vs usual (${v.malariaAvg})</span><div class="row"><input class="in num" id="fd-malaria" type="number" min="0" max="50000" value="${v.malariaCases}" aria-label="Malaria weekly cases"><button class="btn small" type="button" data-feed="malaria">Record</button></div><span class="src"><span class="srcdot"></span>Enter from the BMC weekly monsoon-illness report</span></div>`,
-    `<div class="feed"><span class="eyebrow">Influenza-like illness index</span><span class="v">${(+v.ili).toFixed(2)}×</span><span class="ink2 small">Sentinel clinics vs seasonal norm</span><div class="row"><input class="in num" id="fd-ili" type="number" min="0.2" max="4" step="0.05" value="${v.ili}" aria-label="ILI index"><button class="btn small" type="button" data-feed="ili">Record</button></div><span class="src"><span class="srcdot"></span>Enter from IDSP sentinel surveillance</span></div>`
+    `<div class="feed"><span class="eyebrow">Rain today and next 3 days</span><span class="v">${A.src.weather.live ? Math.round(v.rainToday) + ' / ' + Math.round(v.rainNext) + ' mm' : na}</span><span class="ink2 small">${A.src.weather.live ? `Today: ${S.rainClass(v.rainToday)} · worst coming day: ${S.rainClass(v.rainNext)} (IMD categories). ` : ''}Used for ambulance trip times ${kb('U', 'the slow-down per IMD category is a placeholder; no Mumbai data is published')}.</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
+    `<div class="feed"><span class="eyebrow">Heavy-rain days, last 14 days</span><span class="v">${A.src.weather.live ? v.heavyRecent : na}</span><span class="ink2 small">Days with ≥ 64.5 mm (IMD "heavy"). Shown for awareness: leptospirosis follows flooding by 1–2 weeks.</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
+    `<div class="feed"><span class="eyebrow">AQI forecast, next 3 days</span><span class="v">${v.aqi != null ? v.aqi : na}</span><span class="ink2 small">${v.aqi != null ? `${S.aqiBand(v.aqi)} · PM2.5 ${Math.round(v.pm25)}, PM10 ${Math.round(v.pm10)} µg/m³ (CPCB Indian AQI). ` : ''}Shown for awareness only: no published Mumbai figure converts AQI into admissions.</span><span class="src">${srcLine(A.src.air)}</span></div>`,
+    `<div class="feed"><span class="eyebrow">Max temperature, next 3 days</span><span class="v">${v.tmax != null ? Math.round(v.tmax) + ' °C' : na}</span><span class="ink2 small">Shown for awareness only (heat illness is not notifiable in Mumbai).</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
+    `<div class="feed"><span class="eyebrow">Dengue, Mumbai</span><span class="v small">${dz('dengue')}</span><div class="row"><input class="in num" id="fd-dengue" type="number" min="0" max="50000" placeholder="this week" value="${v.dengueWeekly ?? ''}" aria-label="BMC dengue cases this week"><button class="btn small" type="button" data-feed="dengue">Record</button></div><span class="src">Enter the BMC weekly count when released${v.dengueWeekly ? ` · recorded: ${v.dengueWeekly} ${kb('H')}` : ''}</span></div>`,
+    `<div class="feed"><span class="eyebrow">Malaria, Mumbai</span><span class="v small">${dz('malaria')}</span><div class="row"><input class="in num" id="fd-malaria" type="number" min="0" max="50000" placeholder="this week" value="${v.malariaWeekly ?? ''}" aria-label="BMC malaria cases this week"><button class="btn small" type="button" data-feed="malaria">Record</button></div><span class="src">Enter the BMC weekly count when released${v.malariaWeekly ? ` · recorded: ${v.malariaWeekly} ${kb('H')}` : ''}</span></div>`
   ].join('');
 }
 
@@ -1259,7 +1336,7 @@ async function fetchFeeds(quiet) {
     const days = Object.keys(by).filter(d => d >= today).slice(0, 3).map(d => ({ p25: mean(by[d].p25), p10: mean(by[d].p10) })).filter(d => d.p25 > 0);
     if (!days.length) throw new Error('no forecast');
     const worst = days.reduce((x, y) => S.indianAQI(y.p25, y.p10) > S.indianAQI(x.p25, x.p10) ? y : x), aqi = S.indianAQI(worst.p25, worst.p10);
-    changes.push(`AQI ${v.aqi} → ${aqi}`);
+    changes.push(`AQI ${aqi}`);
     Object.assign(v, { pm25: worst.p25, pm10: worst.p10, aqi });
     A.src.air = { live: true, msg: `Live: Open-Meteo air quality, fetched ${stamp}` };
   } catch (e) { A.src.air = { live: false, msg: `Simulated: live air quality unavailable here (${e.name === 'AbortError' ? 'timed out' : 'blocked or offline'})` }; }
@@ -1362,8 +1439,8 @@ function renderPeople() {
 }
 function renderLog() { $('log').innerHTML = A.log.map(l => `<div><span class="num">${fmtT(l.at).replace(',', '')}</span><span>${l.sev && l.sev !== 'ok' ? pill(l.sev) + ' ' : ''}${esc(l.text)}</span></div>`).join(''); }
 function renderFoot() {
-  $('foot').textContent = `${A.imported ? 'Observations for this hospital come from the imported file; anything not in the file is simulated.' : 'Hospital occupancy, patients and stocks are simulated: Mumbai hospitals do not publish live bed data.'} Bed counts are from public sources; other capacities are estimated from bed counts with typical ratios. The model is an hour-by-hour flow simulation of arrivals by hour, weekday and Mumbai season; routing to wards, ICU and isolation; length of stay; discharges on weekdays, weekends and holidays; bed cleaning; lab, X-ray and CT queues; oxygen, platelets and ambulances; and nurse ratios. Uncertainty comes from ${A.F.ens.n} Monte Carlo runs. Forecasts support decisions by hospital staff; they do not make them.`;
-  $('sources').innerHTML = 'Sources: bed counts — KEM Medical Records report 2021–23; hospital websites, Wikipedia and published profiles (hover "source" in the network table). Disease figures — BMC data via Free Press Journal and The Week (2025–2026). Oxygen context — BMC liquid-oxygen tank programme and the April 2021 shortage. Rain classes — India Meteorological Department. AQI — CPCB National AQI breakpoints. Weather and air quality — Open-Meteo.';
+  $('foot').innerHTML = `${A.imported ? 'Observations for this hospital come from the imported file.' : 'Mumbai hospitals do not publish live bed data, so the current state is simulated from the published averages until census data is imported.'} Every input is labelled: ${kb('P')} published, ${kb('D')} derived from published figures, ${kb('R')} another Mumbai hospital's published figure used as reference, ${kb('U')} not published (placeholder for the hospital to replace), ${kb('X')} projection after the last published month, ${kb('L')} live. Forecasts are model outputs from these inputs (${A.F.ens.n} Monte Carlo runs) and support decisions by hospital staff; they do not make them. See <a href="#data">Data sources and completeness</a>.`;
+  $('sources').innerHTML = '';
 }
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3200); }
 
@@ -1449,16 +1526,34 @@ function sampleCSV() {
 }
 
 /* ---------------- setup form ---------------- */
-const SF = [['s-name', s => s.name], ['s-arr', s => s.arrPerDay], ['s-ed', s => s.edSpaces], ['s-amb', s => s.ambulances], ['s-MED', s => s.beds.MED], ['s-SURG', s => s.beds.SURG], ['s-ICU', s => s.beds.ICU], ['s-PEDS', s => s.beds.PEDS], ['s-ISO', s => s.beds.ISO], ['s-vents', s => s.vents],
+const SF = [['s-name', s => s.name], ['s-arr', s => s.arrPerDay], ['s-adm', s => s.admissionsPerDay], ['s-alos', s => s.alos], ['s-bor', s => +(s.bor * 100).toFixed(1)], ['s-ed', s => s.edSpaces], ['s-edlos', s => s.edLOS], ['s-amb', s => s.ambulances],
+  ['s-MED', s => s.beds.MED], ['s-SURG', s => s.beds.SURG], ['s-ICU', s => s.beds.ICU], ['s-PEDS', s => s.beds.PEDS], ['s-ISO', s => s.beds.ISO], ['s-vents', s => s.vents],
   ['s-n0', s => s.nurses[0]], ['s-n1', s => s.nurses[1]], ['s-n2', s => s.nurses[2]], ['s-d0', s => s.docs[0]], ['s-d1', s => s.docs[1]], ['s-d2', s => s.docs[2]], ['s-labd', s => s.lab.day], ['s-labn', s => s.lab.night],
   ['s-xrd', s => s.xray.day], ['s-xrn', s => s.xray.night], ['s-imgd', s => s.img.day], ['s-imgn', s => s.img.night], ['s-o2c', s => s.o2Capacity], ['s-o2d', s => s.o2Delivery], ['s-pltS', s => s.plateletSupply], ['s-pltN', s => s.plateletStock]];
-function fillSetup(s) { for (const [id, f] of SF) $(id).value = f(s || A.setup); }
+function fillSetup(s) { for (const [id, f] of SF) $(id).value = f(s || A.setup); markSetup(s); }
+function markSetup(s) {
+  s = s || A.setup; const pv = s.prov || {};
+  for (const key in SETUP_KEYS) {
+    const ids = [].concat(SETUP_KEYS[key]), pr = pv[key];
+    for (const id of ids) {
+      const span = $(id) && $(id).closest('label').querySelector('span'); if (!span) continue;
+      const old = span.querySelector('.kb'); if (old) old.remove();
+      if (pr) span.insertAdjacentHTML('beforeend', kb(pr.kind, pr.note));
+    }
+  }
+}
 function readSetup() {
   const n = id => { const v = +$(id).value; if (!isFinite(v) || v < 0) throw new Error('Check the value for ' + $(id).closest('label').querySelector('span').textContent); return v; };
-  return { name: $('s-name').value.trim() || A.setup.name, arrPerDay: n('s-arr'), edSpaces: n('s-ed'), ambulances: n('s-amb'),
+  const out = { name: $('s-name').value.trim() || A.setup.name, arrPerDay: n('s-arr'), admissionsPerDay: n('s-adm'), alos: n('s-alos'), bor: n('s-bor') / 100, edSpaces: n('s-ed'), edLOS: n('s-edlos'), ambulances: n('s-amb'),
     beds: { MED: n('s-MED'), SURG: n('s-SURG'), ICU: n('s-ICU'), PEDS: n('s-PEDS'), ISO: n('s-ISO') }, vents: n('s-vents'),
     nurses: [n('s-n0'), n('s-n1'), n('s-n2')], docs: [n('s-d0'), n('s-d1'), n('s-d2')], lab: { day: n('s-labd'), night: n('s-labn') },
     xray: { day: n('s-xrd'), night: n('s-xrn') }, img: { day: n('s-imgd'), night: n('s-imgn') }, o2Capacity: n('s-o2c'), o2Delivery: n('s-o2d'), plateletSupply: n('s-pltS'), plateletStock: n('s-pltN') };
+  // Record which inputs staff changed, so their provenance shows as "entered by hospital".
+  const base = S.setupFor(S.HOSPITALS.find(h => h.id === A.hospitalId)), changed = [];
+  const val = (o, k) => k in o.beds ? o.beds[k] : o[k];
+  for (const k in SETUP_KEYS) if (JSON.stringify(val(out, k)) !== JSON.stringify(val(base, k)) && !(k === 'bor' && Math.abs(out.bor - base.bor) < 0.0006)) changed.push(k);
+  out.changed = changed;
+  return out;
 }
 
 /* ---------------- clock ---------------- */
@@ -1468,18 +1563,10 @@ function advance(hours) {
     rec.state = S.cloneState(A.state);
     A.history.push(rec); A.now++;
     if (A.history.length > 24 * 40) A.history.shift();
-    if (tOf(A.now).getHours() === 8) dailyUpdate();
   }
   updateNowcast(); detect();
   recompute(false);
   if (hours >= 24 || tOf(A.now).getHours() === 9) { backtest(); renderAcc(); }
-}
-function dailyUpdate() {
-  const v = A.feedVals, r = A.rand, t = S.START + A.now * S.HOUR;
-  const drift = (id, key, avg) => { const se = S.DISEASES.find(d => d.id === id), tr = S.seasonRaw(se, t) / Math.max(0.05, S.seasonRaw(se, t - 7 * S.DAY)); v[key] = Math.max(5, Math.round(v[key] * Math.pow(tr, 1 / 7) * (1 + (r() - 0.45) * 0.1))); v[avg] = Math.max(5, Math.round(v[avg] * Math.pow(tr, 1 / 7))); };
-  const pd = v.dengueCases, pm = v.malariaCases;
-  drift('dengue', 'dengueCases', 'dengueAvg'); drift('malaria', 'malariaCases', 'malariaAvg');
-  addLog(`Daily surveillance update: dengue ${pd} → ${v.dengueCases}, malaria ${pm} → ${v.malariaCases} cases/week${A.mode === 'fast' ? ' (simulated)' : ''}.`);
 }
 function setLive(on) {
   A.live = on; clearInterval(A.timer); A.timer = null;
@@ -1583,11 +1670,9 @@ let rcT; function scheduleRecompute() { clearTimeout(rcT); rcT = setTimeout(() =
 function recordFeed(kind) {
   const v = A.feedVals, n = parseFloat($('fd-' + kind).value);
   if (!isFinite(n) || n < 0) { toast('Enter a number'); return; }
-  const key = { dengue: 'dengueCases', malaria: 'malariaCases', aqi: 'aqi', ili: 'ili' }[kind], before = v[key];
-  v[key] = kind === 'ili' ? n : Math.round(n);
-  if (kind === 'aqi') A.src.air = { live: false, msg: 'Entered manually' };
-  addLog(`New reading recorded: ${kind} ${before} → ${v[key]}. Forecast recalculated.`);
-  A.netAt = -999; recompute(false); toast('Reading recorded, forecast updated');
+  v[kind + 'Weekly'] = Math.round(n);
+  addLog(`BMC ${kind} count for this week recorded: ${Math.round(n)}. The ${kind} curve is rescaled to it and the forecast recalculated.`);
+  A.netAt = -999; recompute(false); toast('Recorded; forecast updated');
 }
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { renderChart(); renderSeason(); }, 150); });
 

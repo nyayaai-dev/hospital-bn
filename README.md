@@ -1,8 +1,45 @@
 # Surge Watch Mumbai
 
-A decision-support tool that forecasts bottlenecks in Mumbai hospitals before they happen. It covers beds, ICU, isolation, oxygen, ambulances, the laboratory, X-ray, CT/ultrasound, nursing and platelets. It accounts for Mumbai's seasonal infections, monsoon flooding and public holidays, and it watches incoming patients for signs of an epidemic. It runs entirely in the browser, with no build step or backend.
+A decision-support tool that forecasts bottlenecks in Mumbai hospitals. It covers beds, ICU, isolation, oxygen, ambulances, the laboratory, X-ray, CT/ultrasound, nursing and platelets. Its inputs come from official and published sources, and it watches incoming patients for signs of an epidemic. It runs entirely in the browser, with no build step or backend.
 
-> **What is real and what is simulated.** Hospital bed counts come from public sources, and weather and air quality are live from Open-Meteo. Mumbai hospitals do not publish live occupancy, so patient numbers, stock levels and per-hospital load are **simulated** until you import your own census data.
+## Where every number comes from
+
+Every input carries a provenance label, shown as a badge in the app and in `data.js`:
+
+| Label | Meaning |
+|---|---|
+| **P** | Published figure, with source link and date |
+| **D** | Derived arithmetically from published figures; the working is shown |
+| **R** | Another Mumbai hospital's published figure, used where this hospital publishes nothing |
+| **U** | Not published anywhere; a placeholder the hospital must replace |
+| **X** | Projection after the last published month; the rule is shown |
+| **H** | Entered by hospital staff |
+| **L** | Live data (Open-Meteo) |
+
+**Hospital figures (official documents):**
+- **KEM:** NIRF 2026 submission for 2024 (1,900 beds, 1,430 occupied a day, 6,206 OPD a day). Medical Records report for 2023 (177 admissions a day, 1,43,098 casualty attendances, average stay 8.0 days). 2022 proforma (40 emergency beds).
+- **Sion (LTMGH):**
+  - MUHS 2026–27 filing: 1,750 registered beds with the full ward breakdown, 151 ICU-type beds by unit, and 18 casualty beds with 5 ventilators.
+  - Equipment in the same filing: 14 working X-ray units, 10 ultrasound, 2 CT, 2 MRI and 51 operating theatres; the blood centre dispenses 75–80 units a day.
+  - Dean's page: more than 75,000 inpatients a year.
+- **Nair:** UGMSR proforma, April 2026: 1,632 beds, 19 emergency beds, and 4,099 admissions in the previous month.
+- **Cooper, J J and the private hospitals:** bed counts from the hospitals' own sites or secondary sources. Each is marked in the app.
+- **City:** BMC Budget 2025–26 (15,302 government beds, 31,076 private beds). Kasturba isolation capacity. BMC liquid-oxygen tanks (2020).
+
+**Disease seasonality: BMC notified cases by month for 2026.**
+- **Sources:** monthly figures from news reports of BMC Epidemic Cell data (FPJ, Outlook, The Week), plus the IDSP Mumbai dengue series for 2009–2018 (Pol et al., IJCMPH 2021).
+- **Gaps:** months not reported individually are derived from published year-to-date totals, with the working shown. October–December are projections, using the IDSP 10-year shape for dengue and holding the last published level for the others.
+- **How it enters the forecast:** each hospital's published admissions already include the yearly average, so only the deviation from that average is added. Cases are shared across hospitals by their share of Mumbai's 46,378 beds.
+
+**Not published anywhere, so the hospital must supply them** (listed in the app under *Data sources and completeness*):
+- the share of notified cases that are admitted;
+- ICU beds (except Sion, Bombay Hospital and Jaslok), isolation beds and ventilators;
+- nurses per shift, lab and X-ray throughput;
+- ambulances per hospital (only the statewide 108 fleet of 1,756 is published);
+- oxygen refill schedules;
+- hourly and weekday arrival and discharge patterns, and casualty stay per patient.
+
+Mumbai does not publish live bed occupancy. The current state is simulated from each hospital's published averages until census data is imported (CSV), and forecasts are model outputs from the labelled inputs.
 
 ## Run it
 
@@ -12,45 +49,17 @@ python -m http.server 8000
 
 Then open http://localhost:8000. It also works on GitHub Pages. Live weather needs a real web origin, not `file://`.
 
-## What it covers
+## Features
 
-| Need | How |
-|---|---|
-| Seasonal infections that fill beds | 11 Mumbai illnesses, each with its own season, admission rate, ICU share and resource needs: malaria, dengue, leptospirosis, chikungunya, gastroenteritis and cholera, hepatitis A/E and typhoid, influenza (H1N1/H3N2), pollution-related respiratory illness, heat illness, monsoon injuries, and Diwali burns. TB is treated as year-round load, and COVID-type epidemics are handled by outbreak detection. The table shows how many beds and ICU beds each illness adds at its peak. |
-| Mumbai hospitals | 13 hospitals with published bed counts (KEM, J J, Nair, Sion, Cooper, Kokilaben, Hinduja, Bombay, Jaslok, Nanavati, Lilavati, Fortis Mulund, Breach Candy), plus Kasturba's isolation reserve and upcoming BMC beds. Pick any hospital to forecast it; the network view estimates free beds, ICU, isolation, oxygen and ambulances across the city. |
-| Keeps updating | *Real time* mode (the default) re-forecasts every hour and refreshes live rain, temperature and AQI every 30 minutes. *Fast-forward* is for demos. |
-| Epidemic / pandemic alerts | Every hour, arrivals by syndrome (fever, respiratory, diarrhoea/jaundice, injuries) are compared with the seasonal expectation. The level escalates from Watch to Outbreak, Epidemic and Severe epidemic. Once an outbreak is detected, its growth goes into every forecast. An epidemic alert email is drafted, a red banner appears, and a desktop notification is sent where the browser allows it. |
-| Prepared for the worst | A reasonable worst case (faster growth, 15% fewer nurses, 30% oxygen supply cut, 15% of ambulances off road) shows when each resource runs out and by how much. A preparedness checklist lists each action, its owner, its lead time and a *decide by* time. With no outbreak, it runs a stress test of a COVID-like epidemic starting today. |
-| Beds, oxygen, ambulances, labs, X-ray | Availability tiles show free general, ICU and isolation beds; free ventilators; oxygen days of supply (liquid tank and cylinders, in D-type cylinder equivalents); ambulances available and current trip time (Mumbai traffic, and IMD heavy-rain classes slow trips); lab turnaround; X-ray wait; CT/ultrasound wait; and platelet stock. Each shows its lowest point in the next 72 h. |
-| What-if | Mumbai flood (26 July-type), dengue outbreak, flu wave with staff sickness, building collapse, oxygen supply crisis, X-ray and lab breakdown, nursing strike, and blood donor shortage, plus 13 sliders. |
-| Human control | 20 preventive actions, each needing a named approver. Alerts are drafts that a person reviews and sends. Outbreak drills test detection without touching real data. |
-
-## Data sources
-
-- **Bed counts:**
-  - KEM Medical Records annual statistical report 2021–23 (2,250 beds).
-  - Hospital websites, Wikipedia and published profiles for the others. Sources disagree for some hospitals (e.g. Cooper 500–1,462), and each figure's source is shown in the app.
-- **Mumbai disease figures:** BMC data reported by the Free Press Journal and The Week (2025–2026). For example, July 2026 had 1,380 malaria, 466 dengue, 78 leptospirosis, 851 gastroenteritis and 105 H1N1 cases.
-- **Oxygen:** the BMC liquid-oxygen tank programme, and the April 2021 shortage as context.
-- **Rain classes:** India Meteorological Department (heavy ≥ 64.5 mm, very heavy ≥ 115.6 mm, extremely heavy ≥ 204.5 mm per day).
-- **AQI:** CPCB National AQI breakpoints, from Open-Meteo PM2.5/PM10.
-
-## Limits
-
-- **Capacities other than beds are estimated.** ICU share, ventilators, staff, lab, X-ray, oxygen, ambulances and platelets are derived from bed counts using typical ratios. Edit them in *Hospital setup and data*.
-- **Clinical rates are typical values,** not fitted to any hospital. Validate against your own records before using this for real decisions.
-- **Disease counts have no open API,** so they're entered by hand from BMC/IDSP reports.
-
-## Data import format
-
-One row per hour or per day. Only `timestamp` is required.
-
-```
-timestamp,ed_arrivals,ed_census,ed_waiting_for_bed,med_occupied,surg_occupied,icu_occupied,peds_occupied,iso_occupied,lab_backlog,platelet_stock,oxygen_stock,ambulances_busy
-2026-10-14 08:00,40,120,12,880,520,120,190,20,200,230,5200,9
-```
+- **Forecasts:** a 7/14/30-day forecast per unit, with 30 Monte Carlo runs giving breach probabilities and 80% ranges.
+- **Diseases:** a table of the 7 notified diseases with each month's figure and its working.
+- **City network:** 13 hospitals, each showing its published operating data and how many of its inputs are P/D, R or U.
+- **Outbreak watch:** syndromic detection that escalates Watch → Outbreak → Epidemic. When it triggers, the outbreak is carried into every forecast, an epidemic alert email is drafted, desktop notifications fire, and a worst case with a preparedness checklist is produced. Outbreak drills test it without touching real data.
+- **What-if scenarios and actions:** what-if scenarios, 20 preventive actions that each need a named approver, and alert drafts reviewed and sent by a person.
+- **Updates and accuracy:** real-time mode (hourly re-forecast; live rain and AQI every 30 minutes), CSV census import, and a 7-day accuracy backtest.
 
 ## Files
 
+- `data.js`: every sourced figure with source, date, kind and working.
+- `model.js`: the simulation model.
 - `index.html`: the interface.
-- `model.js`: the simulation model, with no dependencies. It contains the hospitals in `HOSPITALS`, the illnesses in `DISEASES`, the epidemic profiles in `PATHOGENS`, the clinical rates in `R`, and the actions in `ACTIONS`.

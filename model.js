@@ -9,46 +9,78 @@
   const HOUR = 3600e3, DAY = 864e5;
   const MUMBAI = { name: 'Mumbai', lat: 19.08, lon: 72.88 };
 
-  /* ---------------- Mumbai hospitals (bed counts from public sources; coordinates approximate) ---------------- */
+  /* ---------------- Mumbai hospitals: facts from data.js (each with its source) ---------------- */
+  const DATA = global.SWDATA, HF = DATA.HOSPITAL_FACTS, CF = DATA.CITY_FACTS;
+  const CITY_BEDS = CF.govtBeds.v + CF.privateBeds.v; // 46,378 (BMC budget 2025-26)
   const HOSPITALS = [
-    { id: 'kem', name: 'KEM Hospital', area: 'Parel', zone: 'Central Mumbai', type: 'BMC', beds: 2250, lat: 19.0026, lon: 72.8420, src: 'KEM Medical Records annual statistical report 2021–23 (2,250 scheduled beds)' },
-    { id: 'jj', name: 'Sir J J Hospital', area: 'Byculla', zone: 'South Mumbai', type: 'State', beds: 2844, lat: 18.9627, lon: 72.8337, src: 'Hospital profile, Govt of Maharashtra (2,844 beds)' },
-    { id: 'nair', name: 'B Y L Nair Hospital', area: 'Mumbai Central', zone: 'South Mumbai', type: 'BMC', beds: 1800, lat: 18.9719, lon: 72.8227, src: 'Hospital listings (~1,800); an older survey gives 1,200' },
-    { id: 'sion', name: 'LTMG (Sion) Hospital', area: 'Sion', zone: 'Central Mumbai', type: 'BMC', beds: 1400, lat: 19.0368, lon: 72.8597, src: 'National Herald profile ("more than 1,400 beds")' },
-    { id: 'cooper', name: 'Dr R N Cooper Hospital', area: 'Juhu / Vile Parle', zone: 'Western suburbs', type: 'BMC', beds: 636, lat: 19.1069, lon: 72.8360, src: 'Hospital listing (636); other sources range 500–1,462' },
-    { id: 'kokilaben', name: 'Kokilaben Dhirubhai Ambani Hospital', area: 'Andheri West', zone: 'Western suburbs', type: 'Private', beds: 750, lat: 19.1309, lon: 72.8253, src: 'Hospital profiles ("750-bed")' },
-    { id: 'hinduja', name: 'P D Hinduja Hospital', area: 'Mahim', zone: 'Central Mumbai', type: 'Private', beds: 520, lat: 19.0335, lon: 72.8388, src: 'Two units, about 520 beds combined (sources vary)' },
-    { id: 'bombay', name: 'Bombay Hospital', area: 'Marine Lines', zone: 'South Mumbai', type: 'Private', beds: 500, icu: 110, lat: 18.9415, lon: 72.8270, src: 'Hospital website and Wikipedia (500 beds, 110 critical care)' },
-    { id: 'jaslok', name: 'Jaslok Hospital', area: 'Pedder Road', zone: 'South Mumbai', type: 'Private', beds: 350, icu: 75, lat: 18.9718, lon: 72.8094, src: 'Hospital profile (350 beds, 75 ICU)' },
-    { id: 'nanavati', name: 'Nanavati Max Hospital', area: 'Vile Parle West', zone: 'Western suburbs', type: 'Private', beds: 350, lat: 19.0963, lon: 72.8400, src: '2022 expansion announcement (existing 350 beds)' },
-    { id: 'lilavati', name: 'Lilavati Hospital', area: 'Bandra West', zone: 'Western suburbs', type: 'Private', beds: 300, lat: 19.0510, lon: 72.8288, src: 'Hospital listings ("over 300 beds")' },
-    { id: 'fortis', name: 'Fortis Hospital', area: 'Mulund', zone: 'Eastern suburbs', type: 'Private', beds: 261, lat: 19.1612, lon: 72.9408, src: 'Business directory listing (261 beds)' },
-    { id: 'breach', name: 'Breach Candy Hospital', area: 'Breach Candy', zone: 'South Mumbai', type: 'Private', beds: 220, lat: 18.9705, lon: 72.8045, src: 'Wikipedia ("over 220 beds")' }
-  ];
+    { id: 'kem', name: 'KEM Hospital', area: 'Parel', zone: 'Central Mumbai', type: 'BMC', lat: 19.0026, lon: 72.8420 },
+    { id: 'jj', name: 'Sir J J Hospital', area: 'Byculla', zone: 'South Mumbai', type: 'State', lat: 18.9627, lon: 72.8337 },
+    { id: 'sion', name: 'LTMG (Sion) Hospital', area: 'Sion', zone: 'Central Mumbai', type: 'BMC', lat: 19.0368, lon: 72.8597 },
+    { id: 'nair', name: 'B Y L Nair Hospital', area: 'Mumbai Central', zone: 'South Mumbai', type: 'BMC', lat: 18.9719, lon: 72.8227 },
+    { id: 'cooper', name: 'Dr R N Cooper Hospital', area: 'Juhu / Vile Parle', zone: 'Western suburbs', type: 'BMC', lat: 19.1069, lon: 72.8360 },
+    { id: 'kokilaben', name: 'Kokilaben Dhirubhai Ambani Hospital', area: 'Andheri West', zone: 'Western suburbs', type: 'Private', lat: 19.1309, lon: 72.8253 },
+    { id: 'hinduja', name: 'P D Hinduja Hospital', area: 'Mahim', zone: 'Central Mumbai', type: 'Private', lat: 19.0335, lon: 72.8388 },
+    { id: 'bombay', name: 'Bombay Hospital', area: 'Marine Lines', zone: 'South Mumbai', type: 'Private', lat: 18.9415, lon: 72.8270 },
+    { id: 'jaslok', name: 'Jaslok Hospital', area: 'Pedder Road', zone: 'South Mumbai', type: 'Private', lat: 18.9718, lon: 72.8094 },
+    { id: 'nanavati', name: 'Nanavati Max Hospital', area: 'Vile Parle West', zone: 'Western suburbs', type: 'Private', lat: 19.0963, lon: 72.8400 },
+    { id: 'lilavati', name: 'Lilavati Hospital', area: 'Bandra West', zone: 'Western suburbs', type: 'Private', lat: 19.0510, lon: 72.8288 },
+    { id: 'fortis', name: 'Fortis Hospital', area: 'Mulund', zone: 'Eastern suburbs', type: 'Private', lat: 19.1612, lon: 72.9408 },
+    { id: 'breach', name: 'Breach Candy Hospital', area: 'Breach Candy', zone: 'South Mumbai', type: 'Private', lat: 18.9705, lon: 72.8045 }
+  ].map(h => Object.assign(h, { beds: HF[h.id].beds.v, facts: HF[h.id], src: DATA.SOURCES[HF[h.id].beds.src].title }));
   const ISOLATION_RESERVE = [
-    { name: 'Kasturba Hospital for Infectious Diseases, Chinchpokli', beds: 78, note: 'BMC infectious-disease hospital: 78 isolation beds reported in March 2020, plus a 10-bed Ebola isolation ward set up in 2026.' }
+    { name: 'Kasturba Hospital for Infectious Diseases, Chinchpokli', beds: CF.kasturbaIsolation.v, note: '78 isolation beds (March 2020) and a 10-bed Ebola isolation ward (2026).' }
   ];
-  const UPCOMING = { beds: 1120, note: 'Siddharth (306), Shatabdi (324) and Harilal Bhagwati (490) BMC hospitals, reported as more than 85% complete.' };
+  const UPCOMING = { beds: CF.upcomingBeds.v, note: 'Siddharth (306), Shatabdi (324) and Harilal Bhagwati (490) BMC hospitals, reported as more than 85% complete.' };
 
-  // Derive a full setup from a hospital's bed count. Shares are typical values, not published figures.
+  // Sion publishes its ward-by-ward beds (MUHS 2026-27). Where a hospital publishes only a total, Sion's mix is used as the reference.
+  const SION_MIX = { MED: 331, SURG: 844, PEDS: 160, ICU: 100 }, SION_TOTAL = 1435;
+  const KEMF = HF.kem;
+  // Every input carries provenance: P published, D derived from this hospital's published figures,
+  // R reference (another Mumbai hospital's published figure applied here), U not published (placeholder to replace).
   function setupFor(h) {
-    const pub = h.type !== 'Private', b = h.beds;
-    const icu = h.icu || Math.round(b * (pub ? 0.06 : 0.09));
-    const arr = Math.round(b * (pub ? 0.46 : 0.30));
-    const nDay = Math.round(b * (pub ? 0.2 : 0.21));
+    const F = HF[h.id] || {}, prov = {};
+    const put = (key, v, kind, src, note) => { prov[key] = { kind, src: src || null, note: note || '' }; return v; };
+    const fact = (key, fk) => put(key, F[fk].v, F[fk].kind, F[fk].src, F[fk].note);
+    const beds = fact('beds', 'beds');
+    let icu, med, surg, peds;
+    if (F.wardMED) { med = fact('MED', 'wardMED'); surg = fact('SURG', 'wardSURG'); peds = fact('PEDS', 'wardPEDS'); icu = fact('ICU', 'icuAdult'); }
+    else {
+      icu = F.icuAdult ? fact('ICU', 'icuAdult') : put('ICU', Math.round(beds * SION_MIX.ICU / SION_TOTAL), 'R', 'sionMUHS', "Sion's published adult ICU share (100 of 1,435 ward and ICU beds) applied to this hospital's beds");
+      const rest = beds - icu, rs = SION_TOTAL - SION_MIX.ICU;
+      med = put('MED', Math.round(rest * SION_MIX.MED / rs), 'R', 'sionMUHS', "Sion's published ward mix: Medicine group 331 of 1,335 ward beds");
+      surg = put('SURG', Math.round(rest * SION_MIX.SURG / rs), 'R', 'sionMUHS', "Sion's published ward mix: surgical and obstetric group 844 of 1,335");
+      peds = put('PEDS', Math.round(rest * SION_MIX.PEDS / rs), 'R', 'sionMUHS', "Sion's published ward mix: Paediatrics 160 of 1,335");
+    }
+    const iso = put('ISO', Math.max(4, Math.round(beds * 0.015)), 'U', null, 'Isolation beds are not published for this hospital. Placeholder: 1.5% of beds.');
+    const adm = F.admissionsPerDay ? fact('admissionsPerDay', 'admissionsPerDay') : put('admissionsPerDay', +(beds * KEMF.admissionsPerDay.v / KEMF.beds.v).toFixed(1), 'R', 'kemMRD', "KEM's published admissions per bed (177 a day / 1,900 beds) x this hospital's beds");
+    const arrRatio = KEMF.casualtyPerDay.v / KEMF.admissionsPerDay.v;
+    const arr = F.casualtyPerDay ? put('arrPerDay', Math.round(F.casualtyPerDay.v), F.casualtyPerDay.kind, F.casualtyPerDay.src, F.casualtyPerDay.note) : put('arrPerDay', Math.round(adm * arrRatio), 'R', 'kemMRD', "KEM's published casualty attendances per admission (392 / 177 = " + arrRatio.toFixed(2) + ") x this hospital's admissions");
+    const alos = F.alos ? fact('alos', 'alos') : put('alos', KEMF.alos.v, 'R', 'kemMRD', "KEM's published average stay (8.0 days, 2023)");
+    const bor = F.bor ? fact('bor', 'bor') : put('bor', KEMF.bor.v, 'R', 'kemNIRF', "KEM's published occupancy (1,430 of 1,900 beds, 2024)");
+    const ed = F.emergencyBeds ? fact('edSpaces', 'emergencyBeds') : put('edSpaces', Math.max(6, Math.round(beds * KEMF.emergencyBeds.v / KEMF.beds.v)), 'R', 'kemProforma', "KEM's published emergency beds per bed (40 / 1,900)");
+    const edLOS = put('edLOS', 1.5, 'U', null, 'Average time a casualty patient occupies a bed is not published. Placeholder: 1.5 h.');
+    const vents = put('vents', Math.round(icu * 0.75) + (F.casualtyVentilators ? F.casualtyVentilators.v : 0), 'U', F.casualtyVentilators ? 'sionMUHS' : null, F.casualtyVentilators ? 'ICU ventilators not published (placeholder 0.75 per ICU bed) + 5 in casualty (published)' : 'Not published. Placeholder: 0.75 per ICU bed.');
+    const nDay = Math.round(beds * 0.2);
+    const nurses = put('nurses', [Math.round(nDay * 0.74), nDay, Math.round(nDay * 0.92)], 'U', null, 'Not published. Placeholder: 0.2 nurses per bed on the day shift.');
     const docDay = Math.max(3, Math.ceil(arr / 24 * 1.5 / 3.2 * 1.5));
-    return {
-      hospitalId: h.id, name: h.name + ', ' + h.area, type: h.type,
-      edSpaces: Math.max(10, Math.round(b * (pub ? 0.06 : 0.05))),
-      beds: { MED: Math.round(b * 0.40), SURG: Math.round(b * 0.26), ICU: icu, PEDS: Math.round(b * (pub ? 0.11 : 0.09)), ISO: Math.max(4, Math.round(b * 0.015)) },
-      vents: Math.round(icu * 0.75), arrPerDay: arr,
-      nurses: [Math.round(nDay * 0.74), nDay, Math.round(nDay * 0.92)], docs: [Math.ceil(docDay / 2), docDay, Math.ceil(docDay * 0.85)],
-      lab: { day: Math.round(arr * 0.3 + b * 0.12), night: Math.round((arr * 0.3 + b * 0.12) * 0.6) }, xray: { day: Math.max(3, Math.round(arr * 0.034)), night: Math.max(2, Math.round(arr * 0.018)) },
-      img: { day: Math.max(2, Math.round(arr * 0.02)), night: Math.max(1, Math.round(arr * 0.008)) },
-      plateletSupply: Math.round(arr * 0.11), plateletStock: Math.round(arr * 0.3),
-      o2Capacity: Math.round(b * 2.4), o2Delivery: Math.round(b * 0.22), ambulances: Math.max(3, Math.round(arr / 25)),
-      elective: pub ? 1 : 2.4, icuReferral: pub ? 0 : Math.round(icu * 0.16), startOcc: pub ? 0.96 : 0.82
-    };
+    const docs = put('docs', [Math.ceil(docDay / 2), docDay, Math.ceil(docDay * 0.85)], 'U', null, 'Not published. Placeholder sized to casualty attendances.');
+    const labDay = Math.round(arr * 0.3 + beds * 0.12);
+    const lab = put('lab', { day: labDay, night: Math.round(labDay * 0.6) }, 'U', F.xrayUnits ? 'sionMUHS' : null, 'Throughput not published (Sion lists its analysers, not tests per hour). Placeholder.');
+    const xray = F.xrayUnits ? put('xray', { day: F.xrayUnits.v * 3, night: Math.round(F.xrayUnits.v * 1.2) }, 'U', 'sionMUHS', '14 working X-ray units (published) x 3 studies per unit-hour by day (throughput not published)')
+      : put('xray', { day: Math.max(3, Math.round(arr * 0.034)), night: Math.max(2, Math.round(arr * 0.018)) }, 'U', null, 'X-ray units and throughput not published. Placeholder.');
+    const img = F.ctUnits ? put('img', { day: (F.ctUnits.v + F.usgUnits.v) * 2, night: F.ctUnits.v + 2 }, 'U', 'sionMUHS', '2 CT + 10 ultrasound (published) x 2 studies per unit-hour (throughput not published)')
+      : put('img', { day: Math.max(2, Math.round(arr * 0.02)), night: Math.max(1, Math.round(arr * 0.008)) }, 'U', null, 'CT/ultrasound units and throughput not published. Placeholder.');
+    const o2Cap = F.lmoTank ? put('o2Capacity', Math.round(F.lmoTank.v * 1000 * 0.861 / 7), 'D', 'lmo', '13 kL liquid oxygen x 861 L of gas per L / 7,000 L per D-type cylinder')
+      : put('o2Capacity', Math.round(beds * 2.4), 'U', null, 'Oxygen storage not published. Placeholder.');
+    const o2Del = put('o2Delivery', Math.round(beds * 0.22), 'U', null, 'Oxygen refill schedule not published. Placeholder.');
+    const amb = put('ambulances', Math.max(3, Math.round(arr / 25)), 'U', 'mems', 'Mumbai and per-hospital 108 allocation not published (statewide fleet: 1,756). Placeholder.');
+    const pltS = F.bloodUnitsPerDay ? put('plateletSupply', Math.round(F.bloodUnitsPerDay.v * 0.25), 'U', 'sionMUHS', '75-80 blood units dispensed a day (published) x 25% platelets (split not published)')
+      : put('plateletSupply', Math.round(arr * 0.11), 'U', null, 'Blood bank output not published. Placeholder.');
+    const pltN = put('plateletStock', Math.round(pltS * 3), 'U', null, 'Stock not published. Placeholder: 3 days of supply.');
+    return { hospitalId: h.id, name: h.name + ', ' + h.area, type: h.type, totalBeds: beds,
+      beds: { MED: med, SURG: surg, ICU: icu, PEDS: peds, ISO: iso },
+      edSpaces: ed, edLOS, vents, arrPerDay: arr, admissionsPerDay: adm, alos, bor, startOcc: bor, nurses, docs, lab, xray, img,
+      plateletSupply: pltS, plateletStock: pltN, o2Capacity: o2Cap, o2Delivery: o2Del, ambulances: amb, prov };
   }
   const DEFAULT_SETUP = setupFor(HOSPITALS[0]);
 
@@ -70,60 +102,59 @@
   const WARDS = ['MED', 'SURG', 'ICU', 'PEDS', 'ISO'];
 
   const R = {
-    route: { MED: 0.09, SURG: 0.04, ICU: 0.015, PEDS: 0.045, ISO: 0.002 },
-    los: { MED: 4.5, SURG: 4.5, ICU: 3.4, PEDS: 3.0, ISO: 6.0 },
-    directMED: 0.024, elective: 1.2, postOpICU: 0.035, icuToMed: 0.7,
+    // Operating rules no source publishes (listed in SWDATA.UNPUBLISHED); editable placeholders.
     edLOS: 2.6, docRate: 3.2, absence: 0.06,
     ratio: { ED: 4, MED: 6, SURG: 6, ICU: 2, PEDS: 5, ISO: 3 }, nightRelax: 1.3,
-    clean: [4, 2, 2.5],
+    clean: [4, 2, 2.5], icuToMed: 0, plannedSurg: 0.4,
     lab: { perArr: 2.2, perBedDay: 1.5, batch: 0.6, target: 2.5, proc: 0.8 },
     xray: { perArr: 0.30, perBedDay: 0.06, target: 1.5, proc: 0.5 },
     img: { perArr: 0.15, perBedDay: 0.02, target: 3, proc: 0.5 },
     ventPerIcuPt: 0.6,
     plt: { base: 0.3, perDengueAdm: 0.95, shelf: 5, cover: 1.5 },
-    // Oxygen in D-type cylinder equivalents (~7 m³). A ward patient on 5 L/min uses about 1 a day; ICU about 2.5.
+    // Oxygen in D-type cylinder equivalents (7 m3). 5 L/min for a day = 7.2 m3, about 1 cylinder; ICU about 2.5.
     o2: { ward: { MED: 0.10, SURG: 0.04, PEDS: 0.05, ISO: 0.3 }, icu: 0.8, perWardPt: 1, perIcuPt: 2.5, decayDays: 5, cover: 3 },
     amb: { share: 0.16, epiShare: 0.25, trip: 1.5 },
-    bg: { fever: 0.10, resp: 0.14, gi: 0.07, trauma: 0.22 } // background share of ordinary ED arrivals by syndrome
+    bg: { fever: 0.10, resp: 0.14, gi: 0.07, trauma: 0.22 }
   };
 
-  /* ---------------- Mumbai seasonal infections ---------------- */
-  // Peaks are day of year. amp = extra ED demand at peak (share of a normal day). route = share of those patients admitted to each unit.
+  /* ---------------- Mumbai notified diseases (monthly BMC counts in data.js) ---------------- */
+  // admit / route / test rates are clinical placeholders: BMC publishes notified cases, not admissions.
   const DISEASES = [
-    { id: 'malaria', name: 'Malaria', syn: 'fever', months: 'Jun – Oct', peaks: [{ doy: 215, sd: 38 }], amp: 0.16,
-      route: { MED: 0.10, ICU: 0.012, PEDS: 0.03 }, lab: 3, xray: 0.05, img: 0.1, o2: 0.05, needs: ['Lab (smear, RDT)', 'Medicine beds'],
-      mumbai: '1,380 cases in July 2026; 4,825 Jan–mid-Aug 2025 (BMC)', why: 'Anopheles breed in construction sites, water tanks and waterlogged areas during the monsoon.' },
-    { id: 'dengue', name: 'Dengue', syn: 'fever', months: 'Aug – Nov', peaks: [{ doy: 265, sd: 30 }], amp: 0.22, platelets: true,
-      route: { MED: 0.13, ICU: 0.022, PEDS: 0.05 }, lab: 4.5, xray: 0.05, img: 0.3, o2: 0.05, needs: ['Platelets', 'Lab (NS1, CBC)', 'Ultrasound', 'Medicine beds'],
-      mumbai: '466 cases in July 2026; 1,564 Jan–mid-Aug 2025 (BMC)', why: 'Aedes breed in clean stored water 2–5 weeks after rain; platelet monitoring drives repeat blood counts and transfusions.' },
-    { id: 'lepto', name: 'Leptospirosis', syn: 'fever', months: 'Jul – Aug, 1–2 weeks after flooding', peaks: [{ doy: 205, sd: 20 }], amp: 0.05, rainDriven: true,
-      route: { MED: 0.42, ICU: 0.12 }, lab: 4, xray: 0.5, img: 0.1, o2: 0.3, needs: ['ICU', 'Dialysis', 'Oxygen', 'X-ray'],
-      mumbai: '78 cases in July 2026 (BMC); highest share of confirmed deaths in 2025', why: 'Wading through flood water contaminated by rat urine; causes kidney failure and lung bleeding, so a high share needs ICU.' },
-    { id: 'chik', name: 'Chikungunya', syn: 'fever', months: 'Aug – Oct', peaks: [{ doy: 250, sd: 30 }], amp: 0.04,
-      route: { MED: 0.05 }, lab: 2, xray: 0.05, img: 0, o2: 0, needs: ['Mostly outpatient'],
-      mumbai: 'Up 56% Jan–Aug 2025 (BMC)', why: 'Same Aedes mosquito as dengue; severe joint pain, rarely needs admission.' },
-    { id: 'gastro', name: 'Gastroenteritis & cholera', syn: 'gi', months: 'Jun – Sep', peaks: [{ doy: 190, sd: 35 }], amp: 0.14,
-      route: { MED: 0.08, ICU: 0.005, PEDS: 0.18 }, lab: 2, xray: 0.02, img: 0.05, o2: 0, needs: ['Paediatric beds', 'IV fluids'],
-      mumbai: '851 cases in July 2026; 5,510 Jan–mid-Aug 2025 (BMC)', why: 'Contaminated water and street food during heavy rain and pipeline leaks.' },
-    { id: 'hep', name: 'Hepatitis A/E & typhoid', syn: 'gi', months: 'Jul – Oct', peaks: [{ doy: 220, sd: 40 }], amp: 0.06,
-      route: { MED: 0.2, PEDS: 0.08, ICU: 0.01 }, lab: 3, xray: 0.02, img: 0.3, o2: 0, needs: ['Medicine beds', 'Ultrasound', 'Lab'],
-      mumbai: 'Hepatitis up 16% Jan–Aug 2025 (BMC)', why: 'Faecal contamination of drinking water; hepatitis E is dangerous in pregnancy.' },
-    { id: 'flu', name: 'Influenza (H1N1 / H3N2)', syn: 'resp', months: 'Jul – Sep, smaller Jan – Feb wave', peaks: [{ doy: 210, sd: 25, w: 1 }, { doy: 25, sd: 20, w: 0.6 }], amp: 0.16, staff: 0.05,
-      route: { MED: 0.14, ICU: 0.05, PEDS: 0.10, ISO: 0.03 }, lab: 2.5, xray: 0.7, img: 0.05, o2: 0.35, needs: ['Isolation', 'Oxygen', 'ICU', 'X-ray'],
-      mumbai: '105 H1N1 cases in July 2026 (BMC)', why: 'Mumbai\'s main flu wave comes with the monsoon; it also raises staff sickness.' },
-    { id: 'aqi', name: 'Pollution-related respiratory illness', syn: 'resp', months: 'Nov – Feb', peaks: [{ doy: 5, sd: 40 }], amp: 0.09,
-      route: { MED: 0.16, ICU: 0.05, PEDS: 0.10 }, lab: 2, xray: 0.8, img: 0.05, o2: 0.3, needs: ['Oxygen', 'X-ray', 'Medicine beds'],
-      mumbai: 'Winter AQI often "Poor" with construction dust and weak sea breeze', why: 'Asthma, COPD and cardiac exacerbations rise with PM2.5 and PM10.' },
-    { id: 'heat', name: 'Heat & humidity illness', syn: 'trauma', months: 'Apr – May', peaks: [{ doy: 125, sd: 18 }], amp: 0.05,
-      route: { MED: 0.12, ICU: 0.03, PEDS: 0.05 }, lab: 2.5, xray: 0.1, img: 0.05, o2: 0.05, needs: ['Medicine beds'],
-      mumbai: 'Humid heat before the monsoon', why: 'Heat exhaustion, dehydration and kidney injury in outdoor workers.' },
-    { id: 'injury', name: 'Monsoon injuries', syn: 'trauma', months: 'Jun – Sep', peaks: [{ doy: 200, sd: 35 }], amp: 0.06,
-      route: { SURG: 0.25, ICU: 0.04 }, lab: 1.5, xray: 1.2, img: 0.4, o2: 0.02, needs: ['X-ray', 'CT', 'Surgical beds', 'Ambulances'],
-      mumbai: 'Falls, wall and building collapses, and road accidents in heavy rain', why: 'Slippery roads, waterlogging and dilapidated buildings.' },
-    { id: 'diwali', name: 'Diwali burns & trauma', syn: 'trauma', months: 'Diwali ± 2 days', event: true, sdDays: 1.1, amp: 0.20,
-      route: { SURG: 0.22, ICU: 0.06, PEDS: 0.08, MED: 0.02 }, lab: 2, xray: 0.9, img: 0.3, o2: 0.05, needs: ['Burns beds', 'ICU', 'X-ray'],
-      mumbai: 'Firecracker burns and eye injuries', why: 'Burns, eye injuries and road accidents; staff leave peaks around the festival.' }
+    { id: 'dengue', name: 'Dengue', syn: 'fever', months: 'Aug - Nov (peak Sep - Oct)', admit: 0.5, route: { MED: 0.8, ICU: 0.05, PEDS: 0.15 }, lab: 4.5, xray: 0.05, img: 0.3, o2: 0.05, platelets: true,
+      needs: ['Platelets', 'Lab (NS1, CBC)', 'Ultrasound', 'Medicine beds'], why: 'Aedes mosquitoes breed in stored and stagnant water; in IDSP Mumbai data for 2009-18, cases peak in September and October, about 2 months after peak rain.' },
+    { id: 'malaria', name: 'Malaria', syn: 'fever', months: 'All year; rises Jun - Sep', admit: 0.3, route: { MED: 0.85, ICU: 0.05, PEDS: 0.1 }, lab: 3, xray: 0.05, img: 0.1, o2: 0.05,
+      needs: ['Lab (smear, RDT)', 'Medicine beds'], why: 'Anopheles breed in construction sites, tanks and waterlogged areas; Mumbai reports malaria all year with a monsoon rise.' },
+    { id: 'lepto', name: 'Leptospirosis', syn: 'fever', months: 'Jul - Sep, after flooding', admit: 0.9, route: { MED: 0.7, ICU: 0.3 }, lab: 4, xray: 0.5, img: 0.1, o2: 0.3,
+      needs: ['ICU', 'Ventilators', 'Dialysis', 'X-ray'], why: 'Contact with flood water contaminated by rat urine; in a published ICU series, 26 of 60 patients needed ventilation.' },
+    { id: 'gastro', name: 'Gastroenteritis', syn: 'gi', months: 'All year; peaks Jun - Jul', admit: 0.4, route: { MED: 0.4, PEDS: 0.6 }, lab: 2, xray: 0.02, img: 0.05, o2: 0,
+      needs: ['Paediatric beds', 'IV fluids'], why: 'Contaminated water and food, worse in heavy rain.' },
+    { id: 'hep', name: 'Hepatitis', syn: 'gi', months: 'All year', admit: 0.5, route: { MED: 0.85, PEDS: 0.15 }, lab: 3, xray: 0.02, img: 0.3, o2: 0,
+      needs: ['Medicine beds', 'Ultrasound', 'Lab'], why: 'Mostly water-borne hepatitis A and E.' },
+    { id: 'flu', name: 'H1N1 influenza', syn: 'resp', months: 'Jul - Sep in 2026', admit: 0.6, route: { MED: 0.5, ICU: 0.15, ISO: 0.25, PEDS: 0.1 }, lab: 2.5, xray: 0.7, img: 0.05, o2: 0.35,
+      needs: ['Isolation', 'Oxygen', 'ICU', 'X-ray'], why: 'H1N1 rose sharply in the 2026 monsoon (441 cases Jun-Aug against 62 in 2025).' },
+    { id: 'chik', name: 'Chikungunya', syn: 'fever', months: 'Aug - Oct', admit: 0.1, route: { MED: 1 }, lab: 2, xray: 0.05, img: 0, o2: 0,
+      needs: ['Mostly outpatient'], why: 'Same Aedes mosquito as dengue; rarely needs admission.' }
   ];
+  const NOT_MODELLED = [
+    { name: 'Pollution-related respiratory illness (Nov - Feb)', note: 'No published Mumbai admissions data. The live AQI is shown but not turned into admissions.' },
+    { name: 'Heat and humidity illness (Apr - May)', note: 'Not notifiable; no published Mumbai admission counts.' },
+    { name: 'Monsoon injuries and building collapses', note: 'No published monthly counts. Use the building-collapse scenario.' },
+    { name: 'Diwali burns and trauma', note: 'No published Mumbai admission counts.' },
+    { name: 'Tuberculosis', note: "Year-round load, already inside the hospital's published admissions." },
+    { name: 'COVID-19 and new epidemics', note: 'Watched by the outbreak detector rather than a seasonal curve.' }
+  ];
+  const dim = mo => new Date(DATA.YEAR, mo + 1, 0).getDate();
+  const SER = {};
+  for (const d of DISEASES) {
+    const ms = DATA.DISEASE_SERIES[d.id].months, tot = ms.reduce((a, x) => a + x.c, 0);
+    SER[d.id] = { ms, mean: tot / 365, peak: Math.max(...ms.map((x, i) => x.c / dim(i))), total: tot };
+  }
+  // Mumbai notified cases per day on date t (linear between month mid-points; the same months repeat each year)
+  function rateAt(id, t) {
+    const d = new Date(t), mo = d.getMonth(), n = dim(mo), pos = (d.getDate() - 0.5) / n - 0.5;
+    const mo2 = pos >= 0 ? (mo + 1) % 12 : (mo + 11) % 12, w = Math.abs(pos);
+    return SER[id].ms[mo].c / n * (1 - w) + SER[id].ms[mo2].c / dim(mo2) * w;
+  }
 
   // Epidemic profiles: used for outbreak drills and to forecast a detected outbreak.
   const PATHOGENS = {
@@ -164,26 +195,22 @@
     const u = setup || {};
     const s = Object.assign({}, DEFAULT_SETUP, u);
     for (const k of ['beds', 'lab', 'xray', 'img']) s[k] = Object.assign({}, DEFAULT_SETUP[k], u[k]);
+    const sumBeds = WARDS.reduce((a, w) => a + s.beds[w], 0);
+    const admitFrac = s.admissionsPerDay / s.arrPerDay, route = {};
+    for (const w of WARDS) route[w] = admitFrac * s.beds[w] / sumBeds;
     P = { setup: s, edSpaces: s.edSpaces, beds: s.beds, vents: s.vents, arr: s.arrPerDay / 24, arrScale: 1,
-      nurses: s.nurses, docs: s.docs,
+      nurses: s.nurses, docs: s.docs, route, admitFrac, edLOS: s.edLOS || 1.5,
+      los: { MED: s.alos, SURG: s.alos, ICU: s.alos, PEDS: s.alos, ISO: s.alos },
       lab: Object.assign({}, R.lab, s.lab), xray: Object.assign({}, R.xray, s.xray), img: Object.assign({}, R.img, s.img),
       pltSupply: s.plateletSupply / 12, pltStock: s.plateletStock, o2Cap: s.o2Capacity, o2Delivery: s.o2Delivery / 24,
-      amb: s.ambulances, startOcc: s.startOcc || 0.88, elective: s.elective || 1, icuRef: (s.icuReferral || 0) / 24, sizeK: s.arrPerDay / 200 };
+      amb: s.ambulances, startOcc: s.startOcc || s.bor || 0.75, share: (s.totalBeds || sumBeds) / CITY_BEDS, sizeK: s.arrPerDay / 200 };
     api.P = P; api.SETUP = s;
     return P;
   }
 
   function dayOfYear(t) { const d = new Date(t); return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / DAY); }
-  function seasonRaw(s, t) {
-    if (s.event) {
-      let v = 0;
-      for (const e of DIWALI) { const dd = (t - e) / DAY - 0.5; v = Math.max(v, Math.exp(-dd * dd / (2 * s.sdDays * s.sdDays))); }
-      return v;
-    }
-    const doy = dayOfYear(t); let v = 0;
-    for (const p of s.peaks) { let dd = Math.abs(doy - p.doy); dd = Math.min(dd, 365 - dd); v += (p.w || 1) * Math.exp(-dd * dd / (2 * p.sd * p.sd)); }
-    return v;
-  }
+  // 0..1 intensity of a disease relative to its own peak month (for charts)
+  function seasonRaw(s, t) { return SER[s.id] ? rateAt(s.id, t) / SER[s.id].peak : 0; }
   const nearDiwali = (t, days) => DIWALI.some(e => Math.abs((t - e) / DAY) <= days);
 
   /* ---------------- external signals ---------------- */
@@ -196,16 +223,11 @@
   function rainClass(mm) { return mm >= 204.5 ? 'Extremely heavy' : mm >= 115.6 ? 'Very heavy' : mm >= 64.5 ? 'Heavy' : mm >= 15.6 ? 'Moderate' : mm >= 2.5 ? 'Light' : mm > 0 ? 'Very light' : 'None'; }
   const floodFactor = mm => mm >= 204.5 ? 2.2 : mm >= 115.6 ? 1.7 : mm >= 64.5 ? 1.35 : 1;
 
-  // v: raw readings. v.rainDays: { dayStartMs: mm } from the weather feed (past and forecast).
+  // v: raw readings. dengueWeekly / malariaWeekly: optional BMC weekly counts entered by staff (scale the published series).
   function feedFactors(v) {
-    const rainF = 0.75 + 0.25 * Math.min(2.2, (v.rainLag || 0) / 50);
-    return {
-      dengue: (v.dengueCases / v.dengueAvg) * rainF,
-      malaria: (v.malariaCases / v.malariaAvg) * (0.8 + 0.2 * Math.min(2, (v.rainLag || 0) / 50)),
-      chik: rainF, rainF, aqi: Math.max(0.3, Math.min(3, v.aqi / 150)), flu: v.ili,
-      heat: Math.max(0.2, Math.min(2.2, 0.4 + ((v.tmax == null ? 32 : v.tmax) - 33) / 4)),
-      rainDays: v.rainDays || {}
-    };
+    const now = v.now || Date.now();
+    const ratio = (id, wk) => wk ? Math.max(0.2, Math.min(5, (wk / 7) / Math.max(0.1, rateAt(id, now)))) : 1;
+    return { dengue: ratio('dengue', v.dengueWeekly), malaria: ratio('malaria', v.malariaWeekly), rainDays: v.rainDays || {} };
   }
 
   /* ---------------- scenarios & actions ---------------- */
@@ -287,7 +309,7 @@
   function initialState() {
     const k = P.sizeK, o = P.startOcc;
     return { ed: 22 * k, bd: { MED: 1, SURG: 0, ICU: 0, PEDS: 0, ISO: 0 },
-      occ: { MED: P.beds.MED * o, SURG: P.beds.SURG * (o - 0.08), ICU: P.beds.ICU * (o - 0.08), PEDS: P.beds.PEDS * (o - 0.22), ISO: P.beds.ISO * 0.3 },
+      occ: { MED: P.beds.MED * o, SURG: P.beds.SURG * o, ICU: P.beds.ICU * o, PEDS: P.beds.PEDS * o, ISO: P.beds.ISO * o },
       dirty: { MED: 2 * k, SURG: k, ICU: 0, PEDS: k, ISO: 0 }, icuStep: 0, otQ: 0, labQ: 30 * k, xrayQ: 4 * k, imgQ: 3 * k,
       plt: P.pltStock, pltAvg: R.plt.base * k, pltShort: 0, o2: P.o2Cap * 0.8, o2Avg: 0, o2x: 0, o2Short: 0, amb: 2 * k, cancelled: 0 };
   }
@@ -330,23 +352,24 @@
       if (c.floodH >= 24 && c.floodH < 288) floodExtra = 1;
       if (c.floodH >= 150 && c.floodH < 360) leptoF += 3.5 * Math.exp(-Math.pow((c.floodH - 250) / 70, 2));
     }
-    if (fe.rainDays) for (let j = 7; j <= 14; j++) leptoF += Math.max(0, rainOn(fe, t - j * DAY) - 64.5) / 120;
 
     let seasonArr = 0, staffAbs = 0;
     const seasonBy = {}, parts = [], syn = { fever: 0, resp: 0, gi: 0, trauma: 0 }, synExp = { fever: 0, resp: 0, gi: 0, trauma: 0 };
     for (const S of DISEASES) {
       if (run.off && run.off[S.id]) { seasonBy[S.id] = 0; continue; }
-      let I = seasonRaw(S, t) * c.seasonScale * (fe[S.id] || 1) * (run.seasonBand || 1);
-      if (S.rainDriven) I *= leptoF;
-      if (S.id === 'gastro' && floodExtra) I += 0.8;
-      if (S.id === 'injury' && c.floodH != null && c.floodH >= 0 && c.floodH < 48) I += 2;
-      if (c.outbreak === 'dengue' && S.id === 'dengue') I = I * 1.5 + 0.1;
-      if (c.outbreak === 'flu' && S.id === 'flu') I += 0.9;
-      if (c.outbreak === 'gastro' && S.id === 'gastro') I += 1.1;
-      synExp[S.syn] += unit * S.amp * I * c.arrMult * P.arrScale / (run.seasonBand || 1);
-      const x = unit * S.amp * I * seasonShock * m;
+      const Sx = SER[S.id];
+      let r = rateAt(S.id, t) * (fe[S.id] || 1) * (run.seasonBand || 1);
+      if (S.id === 'lepto') r *= leptoF;
+      if (S.id === 'gastro' && floodExtra) r *= 1.8;
+      if (c.outbreak === 'dengue' && S.id === 'dengue') r *= 1.5;
+      if (c.outbreak === 'flu' && S.id === 'flu') r *= 3;
+      if (c.outbreak === 'gastro' && S.id === 'gastro') r *= 2.5;
+      // Published hospital arrivals already contain the yearly average; only the deviation from it is added.
+      const dev = (r - Sx.mean) * c.seasonScale;
+      const perHour = dev * P.share * HOURP[h] / 24;
+      synExp[S.syn] += perHour * c.arrMult * P.arrScale / (run.seasonBand || 1);
+      const x = perHour * seasonShock * m;
       parts.push([S, x]); seasonArr += x;
-      if (S.staff && !F.noLeave) staffAbs += S.staff * Math.min(1, I);
     }
     // Epidemic: an outbreak drill in the observed world, or a detected outbreak carried into the forecast.
     let epiX = 0, epiP = null;
@@ -360,13 +383,14 @@
       const lam = base + seasonArr + epiX, n = poisson(lam, rnd), f = lam > 0 ? n / lam : 0;
       base *= f; seasonArr *= f; epiX *= f; for (const p of parts) p[1] *= f;
     }
-    const adm = { MED: base * R.route.MED + P.arr * R.directMED * P.arrScale, SURG: base * R.route.SURG, ICU: base * R.route.ICU + P.icuRef, PEDS: base * R.route.PEDS, ISO: base * R.route.ISO };
+    const adm = {}; for (const u of WARDS) adm[u] = base * P.route[u];
+    adm.SURG *= 1 - c.electiveDefer * R.plannedSurg;
     let labD = base * P.lab.perArr, xrayD = base * P.xray.perArr, imgD = base * P.img.perArr, dengueAdm = 0, o2New = 0;
     for (const sy in R.bg) { syn[sy] += base * R.bg[sy]; synExp[sy] += expectedBase * R.bg[sy]; }
     for (const [S, x] of parts) {
       seasonBy[S.id] = x; syn[S.syn] += x;
       let admitted = 0;
-      for (const u in S.route) { adm[u] += x * S.route[u]; admitted += x * S.route[u]; }
+      for (const u in S.route) { const a = x * S.admit * S.route[u]; adm[u] += a; admitted += a; }
       labD += x * S.lab; xrayD += x * S.xray; imgD += x * S.img;
       if (S.platelets) dengueAdm += admitted;
       o2New += admitted * S.o2;
@@ -412,7 +436,7 @@
 
     // Emergency department, with ambulance diversion when far over capacity
     const slow = F.noLabSlow ? 1 : (1 + Math.max(0, labTAT - 1.5) * 0.18) * (1 + Math.max(0, Math.min(xrayTAT, 12) - 1) * 0.06) * (1 + Math.max(0, Math.min(imgTAT, 12) - 2) * 0.05);
-    const edLOS = R.edLOS * slow;
+    const edLOS = P.edLOS * slow;
     const docs = P.docs[sh] * (1 - c.docShort);
     const preBoard = WARDS.reduce((a, u) => a + s.bd[u], 0);
     const divert = (s.ed + preBoard) / P.edSpaces > 1.5 ? 0.5 : 0;
@@ -434,8 +458,8 @@
     const dd = hol && dow >= 1 && dow <= 5 ? 0.6 : DISDOW[dow];
     const dF = DISP[h] * (offDay && F.noWeekendDip ? 0.95 : offDay && c.weekendDc ? Math.max(dd, 0.72) : dd) * c.dcBoost;
     const disOf = (u, x) => rnd ? Math.min(s.occ[u], poisson(x, rnd)) : x;
-    for (const u of ['MED', 'SURG', 'PEDS', 'ISO']) { const x = disOf(u, s.occ[u] / (R.los[u] * 24) * dF); s.occ[u] -= x; s.dirty[u] += x; }
-    const icuDis = disOf('ICU', s.occ.ICU / (R.los.ICU * 24) * (0.5 + 0.5 * dF));
+    for (const u of ['MED', 'SURG', 'PEDS', 'ISO']) { const x = disOf(u, s.occ[u] / (P.los[u] * 24) * dF); s.occ[u] -= x; s.dirty[u] += x; }
+    const icuDis = disOf('ICU', s.occ.ICU / (P.los.ICU * 24) * (0.5 + 0.5 * dF));
     s.occ.ICU -= icuDis * (1 - R.icuToMed); s.dirty.ICU += icuDis * (1 - R.icuToMed);
     s.icuStep += icuDis * R.icuToMed;
     const cleanH = F.noCleaning ? 0.2 : c.cleanFast ? 1.5 : R.clean[sh];
@@ -449,12 +473,8 @@
     a = Math.min(s.bd.MED, free); s.occ.MED += a; s.bd.MED -= a;
     free = freeOf('SURG');
     a = Math.min(s.bd.SURG, free); s.occ.SURG += a; s.bd.SURG -= a; free -= a;
-    let cancelled = 0;
-    if (dow >= 1 && dow <= 5 && !hol && h >= 8 && h < 18) {
-      const el = R.elective * P.sizeK * P.elective * (1 - c.electiveDefer);
-      const got = Math.min(el, free); s.occ.SURG += got; cancelled = el - got;
-      s.otQ += got * R.postOpICU;
-    }
+    // Surgical admissions that find no bed while patients wait in ED count as planned operations at risk.
+    const cancelled = s.bd.SURG > 1 && dow >= 1 && dow <= 5 && h >= 8 && h < 18 ? adm.SURG * R.plannedSurg : 0;
     s.cancelled += cancelled;
     free = freeOf('ICU');
     a = Math.min(s.bd.ICU, free); s.occ.ICU += a; s.bd.ICU -= a; free -= a;
@@ -614,7 +634,7 @@
   function expectedAt(t, feeds) {
     const d = new Date(t), unit = P.arr * HOURP[d.getHours()] * DOW[d.getDay()] * P.arrScale;
     let x = unit;
-    for (const S of DISEASES) x += unit * S.amp * seasonRaw(S, t) * ((feeds || {})[S.id] || 1);
+    for (const S of DISEASES) x += (rateAt(S.id, t) * ((feeds || {})[S.id] || 1) - SER[S.id].mean) * P.share * HOURP[d.getHours()] / 24;
     return x;
   }
 
@@ -622,7 +642,7 @@
     HOUR, DAY, MUMBAI, HOSPITALS, ISOLATION_RESERVE, UPCOMING, UNITS, WARDS, R, DISEASES, PATHOGENS, SYNDROMES, SYN_TO_PATHOGEN, LEVELS,
     DEFAULT_SETUP, ACTIONS, ACTION_BY_ID, OUTBREAKS, THRESH, HOLIDAYS, DIWALI,
     setupFor, configure, setStart, floorHour, dayStart, seasonRaw, dayOfYear, holidayOn, indianAQI, aqiBand, rainClass, floodFactor, feedFactors,
-    defaultLevers, initialState, cloneState, step, simulate, ensemble, detectEvents, detectOutbreak, mulberry, cfgAt, expectedAt
+    defaultLevers, initialState, cloneState, step, simulate, ensemble, detectEvents, detectOutbreak, mulberry, cfgAt, expectedAt, rateAt, SER, NOT_MODELLED, CITY_BEDS, DATA
   };
   Object.defineProperty(api, 'START', { get: () => START, enumerable: true });
   api.SEASONS = DISEASES;
