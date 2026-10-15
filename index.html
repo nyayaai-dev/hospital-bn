@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Surge Watch</title>
+<title>Surge Watch Mumbai</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: sticky control bar, then a ward-round reading order — what breaks, when, why, what follows, what to do, who to tell, how good the forecast has been. */
+/* Layout: sticky control bar; epidemic banner; what is free now; what breaks and when; why; the city network; seasonal diseases; outbreak watch and worst case; scenarios; actions; signals; alerts; accuracy; setup. */
 :root {
   --bg: #f2f4f3; --surface: #ffffff; --surface-2: #e9eeec; --ink: #13201d; --ink-2: #44524e; --muted: #6f7c78;
   --line: #d6dedb; --accent: #0b6b66; --accent-ink: #ffffff; --accent-soft: #d5ebe8; --compare: #8a7f72;
@@ -50,8 +50,8 @@ button { cursor: pointer; }
 
 .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line); margin-inline: -16px; padding: 10px 16px; }
-@media (max-width: 640px) { .bar { position: static; } }
-.bar-in { max-width: 1320px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+@media (max-width: 760px) { .bar { position: static; } }
+.bar-in { max-width: 1320px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .brand svg { flex: none; }
 .brand b { font-size: 1.15rem; }
@@ -62,6 +62,7 @@ button { cursor: pointer; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: inherit; }
 .btn:hover { border-color: var(--accent); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.btn.danger { background: var(--crit); color: #fff; border-color: var(--crit); font-weight: 700; }
 .btn.small { padding: 3px 9px; font-size: .85rem; }
 .btn.ghost { background: transparent; }
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
@@ -74,13 +75,26 @@ button { cursor: pointer; }
 select.in, input.in, textarea.in { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; min-width: 0; }
 
 .banner { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 60%, var(--line)); border-radius: var(--r); padding: 10px 14px; }
+.epi-banner { display: grid; gap: 6px; background: var(--crit-soft); border: 2px solid var(--crit); border-radius: var(--r); padding: 12px 16px; }
+.epi-banner .top { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.epi-banner b.big { font-size: 1.1rem; }
 .sec { display: grid; gap: 14px; }
 .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
-.sec-head p { color: var(--ink-2); max-width: 72ch; }
+.sec-head p { color: var(--ink-2); max-width: 74ch; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; min-width: 0; }
 .grid2 { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 16px; }
 .grid2 > * { min-width: 0; }
 @media (max-width: 980px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 4px; align-content: start; text-align: left; }
+.tile:hover { border-color: var(--accent); }
+.tile .lbl { font-size: .82rem; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; align-items: center; }
+.tile .val { font-size: 1.55rem; font-weight: 700; line-height: 1.15; }
+.tile .val small { font-size: .85rem; font-weight: 400; color: var(--muted); }
+.tile .sub { font-size: .78rem; color: var(--muted); }
+.tile.critical { border-color: color-mix(in srgb, var(--crit) 60%, var(--line)); background: color-mix(in srgb, var(--crit-soft) 50%, var(--surface)); }
+.tile.warning { border-color: color-mix(in srgb, var(--warn) 70%, var(--line)); }
 
 .headline { font-size: clamp(1.2rem, 2.4vw, 1.6rem); font-weight: 700; max-width: 56ch; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
@@ -148,6 +162,22 @@ table.heat td.critical { background: var(--crit); color: #fff; font-weight: 500;
 table.heat tr.sel th.rowh { color: var(--ink); font-weight: 700; }
 .wkend { color: var(--ink-2) !important; }
 
+table.cmp { width: 100%; border-collapse: collapse; font-size: .88rem; }
+table.cmp th, table.cmp td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; vertical-align: top; }
+table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
+table.cmp th { color: var(--muted); font-weight: 700; font-size: .76rem; letter-spacing: .04em; text-transform: uppercase; }
+table.cmp td.wrap { white-space: normal; text-align: left; min-width: 180px; }
+table.cmp tr.focus td { background: var(--accent-soft); }
+.up { color: var(--crit); }
+.down { color: var(--good); }
+
+.mapbox { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 860px) { .mapbox { grid-template-columns: minmax(0, 1fr); } }
+.map { max-width: 320px; }
+.map svg { width: 100%; height: auto; display: block; }
+.rank { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; vertical-align: 1px; border-radius: 10px; background: var(--ink); color: var(--bg); font-size: .72rem; font-weight: 700; margin-right: 6px; font-family: var(--f-data); }
+.map text { font-family: var(--f-body); font-size: 10px; fill: var(--ink-2); }
+
 .cascade { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
 @media (max-width: 1100px) { .cascade { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .cascade { grid-template-columns: minmax(0, 1fr); } }
@@ -168,12 +198,6 @@ table.heat tr.sel th.rowh { color: var(--ink); font-weight: 700; }
 .lever small { color: var(--muted); font-size: .78rem; }
 input[type=range] { width: 100%; accent-color: var(--accent); }
 .presets { display: flex; flex-wrap: wrap; gap: 6px; }
-table.cmp { width: 100%; border-collapse: collapse; font-size: .88rem; }
-table.cmp th, table.cmp td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
-table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
-table.cmp th { color: var(--muted); font-weight: 700; font-size: .76rem; letter-spacing: .04em; text-transform: uppercase; }
-.up { color: var(--crit); }
-.down { color: var(--good); }
 
 .acts { display: grid; gap: 10px; }
 .act { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: start; border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; background: var(--surface); }
@@ -185,11 +209,20 @@ table.cmp th { color: var(--muted); font-weight: 700; font-size: .76rem; letter-
 .act.approved { background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface)); }
 @media (max-width: 560px) { .act { grid-template-columns: minmax(0, 1fr); } .act .btns { justify-content: flex-start; } }
 
+.levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.lvl { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; }
+.lvl.l2, .lvl.l3, .lvl.l4 { border-color: var(--crit); background: color-mix(in srgb, var(--crit-soft) 45%, var(--surface)); }
+.lvl.l1 { border-color: color-mix(in srgb, var(--warn) 70%, var(--line)); }
+.spark { width: 100%; height: 34px; display: block; }
+.checklist { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.checklist li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.checklist li .when { font-family: var(--f-data); font-size: .8rem; color: var(--muted); white-space: nowrap; }
+
 .strips { display: grid; gap: 6px; }
-.strip { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 10px; align-items: center; }
+.strip { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 10px; align-items: center; }
 .strip .nm { font-size: .85rem; color: var(--ink-2); line-height: 1.2; }
 .strip .nm small { display: block; color: var(--muted); font-size: .74rem; }
-.strip svg { width: 100%; height: 22px; display: block; }
+.strip svg { width: 100%; height: 20px; display: block; }
 @media (max-width: 560px) { .strip { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 .feeds { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
 .feed { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; align-content: start; }
@@ -202,8 +235,9 @@ table.cmp th { color: var(--muted); font-weight: 700; font-size: .76rem; letter-
 
 .alerts { display: grid; gap: 10px; }
 .alert { border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 8px; background: var(--surface); }
+.alert.epi { border: 2px solid var(--crit); }
 .alert-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: center; }
-.email { font-family: var(--f-data); font-size: .78rem; white-space: pre-wrap; background: var(--surface-2); border-radius: 8px; padding: 10px 12px; max-height: 260px; overflow: auto; color: var(--ink); user-select: text; }
+.email { font-family: var(--f-data); font-size: .78rem; white-space: pre-wrap; background: var(--surface-2); border-radius: 8px; padding: 10px 12px; max-height: 280px; overflow: auto; color: var(--ink); user-select: text; }
 .recips { font-family: var(--f-data); font-size: .8rem; user-select: all; overflow-wrap: anywhere; }
 table.people { width: 100%; border-collapse: collapse; font-size: .86rem; }
 table.people td, table.people th { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -233,12 +267,13 @@ details.setup[open] > summary h2::before { content: "▾ "; }
   <div class="bar-in">
     <div class="brand">
       <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="var(--accent)"/><path d="M5 17h5l2.5-6 4 11 3-8 1.5 3H25" fill="none" stroke="var(--accent-ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <div><b>Surge Watch</b><small id="hospLine"></small></div>
+      <div><b>Surge Watch Mumbai</b><small id="hospLine"></small></div>
     </div>
-    <div class="clock"><span class="eyebrow" id="clockLbl">Hospital time</span><span class="num" id="clock"></span></div>
+    <div class="clock"><span class="eyebrow">Hospital time</span><span class="num" id="clock"></span></div>
     <div class="ctrls">
-      <span class="muted small" id="updated"></span>
-      <select class="in" id="mode" aria-label="Clock mode"><option value="fast">Fast-forward demo</option><option value="real">Real time</option></select>
+      <label class="small muted" for="focusHosp">Hospital</label>
+      <select class="in" id="focusHosp" aria-label="Hospital to forecast"></select>
+      <select class="in" id="mode" aria-label="Clock mode"><option value="real">Real time</option><option value="fast">Fast-forward demo</option></select>
       <button class="btn" id="liveBtn" type="button"><span class="live-dot"></span><span id="liveLbl">Run</span></button>
       <button class="btn" id="stepBtn" type="button" title="Advance one hour">+1 h</button>
       <button class="btn" id="dayBtn" type="button" title="Advance one day">+1 day</button>
@@ -248,7 +283,13 @@ details.setup[open] > summary h2::before { content: "▾ "; }
 </header>
 
 <main class="wrap" id="main">
+  <div id="epiBanner" hidden></div>
   <div id="scenarioBanner" hidden></div>
+
+  <section class="sec" aria-labelledby="h-avail">
+    <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Right now</span><h2 id="h-avail">Availability</h2></div><span class="muted small" id="availNote"></span></div>
+    <div class="tiles" id="tiles"></div>
+  </section>
 
   <section class="sec" aria-labelledby="h-outlook">
     <div class="sec-head">
@@ -290,13 +331,57 @@ details.setup[open] > summary h2::before { content: "▾ "; }
     <div class="scroll-x"><table class="heat" id="heat"></table></div>
   </section>
 
+  <section class="panel sec" aria-labelledby="h-net">
+    <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">City view</span><h2 id="h-net">Mumbai hospital network</h2></div>
+      <p>Bed counts come from public sources (listed per hospital). Mumbai does not publish live occupancy, so the load, free beds and forecasts for each hospital are <b>simulated estimates</b> from the same model.</p></div>
+    <div class="tiles" id="cityTiles"></div>
+    <div class="mapbox">
+      <div class="map" id="map"></div>
+      <div class="scroll-x"><table class="cmp" id="net"></table></div>
+    </div>
+    <p class="ink2 small" id="netReserve"></p>
+  </section>
+
+  <section class="panel sec" aria-labelledby="h-dis">
+    <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Mumbai</span><h2 id="h-dis">Seasonal infections and diseases that fill beds</h2></div>
+      <p>Each illness is modelled with its own Mumbai season, admission rate, ICU share and resource needs. "Beds added" is the extra beds that illness occupies at its peak in the forecast window at this hospital.</p></div>
+    <div class="scroll-x"><table class="cmp" id="diseases"></table></div>
+  </section>
+
+  <section class="panel sec" aria-labelledby="h-epi" id="epidemic">
+    <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Epidemic and pandemic readiness</span><h2 id="h-epi">Outbreak watch</h2></div>
+      <p>Every hour, patients arriving with each syndrome are compared with what the seasonal model expects. A sustained excess raises the level; once an outbreak is detected, its growth is carried into every forecast and the worst case below.</p></div>
+    <div class="levels" id="levels"></div>
+    <div class="grid2">
+      <div class="sec">
+        <h3 id="worstTitle">Reasonable worst case</h3>
+        <p class="ink2 small" id="worstNote"></p>
+        <div class="scroll-x"><table class="cmp" id="worst"></table></div>
+      </div>
+      <div class="sec">
+        <h3>Preparedness checklist</h3>
+        <ul class="checklist" id="checklist"></ul>
+      </div>
+    </div>
+    <div class="panel" style="background:var(--surface-2);border-style:dashed">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <b>Outbreak drill</b>
+        <span class="ink2 small">Adds simulated patients with a chosen infection to the observed data, so detection, forecasts and alerts can be tested.</span>
+        <select class="in" id="drillPathogen" aria-label="Drill infection"></select>
+        <button class="btn" type="button" id="drillStart">Start drill</button>
+        <button class="btn ghost" type="button" id="drillStop">Stop drill</button>
+        <span class="small muted" id="drillStatus"></span>
+      </div>
+    </div>
+  </section>
+
   <section class="panel sec" aria-labelledby="h-casc">
-    <div class="sec-head"><h2 id="h-casc">Knock-on effects</h2><p>How expected demand moves through the hospital over the forecast window, compared with the same days without seasonal illness or scenario changes.</p></div>
+    <div class="sec-head"><h2 id="h-casc">Knock-on effects</h2><p>How expected demand moves through the hospital over the forecast window, compared with the same days without seasonal illness, outbreaks or scenario changes.</p></div>
     <div class="cascade" id="cascade"></div>
   </section>
 
   <section class="panel sec" aria-labelledby="h-wi" id="whatif">
-    <div class="sec-head"><h2 id="h-wi">What-if scenarios</h2><p>Change conditions to see the effect on every unit. A scenario is hypothetical: it changes the forecast on this page, not the hospital's plan, and alerts pause while it is on.</p></div>
+    <div class="sec-head"><h2 id="h-wi">What-if scenarios</h2><p>Change conditions to see the effect on every unit. A scenario is hypothetical: it changes the forecast on this page, not the plan, and routine alerts pause while it is on.</p></div>
     <div class="presets" id="presets"></div>
     <div class="levers" id="levers"></div>
     <div class="scroll-x"><table class="cmp" id="cmp"></table></div>
@@ -310,7 +395,7 @@ details.setup[open] > summary h2::before { content: "▾ "; }
 
   <section class="grid2">
     <div class="panel sec" aria-labelledby="h-season">
-      <div class="sec-head"><h2 id="h-season">Seasonal and recurring patterns</h2><span class="muted small" id="cityNote"></span></div>
+      <div class="sec-head"><h2 id="h-season">Seasonal calendar</h2><span class="muted small">30 days back · 90 days ahead</span></div>
       <div class="chart" id="seasonChart"></div>
       <div class="strips" id="strips"></div>
     </div>
@@ -323,7 +408,7 @@ details.setup[open] > summary h2::before { content: "▾ "; }
 
   <section class="sec" aria-labelledby="h-alerts">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Early warning</span><h2 id="h-alerts">Notifications</h2></div>
-      <p>Surge Watch drafts an email when a forecast crosses the rule below. A person reviews each draft and sends it from their own mail account.</p></div>
+      <p>Surge Watch drafts an email when a forecast crosses the rule below, and at once when an outbreak is detected. A person reviews each draft and sends it from their own mail account.</p></div>
     <div class="grid2">
       <div class="panel sec">
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.9rem">
@@ -334,6 +419,7 @@ details.setup[open] > summary h2::before { content: "▾ "; }
           chance of starting within
           <select class="in" id="ruleLead"><option value="24">24 h</option><option value="48">48 h</option><option value="72">72 h</option><option value="120">5 days</option><option value="168">7 days</option></select>
         </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><button class="btn small" type="button" id="notifyBtn">Turn on desktop notifications</button><span class="small muted" id="notifyStatus"></span></div>
         <div class="alerts" id="alerts"></div>
       </div>
       <div class="panel sec">
@@ -342,7 +428,7 @@ details.setup[open] > summary h2::before { content: "▾ "; }
         <form class="addrow" id="addPerson" autocomplete="off">
           <input class="in" id="pRole" placeholder="Role" required>
           <input class="in" id="pEmail" placeholder="Email" type="email" required>
-          <select class="in" id="pUnits"><option value="ALL">All units</option></select>
+          <select class="in" id="pUnits"><option value="ALL">All units</option><option value="EPI">Outbreaks only</option></select>
           <button class="btn" type="submit">Add stakeholder</button>
         </form>
         <h3 style="margin-top:8px">Forecast log</h3>
@@ -357,45 +443,51 @@ details.setup[open] > summary h2::before { content: "▾ "; }
   </section>
 
   <details class="panel setup" id="setupBox">
-    <summary><h2>Hospital setup and data</h2><span class="muted small">Capacities, staffing, city, and your own census data</span></summary>
+    <summary><h2>Hospital setup and data</h2><span class="muted small">Capacities, staffing, oxygen, ambulances, and your own census data</span></summary>
     <div class="sec" style="margin-top:14px">
+      <p class="ink2 small" style="max-width:80ch">Values are prefilled from the selected hospital's published bed count using typical ratios. Replace them with the hospital's real figures.</p>
       <form id="setupForm" class="sec" autocomplete="off">
         <div class="form">
-          <label class="field"><span>Hospital name</span><input class="in" id="s-name"></label>
-          <label class="field"><span>City (sets seasonality and live weather)</span><select class="in" id="s-city"></select></label>
-          <label class="field"><span>ED arrivals on a normal day</span><input class="in" id="s-arr" type="number" min="20" max="2000"></label>
-          <label class="field"><span>ED treatment spaces</span><input class="in" id="s-ed" type="number" min="4" max="400"></label>
+          <label class="field"><span>Display name</span><input class="in" id="s-name"></label>
+          <label class="field"><span>ED arrivals on a normal day</span><input class="in" id="s-arr" type="number" min="20" max="5000"></label>
+          <label class="field"><span>ED treatment spaces</span><input class="in" id="s-ed" type="number" min="4" max="1000"></label>
+          <label class="field"><span>Ambulances (own + linked 108)</span><input class="in" id="s-amb" type="number" min="1" max="500"></label>
         </div>
         <fieldset><legend>Beds</legend><div class="form">
-          <label class="field"><span>Medicine</span><input class="in" id="s-MED" type="number" min="5" max="2000"></label>
-          <label class="field"><span>Surgery</span><input class="in" id="s-SURG" type="number" min="5" max="2000"></label>
-          <label class="field"><span>ICU</span><input class="in" id="s-ICU" type="number" min="2" max="400"></label>
-          <label class="field"><span>Paediatrics</span><input class="in" id="s-PEDS" type="number" min="2" max="800"></label>
-          <label class="field"><span>Ventilators</span><input class="in" id="s-vents" type="number" min="0" max="400"></label>
+          <label class="field"><span>Medicine</span><input class="in" id="s-MED" type="number" min="5" max="5000"></label>
+          <label class="field"><span>Surgery</span><input class="in" id="s-SURG" type="number" min="5" max="5000"></label>
+          <label class="field"><span>ICU</span><input class="in" id="s-ICU" type="number" min="2" max="1000"></label>
+          <label class="field"><span>Paediatrics</span><input class="in" id="s-PEDS" type="number" min="2" max="2000"></label>
+          <label class="field"><span>Isolation</span><input class="in" id="s-ISO" type="number" min="1" max="1000"></label>
+          <label class="field"><span>Ventilators</span><input class="in" id="s-vents" type="number" min="0" max="1000"></label>
         </div></fieldset>
         <fieldset><legend>Staff per shift (night / day / evening)</legend><div class="form">
-          <label class="field"><span>Nurses, night</span><input class="in" id="s-n0" type="number" min="1" max="2000"></label>
-          <label class="field"><span>Nurses, day</span><input class="in" id="s-n1" type="number" min="1" max="2000"></label>
-          <label class="field"><span>Nurses, evening</span><input class="in" id="s-n2" type="number" min="1" max="2000"></label>
-          <label class="field"><span>ED doctors, night</span><input class="in" id="s-d0" type="number" min="1" max="200"></label>
-          <label class="field"><span>ED doctors, day</span><input class="in" id="s-d1" type="number" min="1" max="200"></label>
-          <label class="field"><span>ED doctors, evening</span><input class="in" id="s-d2" type="number" min="1" max="200"></label>
+          <label class="field"><span>Nurses, night</span><input class="in" id="s-n0" type="number" min="1" max="5000"></label>
+          <label class="field"><span>Nurses, day</span><input class="in" id="s-n1" type="number" min="1" max="5000"></label>
+          <label class="field"><span>Nurses, evening</span><input class="in" id="s-n2" type="number" min="1" max="5000"></label>
+          <label class="field"><span>ED doctors, night</span><input class="in" id="s-d0" type="number" min="1" max="500"></label>
+          <label class="field"><span>ED doctors, day</span><input class="in" id="s-d1" type="number" min="1" max="500"></label>
+          <label class="field"><span>ED doctors, evening</span><input class="in" id="s-d2" type="number" min="1" max="500"></label>
         </div></fieldset>
-        <fieldset><legend>Diagnostics and blood bank</legend><div class="form">
-          <label class="field"><span>Lab tests / hour, day</span><input class="in" id="s-labd" type="number" min="5" max="5000"></label>
-          <label class="field"><span>Lab tests / hour, night</span><input class="in" id="s-labn" type="number" min="5" max="5000"></label>
-          <label class="field"><span>Imaging studies / hour, day</span><input class="in" id="s-imgd" type="number" min="1" max="500"></label>
-          <label class="field"><span>Imaging studies / hour, night</span><input class="in" id="s-imgn" type="number" min="0" max="500"></label>
-          <label class="field"><span>Platelet units prepared / day</span><input class="in" id="s-pltS" type="number" min="0" max="2000"></label>
-          <label class="field"><span>Platelet units in stock now</span><input class="in" id="s-pltN" type="number" min="0" max="5000"></label>
+        <fieldset><legend>Diagnostics, oxygen and blood</legend><div class="form">
+          <label class="field"><span>Lab tests / hour, day</span><input class="in" id="s-labd" type="number" min="5" max="20000"></label>
+          <label class="field"><span>Lab tests / hour, night</span><input class="in" id="s-labn" type="number" min="5" max="20000"></label>
+          <label class="field"><span>X-rays / hour, day</span><input class="in" id="s-xrd" type="number" min="1" max="2000"></label>
+          <label class="field"><span>X-rays / hour, night</span><input class="in" id="s-xrn" type="number" min="0" max="2000"></label>
+          <label class="field"><span>CT + USG / hour, day</span><input class="in" id="s-imgd" type="number" min="1" max="1000"></label>
+          <label class="field"><span>CT + USG / hour, night</span><input class="in" id="s-imgn" type="number" min="0" max="1000"></label>
+          <label class="field"><span>Oxygen storage (cylinder-equivalents)</span><input class="in" id="s-o2c" type="number" min="10" max="100000"></label>
+          <label class="field"><span>Oxygen refills / day (cylinder-eq.)</span><input class="in" id="s-o2d" type="number" min="0" max="50000"></label>
+          <label class="field"><span>Platelet units prepared / day</span><input class="in" id="s-pltS" type="number" min="0" max="5000"></label>
+          <label class="field"><span>Platelet units in stock now</span><input class="in" id="s-pltN" type="number" min="0" max="20000"></label>
         </div></fieldset>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save and restart forecast</button><button class="btn" type="button" id="setupDefaults">Restore example hospital</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save and restart forecast</button><button class="btn" type="button" id="setupDefaults">Reset to estimates for this hospital</button></div>
       </form>
       <div class="sec">
         <h3>Import census data</h3>
-        <p class="ink2 small" style="max-width:80ch">Paste or upload a CSV exported from your HIS, with one row per hour or per day. Only <span class="mono">timestamp</span> is required; include whichever other columns you have. The last row becomes the starting point of the forecast, ED arrivals calibrate demand, and earlier rows feed the accuracy check.</p>
-        <p class="mono small" style="overflow-wrap:anywhere">timestamp, ed_arrivals, ed_census, ed_waiting_for_bed, med_occupied, surg_occupied, icu_occupied, peds_occupied, lab_backlog, platelet_stock</p>
-        <textarea class="in" id="csvText" spellcheck="false" placeholder="timestamp,ed_arrivals,med_occupied&#10;2026-10-14 08:00,9,161&#10;…"></textarea>
+        <p class="ink2 small" style="max-width:80ch">Paste or upload a CSV exported from your HIS, one row per hour or per day. Only <span class="mono">timestamp</span> is required. The last row becomes the forecast's starting point, ED arrivals calibrate demand, and earlier rows feed the accuracy check.</p>
+        <p class="mono small" style="overflow-wrap:anywhere">timestamp, ed_arrivals, ed_census, ed_waiting_for_bed, med_occupied, surg_occupied, icu_occupied, peds_occupied, iso_occupied, lab_backlog, platelet_stock, oxygen_stock, ambulances_busy</p>
+        <textarea class="in" id="csvText" spellcheck="false" placeholder="timestamp,ed_arrivals,med_occupied&#10;2026-10-14 08:00,40,880&#10;…"></textarea>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button class="btn primary" type="button" id="csvImport">Import</button>
           <label class="btn" for="csvFile">Choose file…</label><input id="csvFile" type="file" accept=".csv,text/csv" hidden>
@@ -408,6 +500,7 @@ details.setup[open] > summary h2::before { content: "▾ "; }
   </details>
 
   <p class="foot" id="foot"></p>
+  <p class="foot" id="sources"></p>
 </main>
 <div id="toast" class="toast" hidden></div>
 
@@ -419,6 +512,7 @@ const S = window.SW, U = S.UNITS, UID = Object.fromEntries(U.map(u => [u.id, u])
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const pct = v => Math.round(v * 100) + '%';
+const loc = n => Math.round(n).toLocaleString('en-IN');
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const tOf = abs => new Date(S.START + abs * S.HOUR);
 const hh = d => String(d.getHours()).padStart(2, '0') + ':00';
@@ -427,6 +521,7 @@ const fmtD = abs => { const d = tOf(abs); return `${DAYS[d.getDay()]} ${d.getDat
 const rel = h => { if (h <= 0) return 'now'; const d = Math.floor(h / 24), r = Math.round(h % 24); return 'in ' + (d ? d + ' d ' : '') + (r || !d ? r + ' h' : '').trim(); };
 const sevOf = v => v >= S.THRESH.crit ? 'critical' : v >= S.THRESH.warn ? 'warning' : v >= S.THRESH.watch ? 'watch' : 'ok';
 const SEV_LABEL = { critical: 'Critical', warning: 'Warning', watch: 'Watch', ok: 'Normal' };
+const LVL_SEV = ['ok', 'watch', 'critical', 'critical', 'critical'];
 const ICON = {
   critical: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 0h4l4 4v4l-4 4H4L0 8V4z" fill="currentColor"/><path d="M6 3v3.5M6 8.6v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>',
   warning: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .5 11.5 11H.5z" fill="currentColor"/><path d="M6 4.5v3M6 9.2v.1" stroke="#241a00" stroke-width="1.4" stroke-linecap="round"/></svg>',
@@ -434,66 +529,90 @@ const ICON = {
   ok: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 5 9l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
 };
 const pill = (sev, text) => `<span class="pill ${sev}">${ICON[sev] || ''}${esc(text || SEV_LABEL[sev])}</span>`;
-const store = { get(k, d) { try { const v = localStorage.getItem('sw2.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('sw2.' + k, JSON.stringify(v)); } catch (e) {} } };
+const store = { get(k, d) { try { const v = localStorage.getItem('sw3.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('sw3.' + k, JSON.stringify(v)); } catch (e) {} } };
 const ENS_N = 30;
 
 /* ---------------- application state ---------------- */
 const DEFAULT_PEOPLE = [
-  { role: 'Medical Superintendent', email: 'ms@meridian-hospital.example', units: 'ALL', minSev: 'warning' },
-  { role: 'Head of Emergency', email: 'ed.head@meridian-hospital.example', units: 'ED,LAB,IMG', minSev: 'warning' },
-  { role: 'Nursing Superintendent', email: 'nursing@meridian-hospital.example', units: 'NUR,MED,SURG,PEDS,ICU', minSev: 'warning' },
-  { role: 'Head of Critical Care', email: 'icu@meridian-hospital.example', units: 'ICU', minSev: 'warning' },
-  { role: 'Lab Director', email: 'lab@meridian-hospital.example', units: 'LAB', minSev: 'warning' },
-  { role: 'Blood Bank Officer', email: 'bloodbank@meridian-hospital.example', units: 'BLOOD', minSev: 'warning' },
-  { role: 'District Surveillance Officer', email: 'dso@district-health.example', units: 'ALL', minSev: 'critical' }
+  { role: 'Medical Superintendent / Dean', email: 'dean@hospital.example', units: 'ALL', minSev: 'warning' },
+  { role: 'Head of Emergency', email: 'casualty@hospital.example', units: 'ED,LAB,XRAY,IMG,AMB', minSev: 'warning' },
+  { role: 'Nursing Superintendent', email: 'nursing@hospital.example', units: 'NUR,MED,SURG,PEDS,ICU,ISO', minSev: 'warning' },
+  { role: 'Head of Critical Care', email: 'icu@hospital.example', units: 'ICU,O2', minSev: 'warning' },
+  { role: 'Biomedical Engineer (oxygen)', email: 'biomed@hospital.example', units: 'O2', minSev: 'warning' },
+  { role: 'Lab Director', email: 'lab@hospital.example', units: 'LAB', minSev: 'warning' },
+  { role: 'Head of Radiology', email: 'radiology@hospital.example', units: 'XRAY,IMG', minSev: 'warning' },
+  { role: 'Blood Bank Officer', email: 'bloodbank@hospital.example', units: 'BLOOD', minSev: 'warning' },
+  { role: 'Transport Officer', email: 'transport@hospital.example', units: 'AMB', minSev: 'warning' },
+  { role: 'Infection Control Officer', email: 'infection.control@hospital.example', units: 'ISO,EPI', minSev: 'warning' },
+  { role: 'BMC Epidemiology Cell', email: 'epicell@bmc.example', units: 'EPI', minSev: 'critical' }
 ];
 let A;
-function simulatedFeeds(city) {
-  const c = S.CITIES[city] || S.CITIES.pune;
-  return { dengueCases: 412, dengueAvg: 368, ili: 0.9, rainLag: 48, rain7: 12, tmax: 31, pm25: c.pm25, pm10: c.pm10, aqi: S.indianAQI(c.pm25, c.pm10) };
+function simulatedFeeds() {
+  return { dengueCases: 120, dengueAvg: 110, malariaCases: 260, malariaAvg: 250, ili: 0.9, rainLag: 70, rain7: 10, tmax: 33, pm25: 52, pm10: 105, aqi: S.indianAQI(52, 105), rainDays: {}, rainToday: 0, rainNext: 0, heavyRecent: 0 };
+}
+function setupForId(id) {
+  const h = S.HOSPITALS.find(x => x.id === id) || S.HOSPITALS[0];
+  return Object.assign(S.setupFor(h), (store.get('overrides', {}) || {})[h.id] || {});
 }
 function freshApp(keep) {
-  const setup = store.get('setup', null) || JSON.parse(JSON.stringify(S.DEFAULT_SETUP));
+  const hid = store.get('hospital', 'kem');
   return {
-    now: 0, rand: S.mulberry(20261015), state: null, history: [], setup,
-    feedVals: (keep && keep.feedVals) || simulatedFeeds(setup.city),
+    now: 0, rand: S.mulberry(20261015), state: null, history: [], hospitalId: hid, setup: setupForId(hid),
+    feedVals: (keep && keep.feedVals) || simulatedFeeds(),
     src: (keep && keep.src) || { weather: { live: false, msg: 'not fetched yet' }, air: { live: false, msg: 'not fetched yet' } },
     nowcast: 1, levers: S.defaultLevers(), approved: [], dismissed: {}, confirming: null,
-    horizonDays: store.get('horizon', 14), selUnit: null, live: false, timer: null, mode: 'fast', heatMode: 'peak',
+    horizonDays: store.get('horizon', 14), selUnit: null, live: false, timer: null, mode: (keep && keep.mode) || 'real', heatMode: 'peak',
     log: [], alerts: [], prevSummary: null, rule: { minSev: 'critical', leadH: 72, prob: 0.5 },
-    people: store.get('people', DEFAULT_PEOPLE), F: null, imported: null, acc: null
+    people: store.get('people', DEFAULT_PEOPLE), F: null, imported: null, acc: null, arrScale: 1,
+    drill: (keep && keep.drill) || null, det: null, epiFit: null, epiAlertLevel: 0, worst: null, net: null, netAt: -999
   };
 }
 const feeds = () => S.feedFactors(A.feedVals);
 function activeActions() { return A.approved.map(a => ({ id: a.id, lead: Math.max(0, a.at + S.ACTION_BY_ID[a.id].lead - A.now) })); }
-function baseRun(extra) { return Object.assign({ levers: A.levers, actions: activeActions(), feeds: feeds(), nowcast: A.nowcast, flags: {} }, extra || {}); }
+function baseRun(extra) { return Object.assign({ levers: A.levers, actions: activeActions(), feeds: feeds(), nowcast: A.nowcast, flags: {}, epi: A.epiFit }, extra || {}); }
+function obsRun() { return { levers: S.defaultLevers(), actions: activeActions(), feeds: feeds(), rand: A.rand, epi: A.drill, noShock: true }; }
 const leversChanged = () => { const d = S.defaultLevers(); return Object.keys(d).some(k => k !== 'startHour' && A.levers[k] !== d[k]); };
+function applyConfig() { S.configure(A.setup); S.P.arrScale = A.arrScale; }
 
 function boot(keep) {
   if (A && A.timer) clearInterval(A.timer);
   A = freshApp(keep);
-  S.configure(A.setup);
-  if (keep && keep.imported) { A.imported = keep.imported; applyImport(keep.imported, false); }
+  applyConfig();
+  if (keep && keep.imported) { A.imported = keep.imported; applyImport(keep.imported); }
   else {
     S.setStart(Date.now());
-    const st = S.initialState();
-    const run = { levers: S.defaultLevers(), actions: [], feeds: feeds(), rand: A.rand };
+    const st = S.initialState(), run = obsRun();
     for (let k = -14 * 24; k < 0; k++) { const rec = S.step(st, 0, k, run); rec.state = S.cloneState(st); A.history.push(rec); }
     A.state = st;
-    addLog(`Forecast started for ${A.setup.name} from 14 days of simulated ward, ED, lab and staffing data.`);
+    addLog(`Forecast started for ${A.setup.name} from 14 days of simulated observations.`);
   }
-  updateNowcast();
+  updateNowcast(); detect();
   recompute(true);
-  backtest();
-  renderAcc();
+  backtest(); renderAcc();
+  setLive(true);
 }
 
 function updateNowcast() {
   const last = A.history.filter(x => x.k >= A.now - 24 && x.arrivals != null && x.expected);
   if (!last.length) { A.nowcast = 1; return; }
-  const r = last.reduce((a, x) => a + x.arrivals, 0) / Math.max(1e-6, last.reduce((a, x) => a + x.expected, 0));
+  // Leave detected outbreak patients out of the general nowcast, so they are not counted twice.
+  const r = last.reduce((a, x) => a + x.arrivals - (A.epiFit ? (x.epiX || 0) : 0), 0) / Math.max(1e-6, last.reduce((a, x) => a + x.expected, 0));
   A.nowcast = Math.max(0.85, Math.min(1.25, 1 + (r - 1) * 0.6));
 }
+
+/* ---------------- outbreak detection ---------------- */
+function detect() {
+  A.det = S.detectOutbreak(A.history, A.now);
+  let best = null;
+  for (const sy in A.det) { const d = A.det[sy]; if (d.level >= 2 && S.SYN_TO_PATHOGEN[sy] && (!best || d.level > best.d.level || (d.level === best.d.level && d.ratio > best.d.ratio))) best = { sy, d }; }
+  if (!best) { A.epiFit = null; return; }
+  let pathogen = S.SYN_TO_PATHOGEN[best.sy];
+  if (best.sy === 'fever' && A.feedVals.heavyRecent > 0) pathogen = 'lepto';
+  const a0 = Math.max(0.02, best.d.excessPerHour / S.P.sizeK);
+  const r = Math.max(0, Math.min(0.35, best.d.growth)) / 24;
+  A.epiFit = { syn: best.sy, level: best.d.level, pathogen, t0: A.now, a0, r, cap: Math.min(8, Math.max(a0 * 20, 3)) };
+}
+function epiLevel() { return A.det ? Math.max(...Object.values(A.det).map(d => d.level)) : 0; }
 
 /* ---------------- forecasting ---------------- */
 const H = () => A.horizonDays * 24;
@@ -519,23 +638,24 @@ function recompute(initial) {
   for (const id in sum) {
     const s = sum[id];
     s.pCrit = ens.prob(id, 0, h - 1, S.THRESH.crit);
-    s.pWarn = ens.prob(id, 0, h - 1, S.THRESH.warn);
     s.pFirst = ens.prob(id, 0, s.firstSerious.start + 12, s.firstSerious.sev === 'critical' ? S.THRESH.crit : S.THRESH.warn);
   }
-  // A unit can also be at risk in many simulated futures without breaching in the expected run.
   const risk = {};
-  for (const u of U) if (!sum[u.id]) { const pc = ens.prob(u.id, 0, h - 1, S.THRESH.crit), pw = ens.prob(u.id, 0, h - 1, S.THRESH.warn); if (pw >= 0.5) risk[u.id] = { pc, pw }; }
-  const typical = S.simulate(A.state, A.now, h, baseRun({ levers: S.defaultLevers(), off: Object.fromEntries(S.SEASONS.map(s => [s.id, true])), nowcast: 1 }));
+  for (const u of U) if (!sum[u.id]) { const pw = ens.prob(u.id, 0, h - 1, S.THRESH.warn); if (pw >= 0.5) risk[u.id] = { pw }; }
+  const typical = S.simulate(A.state, A.now, h, baseRun({ levers: S.defaultLevers(), off: Object.fromEntries(S.DISEASES.map(s => [s.id, true])), nowcast: 1, epi: null }));
   A.F = { mid, ens, compare, compareLabel, events, sum, risk, typical };
   if (!A.selUnit) A.selUnit = pickDefaultUnit();
+  computeWorst();
+  if (A.now - A.netAt >= 6 || initial) computeNetwork();
   if (!leversChanged()) { diffAndLog(initial); evaluateAlerts(); }
+  evaluateEpiAlert();
   render();
 }
 function ranked() {
   const order = { critical: 0, warning: 1 };
   return Object.values(A.F.sum).sort((a, b) => order[a.sev] - order[b.sev] || a.firstSerious.start - b.firstSerious.start);
 }
-function pickDefaultUnit() { const r = ranked(); return r.length ? r[0].unit : 'ED'; }
+function pickDefaultUnit() { const r = ranked(); return r.length ? r[0].unit : 'MED'; }
 
 function diffAndLog(initial) {
   const cur = {};
@@ -553,11 +673,70 @@ function diffAndLog(initial) {
   }
   A.prevSummary = cur;
 }
-function driftNote() {
-  const d = Math.round((A.nowcast - 1) / 0.6 * 100);
-  return Math.abs(d) >= 5 ? ` Arrivals over the last 24 h ran ${Math.abs(d)}% ${d > 0 ? 'above' : 'below'} forecast.` : '';
+function driftNote() { const d = Math.round((A.nowcast - 1) / 0.6 * 100); return Math.abs(d) >= 5 ? ` Arrivals over the last 24 h ran ${Math.abs(d)}% ${d > 0 ? 'above' : 'below'} forecast.` : ''; }
+function addLog(text, sev) { A.log.unshift({ at: A.now, text, sev }); A.log = A.log.slice(0, 120); }
+
+/* ---------------- worst case ---------------- */
+function computeWorst() {
+  const days = 21, h = days * 24;
+  let epi, title;
+  if (A.epiFit) {
+    const f = A.epiFit;
+    epi = Object.assign({}, f, { r: Math.min(Math.log(2) / (2.5 * 24), Math.max(f.r * 1.4, f.r + 0.03 / 24)), cap: Math.min(12, f.cap * 1.5) });
+    title = `Reasonable worst case: the detected ${S.SYNDROMES[f.syn].split(' (')[0].toLowerCase()} outbreak grows 40% faster`;
+  } else {
+    epi = { pathogen: 'novel', t0: A.now, a0: 0.12, r: Math.log(2) / (4 * 24), cap: 6 };
+    title = 'Stress test: if a COVID-like respiratory epidemic started today';
+  }
+  const lev = Object.assign(S.defaultLevers(), { nurseShortPct: 15, docShortPct: 10, o2CutPct: 30, ambDownPct: 15 });
+  const ser = S.simulate(A.state, A.now, h, baseRun({ epi, levers: lev, nowcast: Math.max(1, A.nowcast) }));
+  const first = id => { const i = ser.findIndex(x => x.p[id] >= 1); return i < 0 ? null : i; };
+  const maxOf = f => ser.reduce((a, x, i) => { const v = f(x); return v > a[0] ? [v, i] : a; }, [-Infinity, 0]);
+  const genShort = maxOf(x => ['MED', 'SURG', 'PEDS'].reduce((a, u) => a + Math.max(0, x.occ[u] + x.dirty[u] + x.bd[u] - x.cap[u]), 0));
+  const rows = [
+    { id: 'MED', what: 'General ward beds', unit: 'beds', short: genShort, full: first('MED'), act: ['surgebeds', 'weekenddc', 'stopelective', 'jumbo'] },
+    { id: 'ICU', what: 'ICU beds', unit: 'beds', short: maxOf(x => x.occ.ICU + x.dirty.ICU + x.bd.ICU - x.cap.ICU), full: first('ICU'), act: ['icustep', 'stopelective'] },
+    { id: 'ICU', what: 'Ventilators', unit: 'ventilators', short: maxOf(x => x.ventsUsed - x.vents), full: null, act: ['icustep'] },
+    { id: 'ISO', what: 'Isolation beds', unit: 'beds', short: maxOf(x => x.occ.ISO + x.dirty.ISO + x.bd.ISO - x.cap.ISO), full: first('ISO'), act: ['isoward', 'jumbo'] },
+    { id: 'O2', what: 'Oxygen', unit: 'cylinder-eq./day', short: maxOf(x => x.o2Short * 24), full: (() => { const i = ser.findIndex(x => x.o2Short > 0.05); return i < 0 ? null : i; })(), act: ['o2cyl', 'o2alloc', 'jumbo'], useMax: maxOf(x => x.o2Use * 24) },
+    { id: 'AMB', what: 'Ambulances', unit: 'ambulances', short: maxOf(x => x.ambBusy - x.fleet), full: first('AMB'), act: ['ambextra'] },
+    { id: 'NUR', what: 'Nurses per shift', unit: 'nurses', short: maxOf(x => x.nurseReq - x.nurseAvail), full: first('NUR'), act: ['floatnurse', 'stopelective'] },
+    { id: 'LAB', what: 'Lab turnaround', unit: 'h', tat: maxOf(x => x.labTAT), full: first('LAB'), act: ['labshift', 'phlebo'] },
+    { id: 'XRAY', what: 'X-ray wait', unit: 'h', tat: maxOf(x => x.xrayTAT), full: first('XRAY'), act: ['xraynight'] },
+    { id: 'BLOOD', what: 'Platelets', unit: 'units short', short: maxOf(x => x.pltShort * 24), full: first('BLOOD'), act: ['donorcamp', 'plttransfer'] }
+  ];
+  const peakEpi = maxOf(x => x.epiX * 24);
+  A.worst = { title, epi, rows, ser, peakEpi, days };
 }
-function addLog(text, sev) { A.log.unshift({ at: A.now, text, sev }); A.log = A.log.slice(0, 100); }
+
+/* ---------------- Mumbai network ---------------- */
+function computeNetwork() {
+  const out = [], f = feeds(), drill = A.drill;
+  for (const h of S.HOSPITALS) {
+    if (h.id === A.hospitalId && A.F) {
+      const now = A.F.mid[0], pk = peakDay(A.F.mid.slice(0, 168), 'MED');
+      out.push(netRow(h, now, A.F.mid.slice(0, 168), pk, true));
+      continue;
+    }
+    S.configure(S.setupFor(h));
+    let st = S.initialState();
+    const run = { levers: S.defaultLevers(), actions: [], feeds: f, epi: drill };
+    for (let k = -7 * 24; k < 0; k++) S.step(st, 0, A.now + k, run);
+    const fc = S.simulate(st, A.now, 168, { levers: S.defaultLevers(), actions: [], feeds: f, epi: A.epiFit });
+    out.push(netRow(h, fc[0], fc, peakDay(fc, 'MED'), false));
+  }
+  applyConfig();
+  A.net = out; A.netAt = A.now;
+}
+function peakDay(ser, id) { let m = 0, at = 0; ser.forEach((x, i) => { const v = Math.max(x.p.MED, x.p.ICU, x.p.ISO, x.p.PEDS); if (v > m) { m = v; at = i; } }); return [m, at]; }
+function netRow(h, now, ser, pk, focus) {
+  const free = u => Math.max(0, now.cap[u] - now.occ[u] - now.dirty[u] - now.bd[u]);
+  const genFree = free('MED') + free('SURG') + free('PEDS');
+  const totalCap = ['MED', 'SURG', 'PEDS', 'ICU', 'ISO'].reduce((a, u) => a + now.cap[u], 0);
+  const used = ['MED', 'SURG', 'PEDS', 'ICU', 'ISO'].reduce((a, u) => a + now.occ[u] + now.dirty[u] + now.bd[u], 0);
+  const o2Days = now.o2 / Math.max(0.01, now.o2Use * 24);
+  return { h, focus, load: used / totalCap, genFree, icuFree: free('ICU'), isoFree: free('ISO'), o2Days, ambFree: Math.max(0, now.fleet - now.ambBusy), fleet: now.fleet, peak: pk[0], peakAt: pk[1], sev: sevOf(pk[0]) };
+}
 
 /* ---------------- explanation ---------------- */
 function explain(unitId) {
@@ -566,29 +745,28 @@ function explain(unitId) {
   const peakOf = ser => { let m = 0, at = win[0]; for (let i = win[0]; i <= win[1]; i++) if (ser[i].p[unitId] > m) { m = ser[i].p[unitId]; at = i; } return [m, at]; };
   const [full, fullAt] = peakOf(F.mid);
   const sims = [], f = feeds();
-  for (const se of S.SEASONS) {
+  for (const se of S.DISEASES) {
     let mx = 0; for (let i = win[0]; i <= win[1]; i += 6) mx = Math.max(mx, S.seasonRaw(se, F.mid[i].t) * (f[se.id] || 1));
-    if (mx > 0.04) sims.push({ id: se.id, name: se.name, run: baseRun({ off: { [se.id]: true } }), text: seasonText(se, f) });
+    if (mx > 0.04) sims.push({ id: se.id, name: se.name, run: baseRun({ off: { [se.id]: true } }), text: diseaseText(se) });
   }
+  if (A.epiFit) sims.push({ id: 'epi', name: 'Detected outbreak: ' + S.PATHOGENS[A.epiFit.pathogen].name, run: baseRun({ flags: { noEpi: true } }), text: `Patients with ${S.SYNDROMES[A.epiFit.syn].toLowerCase()} are running ${A.det[A.epiFit.syn].ratio.toFixed(2)}× the seasonal expectation and still growing.` });
   sims.push({ id: 'dow', name: 'Monday arrival peak', run: baseRun({ flags: { flatDow: true } }), text: 'ED arrivals run about 15% above average on Mondays and dip at weekends.' });
-  const hols = []; for (let i = 0; i <= win[1]; i += 24) { const n = F.mid[i] && F.mid[i].holiday; if (n && !hols.includes(n)) hols.push(n); }
-  for (let i = 0; i <= win[1]; i++) { const n = F.mid[i].holiday; if (n && !hols.includes(n)) hols.push(n); }
+  const hols = []; for (let i = 0; i <= win[1]; i++) { const n = F.mid[i].holiday; if (n && !hols.includes(n)) hols.push(n); }
   if (hols.length) sims.push({ id: 'hol', name: 'Public holiday: ' + hols.join(', '), run: baseRun({ flags: { noHoliday: true } }), text: 'Discharges, elective lists and staffing drop on public holidays, and the backlog carries into the next days.' });
-  if (['MED', 'SURG', 'PEDS', 'ED', 'ICU', 'NUR'].includes(unitId)) {
+  if (['MED', 'SURG', 'PEDS', 'ED', 'ICU', 'ISO', 'NUR'].includes(unitId)) {
     if (!A.approved.some(a => a.id === 'weekenddc')) sims.push({ id: 'wkd', name: 'Weekend discharge slowdown', run: baseRun({ flags: { noWeekendDip: true } }), text: 'Saturday discharges run at about 60% and Sunday at 45% of a weekday, so beds freed on Friday are refilled before Monday.' });
     if (!A.approved.some(a => a.id === 'housekeep')) sims.push({ id: 'clean', name: 'Bed cleaning turnaround', run: baseRun({ flags: { noCleaning: true } }), text: 'A discharged bed takes 2–4 h to clean and make up, longer at night, before the next patient can use it.' });
   }
   if (['LAB', 'ED'].includes(unitId)) sims.push({ id: 'batch', name: 'Morning ward blood-draw batch', run: baseRun({ flags: { noBatch: true } }), text: '60% of routine inpatient samples arrive between 05:00 and 09:00, before day staffing starts.' });
-  if (unitId === 'ED') sims.push({ id: 'labslow', name: 'Slow lab results holding ED patients', run: baseRun({ flags: { noLabSlow: true } }), text: 'Patients waiting on blood results stay longer in ED cubicles.' });
+  if (unitId === 'ED') sims.push({ id: 'labslow', name: 'Slow lab and X-ray results holding ED patients', run: baseRun({ flags: { noLabSlow: true } }), text: 'Patients waiting on results stay longer in ED cubicles.' });
   if (unitId === 'NUR') sims.push({ id: 'leave', name: 'Staff sickness and festival leave', run: baseRun({ flags: { noLeave: true } }), text: 'Seasonal flu among staff and leave around festivals reduce nurses on shift.' });
   const st0 = S.cloneState(A.state);
   for (const u of S.WARDS) { st0.occ[u] = Math.min(st0.occ[u], 0.8 * S.P.beds[u]); st0.bd[u] = 0; }
-  st0.labQ = Math.min(st0.labQ, 20 * S.P.sizeK); st0.ed = Math.min(st0.ed, 15 * S.P.sizeK); st0.icuStep = 0; st0.plt = Math.max(st0.plt, S.P.pltStock);
-  sims.push({ id: 'start', name: unitId === 'BLOOD' ? 'Low platelet stock today' : 'Already-high occupancy today', state: st0, run: baseRun(), text: unitId === 'BLOOD' ? 'Stock is starting below a comfortable level, so a rise in use eats into it quickly.' : 'Units are starting the window fuller than usual, so there is little slack to absorb a surge.' });
-  if (Math.abs(A.nowcast - 1) >= 0.02) sims.push({ id: 'nowcast', name: A.nowcast > 1 ? 'Arrivals running above forecast' : 'Arrivals running below forecast', run: baseRun({ nowcast: 1 }), text: `The last 24 h of arrivals were ${Math.abs(Math.round((A.nowcast - 1) / 0.6 * 100))}% ${A.nowcast > 1 ? 'above' : 'below'} what the model expected; the forecast leans toward what is being observed.` });
+  st0.labQ = Math.min(st0.labQ, 20 * S.P.sizeK); st0.ed = Math.min(st0.ed, 15 * S.P.sizeK); st0.icuStep = 0; st0.plt = Math.max(st0.plt, S.P.pltStock); st0.o2 = Math.max(st0.o2, S.P.o2Cap * 0.8); st0.amb = Math.min(st0.amb, 2 * S.P.sizeK);
+  sims.push({ id: 'start', name: 'Starting level today', state: st0, run: baseRun(), text: 'The unit is starting the window fuller (or its stock lower) than usual, leaving little slack to absorb a surge.' });
+  if (Math.abs(A.nowcast - 1) >= 0.02) sims.push({ id: 'nowcast', name: A.nowcast > 1 ? 'Arrivals running above forecast' : 'Arrivals running below forecast', run: baseRun({ nowcast: 1 }), text: `The last 24 h of arrivals were ${Math.abs(Math.round((A.nowcast - 1) / 0.6 * 100))}% ${A.nowcast > 1 ? 'above' : 'below'} what the model expected.` });
   const d = S.defaultLevers();
-  const LV = { arrivalPct: 'Scenario: arrival change', seasonScale: 'Scenario: seasonal surge', outbreak: 'Scenario: outbreak', nurseShortPct: 'Scenario: nurse shortage', docShortPct: 'Scenario: ED doctor shortage', medBedsClosed: 'Scenario: Medicine beds closed', ventsDown: 'Scenario: ventilators out of service', labDownPct: 'Scenario: lab capacity lost', imgDownPct: 'Scenario: imaging capacity lost', plateletCutPct: 'Scenario: platelet supply cut' };
-  for (const k in LV) if (A.levers[k] !== d[k]) sims.push({ id: 'lv_' + k, name: LV[k], run: baseRun({ levers: Object.assign({}, A.levers, { [k]: d[k] }) }), text: 'Part of the what-if scenario you set.' });
+  for (const k in d) if (k !== 'startHour' && A.levers[k] !== d[k]) sims.push({ id: 'lv_' + k, name: 'Scenario: ' + (LEVER_NAMES[k] || k), run: baseRun({ levers: Object.assign({}, A.levers, { [k]: d[k] }) }), text: 'Part of the what-if scenario you set.' });
   for (const a of A.approved) sims.push({ id: 'act_' + a.id, name: 'Approved: ' + S.ACTION_BY_ID[a.id].title, run: baseRun({ actions: activeActions().filter(x => x.id !== a.id) }), text: `Approved by ${a.by}.` });
   const res = [];
   for (const x of sims) {
@@ -599,29 +777,44 @@ function explain(unitId) {
   res.sort((a, b) => b.delta - a.delta);
   return { full, fullAt, drivers: res, s };
 }
-function seasonText(se, f) {
+function diseaseText(se) {
   const v = A.feedVals;
-  if (se.id === 'dengue') { const r = Math.round((v.dengueCases / v.dengueAvg - 1) * 100); return `${se.why} Reported cases are ${Math.abs(r)}% ${r >= 0 ? 'above' : 'below'} the 5-year average; ${Math.round(v.rainLag)} mm of rain fell 2–5 weeks ago.`; }
+  if (se.id === 'dengue') return `${se.why} Reported cases are ${Math.round((v.dengueCases / v.dengueAvg - 1) * 100)}% vs the usual for this week; ${Math.round(v.rainLag)} mm of rain fell 2–5 weeks ago.`;
+  if (se.id === 'malaria') return `${se.why} Reported cases are ${Math.round((v.malariaCases / v.malariaAvg - 1) * 100)}% vs the usual for this week.`;
+  if (se.id === 'lepto') return `${se.why} ${v.heavyRecent ? v.heavyRecent + ' heavy-rain day(s) in the last 2 weeks.' : 'No heavy rain in the last 2 weeks.'}`;
   if (se.id === 'aqi') return `${se.why} AQI forecast: ${v.aqi} (${S.aqiBand(v.aqi)}).`;
   if (se.id === 'heat') return `${se.why} Forecast maximum: ${Math.round(v.tmax)} °C.`;
   return se.why;
 }
+const LEVER_NAMES = { arrivalPct: 'arrival change', seasonScale: 'seasonal surge', outbreak: 'outbreak', flood: 'Mumbai flood', nurseShortPct: 'nurse shortage', docShortPct: 'ED doctor shortage', medBedsClosed: 'Medicine beds closed', ventsDown: 'ventilators out of service', labDownPct: 'lab capacity lost', xrayDownPct: 'X-ray capacity lost', imgDownPct: 'CT/USG capacity lost', plateletCutPct: 'platelet supply cut', o2CutPct: 'oxygen supply cut', ambDownPct: 'ambulances off road' };
 
 /* ---------------- rendering ---------------- */
 function render() {
-  renderBar(); renderBanner(); renderHeadline(); renderCards(); renderTabs(); renderChart(); renderWhy();
-  renderHeat(); renderCascade(); renderLevers(); renderCompare(); renderActions(); renderSeason(); renderFeeds();
-  renderAlerts(); renderPeople(); renderLog(); renderFoot();
+  renderBar(); renderEpiBanner(); renderBanner(); renderTiles(); renderHeadline(); renderCards(); renderTabs(); renderChart(); renderWhy();
+  renderHeat(); renderNetwork(); renderDiseases(); renderEpidemic(); renderCascade(); renderLevers(); renderCompare(); renderActions();
+  renderSeason(); renderFeeds(); renderAlerts(); renderPeople(); renderLog(); renderFoot();
 }
 function renderBar() {
-  const c = S.CITIES[A.setup.city];
-  $('hospLine').textContent = `${A.setup.name} · ${c.name} · ${A.imported ? 'imported census data' : 'simulated observations'}`;
+  $('hospLine').textContent = `${A.setup.name} · ${A.setup.type} · ${A.imported ? 'imported census data' : 'simulated load'}`;
   $('clock').textContent = fmtT(A.now);
-  $('updated').textContent = 'Forecast refreshed ' + hh(tOf(A.now));
-  $('liveLbl').textContent = A.live ? 'Pause' : A.mode === 'real' ? 'Follow real time' : 'Run';
+  $('liveLbl').textContent = A.live ? (A.mode === 'real' ? 'Live · pause' : 'Pause') : A.mode === 'real' ? 'Follow real time' : 'Run';
   $('mode').value = A.mode;
   $('bar').classList.toggle('is-live', A.live);
   for (const b of $('horizon').querySelectorAll('button')) b.setAttribute('aria-pressed', String(+b.dataset.h === A.horizonDays));
+  const fs = $('focusHosp');
+  if (!fs.options.length) fs.innerHTML = S.HOSPITALS.map(h => `<option value="${h.id}">${esc(h.name)} (${esc(h.area)})</option>`).join('');
+  fs.value = A.hospitalId;
+}
+function renderEpiBanner() {
+  const el = $('epiBanner'), lv = epiLevel();
+  el.hidden = lv < 2;
+  if (lv < 2) return;
+  const f = A.epiFit, d = A.det[f.syn], w = A.worst;
+  const o2 = w.rows.find(r => r.id === 'O2'), iso = w.rows.find(r => r.id === 'ISO');
+  el.className = 'epi-banner';
+  el.innerHTML = `<div class="top">${pill('critical', S.LEVELS[lv].toUpperCase())}<b class="big">${esc(S.SYNDROMES[f.syn])} patients are ${d.ratio.toFixed(2)}× the seasonal expectation${d.doubling ? `, doubling about every ${d.doubling.toFixed(1)} days` : ''}.</b></div>
+    <span>Forecasts now include this outbreak (modelled as ${esc(S.PATHOGENS[f.pathogen].name.toLowerCase())}). Worst case: isolation ${iso.full != null ? 'full ' + rel(iso.full) : 'holds'}; oxygen ${o2.full != null ? 'runs short ' + rel(o2.full) : 'holds'}. Alert drafts are waiting for review.</span>
+    <span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn small danger" href="#epidemic">See preparedness plan</a><a class="btn small" href="#h-alerts">Review alerts</a></span>`;
 }
 function renderBanner() {
   const el = $('scenarioBanner'), on = leversChanged();
@@ -635,72 +828,89 @@ function leverSummary() {
   if (L.arrivalPct) p.push(`${L.arrivalPct > 0 ? '+' : ''}${L.arrivalPct}% arrivals`);
   if (L.seasonScale !== 1) p.push(`seasonal illness ×${(+L.seasonScale).toFixed(1)}`);
   if (L.outbreak !== 'none') p.push(S.OUTBREAKS[L.outbreak].label);
-  if (L.nurseShortPct) p.push(`${L.nurseShortPct}% fewer nurses`);
-  if (L.docShortPct) p.push(`${L.docShortPct}% fewer ED doctors`);
+  if (L.flood) p.push('Mumbai flood (extremely heavy rain)');
+  for (const [k, lbl] of [['nurseShortPct', '% fewer nurses'], ['docShortPct', '% fewer ED doctors'], ['labDownPct', '% lab capacity lost'], ['xrayDownPct', '% X-ray capacity lost'], ['imgDownPct', '% CT/USG capacity lost'], ['plateletCutPct', '% platelet supply cut'], ['o2CutPct', '% oxygen supply cut'], ['ambDownPct', '% ambulances off road']]) if (L[k]) p.push(L[k] + lbl);
   if (L.medBedsClosed) p.push(`${L.medBedsClosed} Medicine beds closed`);
   if (L.ventsDown) p.push(`${L.ventsDown} ventilators down`);
-  if (L.labDownPct) p.push(`lab capacity −${L.labDownPct}%`);
-  if (L.imgDownPct) p.push(`imaging capacity −${L.imgDownPct}%`);
-  if (L.plateletCutPct) p.push(`platelet supply −${L.plateletCutPct}%`);
   return p.join(', ') + (L.startHour ? `, starting ${fmtT(A.now + L.startHour)}` : '');
+}
+function renderTiles() {
+  const m = A.F.mid, now = m[0], win = m.slice(0, 72);
+  const free = (x, u) => Math.max(0, x.cap[u] - x.occ[u] - x.dirty[u] - x.bd[u]);
+  const minOf = f => win.reduce((a, x, i) => { const v = f(x); return v < a[0] ? [v, i] : a; }, [Infinity, 0]);
+  const maxOf = f => win.reduce((a, x, i) => { const v = f(x); return v > a[0] ? [v, i] : a; }, [-Infinity, 0]);
+  const gen = x => free(x, 'MED') + free(x, 'SURG') + free(x, 'PEDS');
+  const T = [];
+  const tile = (unit, label, val, small, sub, sevP) => T.push({ unit, label, val, small, sub, sev: sevOf(sevP) });
+  let mn = minOf(gen);
+  tile('MED', 'General beds free', loc(gen(now)), `of ${loc(now.cap.MED + now.cap.SURG + now.cap.PEDS)}`, `${loc(now.bd.MED + now.bd.SURG + now.bd.PEDS)} waiting in ED · lowest in 72 h: ${loc(mn[0])} ${fmtT(A.now + mn[1])}`, Math.max(now.p.MED, now.p.SURG, now.p.PEDS));
+  mn = minOf(x => free(x, 'ICU'));
+  tile('ICU', 'ICU beds free', loc(free(now, 'ICU')), `of ${loc(now.cap.ICU)}`, `lowest in 72 h: ${loc(mn[0])} ${fmtT(A.now + mn[1])}`, now.p.ICU);
+  mn = minOf(x => x.vents - x.ventsUsed);
+  tile('ICU', 'Ventilators free', loc(Math.max(0, now.vents - now.ventsUsed)), `of ${loc(now.vents)}`, `lowest in 72 h: ${loc(Math.max(0, mn[0]))}`, now.ventsUsed / now.vents);
+  mn = minOf(x => free(x, 'ISO'));
+  tile('ISO', 'Isolation beds free', loc(free(now, 'ISO')), `of ${loc(now.cap.ISO)}`, `lowest in 72 h: ${loc(mn[0])} ${fmtT(A.now + mn[1])}`, now.p.ISO);
+  const o2d = now.o2 / Math.max(0.01, now.o2Use * 24); mn = minOf(x => x.o2 / Math.max(0.01, x.o2Use * 24));
+  tile('O2', 'Oxygen on site', o2d >= 30 ? '30+ days' : o2d.toFixed(1) + ' days', '', `${loc(now.o2)} cylinder-eq. · ${loc(now.o2Use * 24)}/day · ${loc(now.o2Pts)} patients on O2`, now.p.O2);
+  mn = minOf(x => x.fleet - x.ambBusy);
+  tile('AMB', 'Ambulances available', loc(Math.max(0, now.fleet - now.ambBusy)), `of ${loc(now.fleet)}`, `trip ~${(now.tripH * 60).toFixed(0)} min now · lowest in 72 h: ${loc(Math.max(0, mn[0]))} ${fmtT(A.now + mn[1])}`, now.p.AMB);
+  let mx = maxOf(x => x.labTAT);
+  tile('LAB', 'Lab turnaround', now.labTAT.toFixed(1) + ' h', 'target 2.5', `worst in 72 h: ${mx[0].toFixed(1)} h ${fmtT(A.now + mx[1])}`, now.p.LAB);
+  mx = maxOf(x => x.xrayTAT);
+  tile('XRAY', 'X-ray wait', now.xrayTAT.toFixed(1) + ' h', 'target 1.5', `worst in 72 h: ${mx[0].toFixed(1)} h ${fmtT(A.now + mx[1])}`, now.p.XRAY);
+  mx = maxOf(x => x.imgTAT);
+  tile('IMG', 'CT / ultrasound wait', now.imgTAT.toFixed(1) + ' h', 'target 3', `worst in 72 h: ${mx[0].toFixed(1)} h`, now.p.IMG);
+  tile('BLOOD', 'Platelets in stock', loc(now.plt), 'units', `${(now.pltDemand * 24).toFixed(0)} used/day`, now.p.BLOOD);
+  $('tiles').innerHTML = T.map(t => `<button class="tile ${t.sev === 'critical' || t.sev === 'warning' ? t.sev : ''}" type="button" data-unit="${t.unit}"><span class="lbl">${esc(t.label)} ${t.sev !== 'ok' ? pill(t.sev) : ''}</span><span class="val">${t.val} <small>${esc(t.small)}</small></span><span class="sub">${esc(t.sub)}</span></button>`).join('');
+  $('availNote').textContent = `Next hour at ${A.setup.name}${A.imported ? '' : ' (simulated)'}`;
 }
 function renderHeadline() {
   const r = ranked(), c = r.filter(x => x.sev === 'critical').length, w = r.length - c;
   let t;
   if (!r.length) t = `No unit is expected to pass 95% of safe capacity in the next ${A.horizonDays} days.`;
-  else {
-    const f = r[0], parts = [];
-    if (c) parts.push(`${c} critical`); if (w) parts.push(`${w} warning`);
-    t = `${parts.join(' and ')} bottleneck${r.length > 1 ? 's' : ''} expected in the next ${A.horizonDays} days. First to act on: ${UID[f.unit].long}, ${rel(f.firstSerious.start)} (${fmtT(A.now + f.firstSerious.start)}).`;
-  }
+  else { const f = r[0], parts = []; if (c) parts.push(`${c} critical`); if (w) parts.push(`${w} warning`); t = `${parts.join(' and ')} bottleneck${r.length > 1 ? 's' : ''} expected in the next ${A.horizonDays} days. First to act on: ${UID[f.unit].long}, ${rel(f.firstSerious.start)} (${fmtT(A.now + f.firstSerious.start)}).`; }
   $('headline').textContent = t;
 }
 const probRow = (label, p) => `<div class="prob"><div style="display:flex;justify-content:space-between;font-size:.84rem"><span class="muted">${label}</span><b class="num">${Math.round(p * 100)}%</b></div><div class="prob-bar"><span style="width:${Math.round(p * 100)}%"></span></div></div>`;
 function renderCards() {
   const r = ranked(), risk = A.F.risk, n = A.F.ens.n;
-  let html = r.map(s => {
-    const e = s.firstSerious;
-    return `<button class="card" type="button" data-unit="${s.unit}" aria-pressed="${A.selUnit === s.unit}">
+  let html = r.map(s => { const e = s.firstSerious; return `<button class="card" type="button" data-unit="${s.unit}" aria-pressed="${A.selUnit === s.unit}">
       <div class="card-top"><b>${esc(UID[s.unit].long)}</b>${pill(s.sev)}</div>
-      <dl class="kv">
-        <dt>Starts</dt><dd><b>${rel(e.start)}</b> · ${fmtT(A.now + e.start)}</dd>
-        <dt>Peak</dt><dd class="num">${pct(s.worst.peak)} · ${fmtT(A.now + s.worst.peakAt)}</dd>
-        <dt>Above 95%</dt><dd>${s.hours} h${s.episodes > 1 ? ` in ${s.episodes} episodes` : ''}</dd>
-      </dl>
-      ${probRow(`Chance of passing 105% in ${A.horizonDays} days`, s.pCrit)}
-      <span class="muted" style="font-size:.76rem">Share of ${n} simulated futures with random arrivals, discharges and outbreak strength.</span></button>`;
-  }).join('');
-  for (const id of Object.keys(risk).sort((a, b) => risk[b].pw - risk[a].pw).slice(0, 3)) html += `<button class="card" type="button" data-unit="${id}" aria-pressed="${A.selUnit === id}"><div class="card-top"><b>${esc(UID[id].long)}</b>${pill('watch', 'At risk')}</div><p class="ink2 small">Stays below 95% in the expected forecast, but passes it in ${Math.round(risk[id].pw * 100)}% of simulated futures.</p>${probRow('Chance of passing 95%', risk[id].pw)}</button>`;
-  $('cards').innerHTML = html || `<div class="empty">All units stay below 95% across the window in every simulated future. Try a longer window or a what-if scenario to stress-test the plan.</div>`;
+      <dl class="kv"><dt>Starts</dt><dd><b>${rel(e.start)}</b> · ${fmtT(A.now + e.start)}</dd><dt>Peak</dt><dd class="num">${pct(s.worst.peak)} · ${fmtT(A.now + s.worst.peakAt)}</dd><dt>Above 95%</dt><dd>${s.hours} h${s.episodes > 1 ? ` in ${s.episodes} episodes` : ''}</dd></dl>
+      ${probRow(`Chance of passing 105% in ${A.horizonDays} days`, s.pCrit)}<span class="muted" style="font-size:.76rem">Share of ${n} simulated futures.</span></button>`; }).join('');
+  for (const id of Object.keys(risk).sort((a, b) => risk[b].pw - risk[a].pw).slice(0, 3)) html += `<button class="card" type="button" data-unit="${id}" aria-pressed="${A.selUnit === id}"><div class="card-top"><b>${esc(UID[id].long)}</b>${pill('watch', 'At risk')}</div><p class="ink2 small">Below 95% in the expected forecast, but passes it in ${Math.round(risk[id].pw * 100)}% of simulated futures.</p>${probRow('Chance of passing 95%', risk[id].pw)}</button>`;
+  $('cards').innerHTML = html || `<div class="empty">All units stay below 95% in every simulated future. Try a longer window or a what-if scenario to stress-test the plan.</div>`;
 }
 function unitSev(id) { const s = A.F.sum[id]; if (s) return s.sev; return sevOf(Math.max(...A.F.mid.map(x => x.p[id]))); }
-function lastObs() { for (let i = A.history.length - 1; i >= 0; i--) if (A.history[i].occ) return A.history[i]; return null; }
 function renderTabs() {
   $('unitTabs').innerHTML = U.map(u => `<button class="tab" role="tab" type="button" data-unit="${u.id}" aria-selected="${A.selUnit === u.id}"><span class="dot ${unitSev(u.id)}"></span>${esc(u.name)}</button>`).join('');
-  const u = UID[A.selUnit], m = A.F.mid, last = A.F.mid[0];
-  const peak = m.reduce((a, x, i) => x.p[u.id] > a[0] ? [x.p[u.id], i] : a, [0, 0]);
-  let detail = '';
-  if (['MED', 'SURG', 'PEDS'].includes(u.id)) detail = `<span>Beds occupied <b class="num">${Math.round(last.occ[u.id])}/${last.cap[u.id]}</b></span><span>Being cleaned <b class="num">${Math.round(last.dirty[u.id])}</b></span>`;
-  if (u.id === 'ICU') detail = `<span>Beds <b class="num">${Math.round(last.occ.ICU)}/${last.cap.ICU}</b></span><span>Ventilators <b class="num">${Math.round(last.ventsUsed)}/${last.vents}</b></span>`;
-  if (u.id === 'ED') detail = `<span>Waiting for a ward bed <b class="num">${Math.round(last.boarders)}</b></span><span>Avg stay <b class="num">${last.edLOS.toFixed(1)} h</b></span>`;
-  if (u.id === 'LAB') detail = `<span>Turnaround <b class="num">${last.labTAT.toFixed(1)} h</b></span>`;
-  if (u.id === 'IMG') detail = `<span>Turnaround <b class="num">${last.imgTAT.toFixed(1)} h</b></span>`;
-  if (u.id === 'NUR') detail = `<span>Nurses needed / on shift <b class="num">${Math.round(last.nurseReq)}/${Math.round(last.nurseAvail)}</b></span>`;
-  if (u.id === 'BLOOD') detail = `<span>Platelet units in stock <b class="num">${Math.round(last.plt)}</b></span><span>Use per day <b class="num">${(last.pltDemand * 24).toFixed(0)}</b></span>`;
-  $('unitMeta').innerHTML = `<span><b>${esc(u.long)}</b> — ${esc(u.measure)}</span><span>Next hour <b class="num">${pct(last.p[u.id])}</b></span>${detail}<span>Expected peak <b class="num">${pct(peak[0])}</b> ${fmtT(A.now + peak[1])}</span>`;
+  const u = UID[A.selUnit], m = A.F.mid, x = m[0];
+  const peak = m.reduce((a, y, i) => y.p[u.id] > a[0] ? [y.p[u.id], i] : a, [0, 0]);
+  const det = {
+    MED: () => `Beds occupied <b class="num">${loc(x.occ.MED)}/${loc(x.cap.MED)}</b> · being cleaned <b class="num">${loc(x.dirty.MED)}</b>`,
+    SURG: () => `Beds occupied <b class="num">${loc(x.occ.SURG)}/${loc(x.cap.SURG)}</b>`, PEDS: () => `Beds occupied <b class="num">${loc(x.occ.PEDS)}/${loc(x.cap.PEDS)}</b>`,
+    ISO: () => `Isolation beds <b class="num">${loc(x.occ.ISO)}/${loc(x.cap.ISO)}</b> · waiting <b class="num">${loc(x.bd.ISO)}</b>`,
+    ICU: () => `Beds <b class="num">${loc(x.occ.ICU)}/${loc(x.cap.ICU)}</b> · ventilators <b class="num">${loc(x.ventsUsed)}/${loc(x.vents)}</b>`,
+    ED: () => `Waiting for a ward bed <b class="num">${loc(x.boarders)}</b> · avg stay <b class="num">${x.edLOS.toFixed(1)} h</b>`,
+    O2: () => `Stock <b class="num">${loc(x.o2)}</b> cylinder-eq. · use <b class="num">${loc(x.o2Use * 24)}/day</b>`,
+    AMB: () => `Busy <b class="num">${x.ambBusy.toFixed(0)}/${loc(x.fleet)}</b> · trip <b class="num">${(x.tripH * 60).toFixed(0)} min</b>`,
+    LAB: () => `Turnaround <b class="num">${x.labTAT.toFixed(1)} h</b>`, XRAY: () => `Wait <b class="num">${x.xrayTAT.toFixed(1)} h</b>`, IMG: () => `Wait <b class="num">${x.imgTAT.toFixed(1)} h</b>`,
+    NUR: () => `Needed / on shift <b class="num">${loc(x.nurseReq)}/${loc(x.nurseAvail)}</b>`, BLOOD: () => `Platelets <b class="num">${loc(x.plt)}</b> · use <b class="num">${(x.pltDemand * 24).toFixed(0)}/day</b>`
+  }[u.id];
+  $('unitMeta').innerHTML = `<span><b>${esc(u.long)}</b> — ${esc(u.measure)}</span><span>Next hour <b class="num">${pct(x.p[u.id])}</b></span><span>${det ? det() : ''}</span><span>Expected peak <b class="num">${pct(peak[0])}</b> ${fmtT(A.now + peak[1])}</span>`;
 }
 
 function renderChart(preview) {
   const host = $('fcChart'), id = A.selUnit, F = A.F, mid = preview ? preview.ser : F.mid, cmp = preview ? F.mid : F.compare, cmpLbl = preview ? 'Current plan' : F.compareLabel;
   const hist = A.history.filter(x => x.k >= A.now - 48 && x.p[id] != null);
-  const W = Math.max(320, host.clientWidth || 700), Hh = W < 560 ? 230 : 280, m = { l: 40, r: 64, t: 12, b: 26 };
+  const W = Math.max(320, host.clientWidth || 700), Hh = W < 560 ? 230 : 280, m = { l: 44, r: 64, t: 12, b: 26 };
   const x0 = -48, x1 = mid.length;
   const all = hist.map(x => x.p[id]).concat(F.ens.p90.map(x => x.p[id]), mid.map(x => x.p[id]), cmp ? cmp.map(x => x.p[id]) : []);
   const yMax = Math.max(1.15, Math.ceil((Math.max(...all) + 0.05) * 10) / 10), yMin = Math.max(0, Math.min(0.4, Math.floor((Math.min(...all) - 0.05) * 10) / 10));
   const X = k => m.l + (k - x0) / (x1 - x0) * (W - m.l - m.r), Y = v => m.t + (1 - (v - yMin) / (yMax - yMin)) * (Hh - m.t - m.b);
   const path = (arr, kf) => arr.map((x, i) => (i ? 'L' : 'M') + X(kf(x, i)).toFixed(1) + ' ' + Y(x.p[id]).toFixed(1)).join('');
   let g = '';
-  const step = yMax - yMin > 1.2 ? 0.5 : 0.25;
+  const step = yMax - yMin > 2.5 ? 1 : yMax - yMin > 1.2 ? 0.5 : 0.25;
   for (let v = Math.ceil(yMin / step) * step; v <= yMax + 1e-9; v += step) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${m.l - 6}" y="${Y(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
   if (!preview) for (const e of F.events.filter(e => e.unit === id)) g += `<rect x="${X(e.start)}" y="${m.t}" width="${Math.max(2, X(e.end + 1) - X(e.start))}" height="${Hh - m.t - m.b}" fill="var(--${e.sev === 'critical' ? 'crit' : 'warn'})" opacity=".09"/>`;
   const dayEvery = (x1 - x0) / 24 > 20 ? 3 : (x1 - x0) / 24 > 10 ? 2 : 1;
@@ -708,8 +918,7 @@ function renderChart(preview) {
   for (let k = x0; k < x1; k++) { const d = tOf(A.now + k); if (d.getHours() === 0) { const hol = S.holidayOn(d.getTime()); if (di++ % dayEvery === 0 || hol) g += `<line x1="${X(k)}" x2="${X(k)}" y1="${Hh - m.b}" y2="${Hh - m.b + 4}" stroke="var(--line)"/><text x="${X(k) + 3}" y="${Hh - 8}" ${hol ? 'style="fill:var(--accent)"' : ''}>${DAYS[d.getDay()]} ${d.getDate()}${hol ? '*' : ''}</text>`; } }
   for (const [v, c, l] of [[S.THRESH.warn, 'warn', 'Warning'], [S.THRESH.crit, 'crit', 'Critical']]) if (v <= yMax) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--${c})" stroke-width="1.2" stroke-dasharray="5 4"/><text x="${W - m.r + 6}" y="${Y(v) + 4}" style="fill:var(--ink-2)">${l}</text>`;
   const p90 = F.ens.p90, p10 = F.ens.p10;
-  const band = p90.map((x, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(x.p[id]).toFixed(1)}`).join('') + p10.slice().reverse().map((x, j) => `L${X(p10.length - 1 - j).toFixed(1)} ${Y(x.p[id]).toFixed(1)}`).join('') + 'Z';
-  g += `<path d="${band}" fill="var(--accent)" opacity=".16"/>`;
+  g += `<path d="${p90.map((x, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(x.p[id]).toFixed(1)}`).join('') + p10.slice().reverse().map((x, j) => `L${X(p10.length - 1 - j).toFixed(1)} ${Y(x.p[id]).toFixed(1)}`).join('')}Z" fill="var(--accent)" opacity=".16"/>`;
   if (cmp) g += `<path d="${path(cmp, (x, i) => i)}" fill="none" stroke="var(--compare)" stroke-width="1.6" stroke-dasharray="4 3"/>`;
   if (hist.length) g += `<path d="${path(hist, x => x.k - A.now)}" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linejoin="round"/>` + (hist.length < 12 ? hist.map(x => `<circle cx="${X(x.k - A.now)}" cy="${Y(x.p[id])}" r="3" fill="var(--ink-2)"/>`).join('') : '');
   g += `<path d="${path(mid, (x, i) => i)}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>`;
@@ -718,7 +927,7 @@ function renderChart(preview) {
   g += `<circle cx="${X(pk[1])}" cy="${Y(pk[0])}" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/><text x="${Math.min(X(pk[1]) + 7, W - m.r - 4)}" y="${Y(pk[0]) - 8}" style="fill:var(--ink);font-weight:500">${pct(pk[0])}</text>`;
   g += `<line id="xh" x1="0" x2="0" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--muted)" stroke-width="1" visibility="hidden"/><circle id="xhd" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
   g += `<rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${Hh - m.t - m.b}" fill="transparent"/>`;
-  host.innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${esc(UID[id].long)} load forecast, expected peak ${pct(pk[0])}">${g}</svg><div class="tip" id="tip" hidden></div>`;
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${esc(UID[id].long)} forecast, expected peak ${pct(pk[0])}">${g}</svg><div class="tip" id="tip" hidden></div>`;
   $('fcLegend').innerHTML = (preview ? `<span class="pill info">Previewing: ${esc(preview.title)}</span>` : '') + `<span><i style="border-color:var(--ink-2)"></i>Observed</span><span><i style="border-color:var(--accent)"></i>Expected</span><span><i class="band"></i>80% range (${F.ens.n} simulated futures)</span>${cmp ? `<span><i style="border-color:var(--compare);border-top-style:dashed"></i>${esc(cmpLbl)}</span>` : ''}<span><i style="border-color:var(--warn);border-top-style:dashed"></i>Warning 95%</span><span><i style="border-color:var(--crit);border-top-style:dashed"></i>Critical 105%</span><span class="muted">* public holiday</span>`;
   const svg = host.querySelector('svg'), tip = $('tip'), xh = svg.querySelector('#xh'), xhd = svg.querySelector('#xhd');
   svg.addEventListener('pointermove', ev => {
@@ -731,9 +940,11 @@ function renderChart(preview) {
       if (cmp) rows += `<div class="row"><span class="muted">${esc(cmpLbl)}</span><span class="num">${pct(cmp[k].p[id])}</span></div>`;
       rows += `<div class="row"><span class="muted">ED arrivals/h</span><span class="num">${rec.arrivals.toFixed(1)}</span></div>`;
       if (rec.holiday) rows += `<div class="row"><span class="muted">Holiday</span><span>${esc(rec.holiday)}</span></div>`;
+      if (rec.rainToday >= 64.5) rows += `<div class="row"><span class="muted">Rain</span><span>${esc(S.rainClass(rec.rainToday))}</span></div>`;
     } else {
-      const rec = hist.reduce((a, x) => Math.abs(x.k - A.now - k) < Math.abs(a.k - A.now - k) ? x : a, hist[0] || { k: 0, p: {} });
-      if (!rec || rec.p[id] == null) return; k = rec.k - A.now; v = rec.p[id];
+      if (!hist.length) return;
+      const rec = hist.reduce((a, x) => Math.abs(x.k - A.now - k) < Math.abs(a.k - A.now - k) ? x : a, hist[0]);
+      k = rec.k - A.now; v = rec.p[id];
       rows = `<div class="row"><span>Observed</span><b class="num">${pct(v)}</b></div>` + (rec.arrivals != null ? `<div class="row"><span class="muted">ED arrivals/h</span><span class="num">${rec.arrivals.toFixed(1)}</span></div>` : '');
     }
     xh.setAttribute('x1', X(k)); xh.setAttribute('x2', X(k)); xh.setAttribute('visibility', 'visible');
@@ -774,91 +985,153 @@ function renderHeat() {
   for (const u of U) {
     h += `<tr class="${A.selUnit === u.id ? 'sel' : ''}"><th class="rowh">${esc(u.name)}</th>`;
     for (const [a, b] of C) {
-      if (prob) {
-        const p = F.ens.prob(u.id, a, b - 1, S.THRESH.crit), s = p >= 0.6 ? 'critical' : p >= 0.3 ? 'warning' : p >= 0.1 ? 'watch' : '';
-        h += `<td class="${s}" data-unit="${u.id}" title="${esc(u.long)} · ${fmtD(A.now + a)} · ${Math.round(p * 100)}% chance of passing 105%">${Math.round(p * 100)}</td>`;
-      } else {
-        let mx = 0; for (let i = a; i < b; i++) mx = Math.max(mx, F.mid[i].p[u.id]);
-        const s = sevOf(mx);
-        h += `<td class="${s === 'ok' ? '' : s}" data-unit="${u.id}" title="${esc(u.long)} · ${fmtD(A.now + a)} · expected peak ${pct(mx)} (${SEV_LABEL[s]})">${Math.round(mx * 100)}</td>`;
-      }
+      if (prob) { const p = F.ens.prob(u.id, a, b - 1, S.THRESH.crit), s = p >= 0.6 ? 'critical' : p >= 0.3 ? 'warning' : p >= 0.1 ? 'watch' : ''; h += `<td class="${s}" data-unit="${u.id}" title="${esc(u.long)} · ${fmtD(A.now + a)} · ${Math.round(p * 100)}% chance of passing 105%">${Math.round(p * 100)}</td>`; }
+      else { let mx = 0; for (let i = a; i < b; i++) mx = Math.max(mx, F.mid[i].p[u.id]); const s = sevOf(mx); h += `<td class="${s === 'ok' ? '' : s}" data-unit="${u.id}" title="${esc(u.long)} · ${fmtD(A.now + a)} · expected peak ${pct(mx)}">${Math.round(mx * 100)}</td>`; }
     }
     h += '</tr>';
   }
   $('heat').innerHTML = h + '</tbody>';
 }
 
+/* city network */
+function renderNetwork() {
+  const N = A.net || [];
+  const beds = S.HOSPITALS.reduce((a, h) => a + h.beds, 0), genFree = N.reduce((a, r) => a + r.genFree, 0), icuFree = N.reduce((a, r) => a + r.icuFree, 0), isoFree = N.reduce((a, r) => a + r.isoFree, 0);
+  const full = N.filter(r => r.peak >= S.THRESH.crit).length;
+  $('cityTiles').innerHTML = [
+    ['Hospitals tracked', N.length, `${loc(beds)} beds (public sources)`],
+    ['General beds free (est.)', loc(genFree), 'across tracked hospitals'], ['ICU beds free (est.)', loc(icuFree), ''], ['Isolation beds free (est.)', loc(isoFree), `+ ${S.ISOLATION_RESERVE[0].beds} at Kasturba`],
+    ['Expected to pass 105% in 7 days', full, 'hospitals']
+  ].map(([l, v, s]) => `<div class="tile"><span class="lbl">${esc(l)}</span><span class="val">${v}</span><span class="sub">${esc(s)}</span></div>`).join('');
+  // schematic map from latitude/longitude
+  const W = 300, Hm = 420, la0 = 18.92, la1 = 19.19, lo0 = 72.79, lo1 = 72.97;
+  const X = lo => 18 + (lo - lo0) / (lo1 - lo0) * (W - 36), Y = la => 14 + (1 - (la - la0) / (la1 - la0)) * (Hm - 28);
+  let g = `<rect x="0" y="0" width="${W}" height="${Hm}" rx="10" fill="var(--surface-2)"/>`;
+  for (const [lbl, la, lo] of [['South Mumbai', 18.94, 72.80], ['Central', 19.03, 72.88], ['Western suburbs', 19.15, 72.80], ['Eastern suburbs', 19.11, 72.92]]) g += `<text x="${X(lo)}" y="${Y(la)}" style="fill:var(--muted);font-size:9px;letter-spacing:.06em">${lbl.toUpperCase()}</text>`;
+  const rows = N.slice().sort((a, b) => b.peak - a.peak), rank = new Map(rows.map((r, i) => [r.h.id, i + 1]));
+  for (const r of N.slice().sort((a, b) => b.h.beds - a.h.beds)) {
+    const rad = 7 + Math.sqrt(r.h.beds) / 7, col = r.sev === 'critical' ? 'var(--crit)' : r.sev === 'warning' ? 'var(--warn)' : r.sev === 'watch' ? 'color-mix(in srgb, var(--warn) 45%, var(--surface))' : 'var(--accent)';
+    g += `<g data-hosp="${r.h.id}" style="cursor:pointer"><circle cx="${X(r.h.lon)}" cy="${Y(r.h.lat)}" r="${rad.toFixed(1)}" fill="${col}" fill-opacity=".8" stroke="${r.focus ? 'var(--ink)' : 'var(--surface)'}" stroke-width="${r.focus ? 2.5 : 1.5}"><title>${esc(r.h.name)}: expected peak ${pct(r.peak)}</title></circle>
+      <text x="${X(r.h.lon)}" y="${Y(r.h.lat) + 3.5}" text-anchor="middle" style="fill:${r.sev === 'critical' || r.sev === 'ok' ? '#fff' : '#241a00'};font-weight:700;font-size:10px;font-family:var(--f-data);pointer-events:none">${rank.get(r.h.id)}</text></g>`;
+  }
+  $('map').innerHTML = `<svg viewBox="0 0 ${W} ${Hm}" role="img" aria-label="Schematic map of tracked Mumbai hospitals coloured by expected peak load">${g}</svg><p class="muted" style="font-size:.74rem;margin-top:4px">Schematic, positions approximate. Numbers match the table; size = beds; colour = expected peak in 7 days. Click a marker to forecast that hospital.</p>`;
+  $('net').innerHTML = `<thead><tr><th>Hospital</th><th>Beds</th><th>Load now</th><th>Free: ward / ICU / isolation</th><th>Oxygen</th><th>Ambulances free</th><th>Expected peak, 7 d</th><th>Status</th></tr></thead><tbody>` +
+    rows.map((r, i) => `<tr class="${r.focus ? 'focus' : ''}"><td class="wrap"><span class="rank">${i + 1}</span><b>${esc(r.h.name)}</b><br><span class="muted small">${esc(r.h.area)} · ${esc(r.h.type)} · <span title="${esc(r.h.src)}">source</span></span></td><td class="num" title="${esc(r.h.src)}">${loc(r.h.beds)}</td><td class="num">${pct(r.load)}</td><td class="num">${loc(r.genFree)} / ${loc(r.icuFree)} / ${loc(r.isoFree)}</td><td class="num">${r.o2Days >= 30 ? '30+ d' : r.o2Days.toFixed(1) + ' d'}</td><td class="num">${loc(r.ambFree)}/${loc(r.fleet)}</td><td class="num">${pct(r.peak)} · ${fmtD(A.now + r.peakAt)}</td><td>${pill(r.sev)} ${r.focus ? '' : `<button class="btn small ghost" type="button" data-hosp="${r.h.id}">Forecast</button>`}</td></tr>`).join('') + '</tbody>';
+  const spare = rows.filter(r => !r.focus).sort((a, b) => b.genFree - a.genFree).slice(0, 3).map(r => `${r.h.name} (${loc(r.genFree)} ward beds, ${loc(r.icuFree)} ICU)`).join('; ');
+  $('netReserve').innerHTML = `Most spare capacity now (estimated): ${esc(spare)}. Isolation reserve: ${esc(S.ISOLATION_RESERVE[0].note)} Upcoming: ${esc(S.UPCOMING.beds + ' beds — ' + S.UPCOMING.note)}`;
+}
+
+/* diseases */
+function renderDiseases() {
+  const F = A.F, f = feeds(), nowT = S.START + A.now * S.HOUR, h = F.mid.length;
+  const bedsOf = x => S.WARDS.reduce((a, u) => a + x.occ[u] + x.bd[u], 0);
+  const rows = S.DISEASES.map(se => {
+    const off = S.simulate(A.state, A.now, h, baseRun({ off: { [se.id]: true } }));
+    let maxB = 0, at = 0, icu = 0;
+    for (let i = 0; i < h; i += 3) { const d = bedsOf(F.mid[i]) - bedsOf(off[i]); if (d > maxB) { maxB = d; at = i; } icu = Math.max(icu, F.mid[i].occ.ICU + F.mid[i].bd.ICU - off[i].occ.ICU - off[i].bd.ICU); }
+    const nowV = S.seasonRaw(se, nowT) * (f[se.id] || 1), later = S.seasonRaw(se, nowT + 14 * S.DAY) * (f[se.id] || 1);
+    const trend = later > nowV * 1.15 + 0.02 ? '↑ rising' : later < nowV * 0.85 - 0.02 ? '↓ falling' : '→ steady';
+    return { se, maxB, at, icu, nowV, trend };
+  }).sort((a, b) => b.maxB - a.maxB || b.nowV - a.nowV);
+  $('diseases').innerHTML = `<thead><tr><th>Illness</th><th>Mumbai season</th><th>Activity now</th><th>Next 2 weeks</th><th>Beds added at peak</th><th>ICU beds added</th><th>Puts pressure on</th><th>Mumbai data</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td class="wrap"><b>${esc(r.se.name)}</b><br><span class="muted small">${esc(r.se.why)}</span></td><td>${esc(r.se.months)}</td><td class="num">${r.nowV < 0.05 ? '<span class="muted">off season</span>' : Math.round(Math.min(2, r.nowV) * 100) + '% of usual peak'}</td><td>${esc(r.trend)}</td><td class="num">${r.maxB >= 0.5 ? loc(r.maxB) + ' · ' + fmtD(A.now + r.at) : '—'}</td><td class="num">${r.icu >= 0.5 ? loc(r.icu) : '—'}</td><td class="wrap small">${esc(r.se.needs.join(', '))}</td><td class="wrap small muted">${esc(r.se.mumbai)}</td></tr>`).join('') +
+    `<tr><td class="wrap"><b>Tuberculosis</b><br><span class="muted small">Year-round load, not seasonal; occupies Medicine and isolation beds.</span></td><td>All year</td><td colspan="6" class="wrap small muted">Included in the normal (non-seasonal) admission rate rather than as a surge.</td></tr>` +
+    `<tr><td class="wrap"><b>COVID-19 and new epidemics</b><br><span class="muted small">Not seasonal; watched by the outbreak detector below.</span></td><td>Any time</td><td colspan="6" class="wrap small muted">Detected from excess respiratory, fever or diarrhoeal patients; once detected, growth is carried into every forecast.</td></tr></tbody>`;
+}
+
+/* epidemic */
+function spark(daily) {
+  if (!daily || !daily.length) return '';
+  const W = 200, Hs = 34, mx = Math.max(...daily.map(d => Math.max(d.o, d.e))) * 1.1 || 1;
+  const X = i => 4 + i / Math.max(1, daily.length - 1) * (W - 8), Y = v => Hs - 3 - v / mx * (Hs - 6);
+  return `<svg class="spark" viewBox="0 0 ${W} ${Hs}" preserveAspectRatio="none" aria-hidden="true"><path d="${daily.map((d, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(d.e)).join('')}" fill="none" stroke="var(--compare)" stroke-width="1.5" stroke-dasharray="3 2"/><path d="${daily.map((d, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(d.o)).join('')}" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>`;
+}
+function renderEpidemic() {
+  const D = A.det || {};
+  $('levels').innerHTML = Object.keys(S.SYNDROMES).map(sy => { const d = D[sy] || { level: 0, ratio: 1, z: 0 }; return `<div class="lvl l${d.level}"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><b class="small">${esc(S.SYNDROMES[sy])}</b>${pill(LVL_SEV[d.level], S.LEVELS[d.level])}</div>
+    <span class="num small">${d.ratio.toFixed(2)}× expected · z ${d.z.toFixed(1)}${d.doubling ? ` · doubling ${d.doubling.toFixed(1)} d` : ''}</span>${spark(d.daily)}<span class="muted" style="font-size:.72rem">Last 7 days: observed (solid) vs seasonal expectation (dashed)</span></div>`; }).join('');
+  const w = A.worst;
+  $('worstTitle').textContent = w.title;
+  $('worstNote').textContent = `Next ${w.days} days, assuming ${A.epiFit ? 'growth 40% faster than detected, levelling off at about 1.4× normal ED arrivals' : 'cases doubling every 4 days, levelling off at about 0.7× normal ED arrivals'}, 15% fewer nurses, 10% fewer doctors, oxygen supply cut 30% and 15% of ambulances off road. Peak extra epidemic patients: ${loc(w.peakEpi[0])}/day around ${fmtD(A.now + w.peakEpi[1])}.`;
+  $('worst').innerHTML = `<thead><tr><th>Resource</th><th>Runs out / full</th><th>Worst shortfall</th></tr></thead><tbody>` + w.rows.map(r => {
+    const sh = r.tat ? `${r.tat[0].toFixed(1)} h at worst` : r.short[0] > 0.5 ? `${loc(r.short[0])} ${r.unit} short · ${fmtD(A.now + r.short[1])}` : 'none';
+    const bad = r.full != null || (r.short && r.short[0] > 0.5);
+    return `<tr><td>${esc(r.what)}</td><td class="num">${r.full != null ? `<b class="up">${rel(r.full)}</b> · ${fmtD(A.now + r.full)}` : '<span class="down">holds</span>'}</td><td class="num ${bad ? 'up' : ''}">${sh}</td></tr>`;
+  }).join('') + '</tbody>';
+  // checklist from shortfalls
+  const items = [], seen = new Set();
+  for (const r of w.rows) {
+    const bad = r.full != null || (r.short && r.short[0] > 0.5);
+    if (!bad) continue;
+    for (const id of r.act) {
+      if (seen.has(id)) continue; seen.add(id);
+      const a = S.ACTION_BY_ID[id], done = A.approved.some(x => x.id === id);
+      const by = r.full != null ? Math.max(0, r.full - a.lead) : null;
+      const qty = r.short && r.short[0] > 0.5 ? ` Gap to cover: ${loc(r.short[0])} ${r.unit}.` : '';
+      items.push(`<li>${done ? pill('info', 'Approved') : pill(by != null && by < 24 ? 'critical' : 'warning', by != null && by < 24 ? 'Urgent' : 'Prepare')}<div><b>${esc(a.title)}</b><br><span class="small ink2">${esc(r.what)}: ${r.full != null ? 'runs out ' + rel(r.full) + '.' : 'shortfall expected.'}${qty} Owner: ${esc(a.owner)}; lead time ${a.lead} h.</span></div><span class="when">${done ? '' : by != null ? 'decide by ' + fmtT(A.now + by) : ''}${done ? '' : `<br><button class="btn small" type="button" data-approve-jump="${id}">Approve…</button>`}</span></li>`);
+    }
+  }
+  $('checklist').innerHTML = items.join('') || '<li><span></span><span class="ink2 small">No shortfall in the worst case. Keep the stock of oxygen cylinders, PPE and isolation space under review.</span><span></span></li>';
+  $('drillPathogen').innerHTML = Object.entries(S.PATHOGENS).map(([k, p]) => `<option value="${k}">${esc(p.name)}</option>`).join('');
+  if (A.drill) $('drillPathogen').value = A.drill.pathogen;
+  $('drillStatus').textContent = A.drill ? `Drill running since ${fmtT(A.drill.t0)}: ${S.PATHOGENS[A.drill.pathogen].name}. Use fast-forward to watch detection.` : 'No drill running.';
+}
+
+/* cascade */
 function agg(ser) {
   const days = ser.length / 24, sum = f => ser.reduce((a, x) => a + f(x), 0), max = f => Math.max(...ser.map(f));
-  return {
-    arr: sum(x => x.arrivals) / days, lab: sum(x => x.labDemand) / days, labTAT: max(x => x.labTAT), imgTAT: max(x => x.imgTAT),
-    edLOS: max(x => x.edLOS), board: sum(x => x.boarders), med: max(x => x.p.MED), peds: max(x => x.p.PEDS), icu: max(x => x.p.ICU), surg: max(x => x.p.SURG),
+  return { arr: sum(x => x.arrivals) / days, lab: sum(x => x.labDemand) / days, xr: sum(x => x.xrayDemand) / days, labTAT: max(x => x.labTAT), xrayTAT: max(x => x.xrayTAT), imgTAT: max(x => x.imgTAT),
+    edLOS: max(x => x.edLOS), board: sum(x => x.boarders), med: max(x => x.p.MED), peds: max(x => x.p.PEDS), icu: max(x => x.p.ICU), iso: max(x => x.p.ISO), surg: max(x => x.p.SURG),
     step: sum(x => x.icuStepWait), canc: sum(x => x.cancelled), nur: max(x => x.p.NUR), edOver: ser.filter(x => x.p.ED >= 1).length, div: sum(x => x.diverted),
-    plt: sum(x => x.pltDemand) / days, pltShort: sum(x => x.pltShort), pltMin: Math.min(...ser.map(x => x.plt))
-  };
-}
-function admPerDay(ser) {
-  let a = 0;
-  for (const x of ser) { const b = x.arrivals - x.seasonArr; a += b * (S.R.route.MED + S.R.route.SURG + S.R.route.ICU + S.R.route.PEDS); for (const se of S.SEASONS) { const v = x.seasonBy[se.id] || 0; for (const u in se.route) a += v * se.route[u]; } }
-  return a / (ser.length / 24) + S.P.arr * S.R.directMED * 24;
+    plt: sum(x => x.pltDemand) / days, pltShort: sum(x => x.pltShort), o2: sum(x => x.o2Use) / days, o2Short: sum(x => x.o2Short), amb: max(x => x.p.AMB) };
 }
 function renderCascade() {
-  const c = agg(A.F.mid), t = agg(A.F.typical), ac = admPerDay(A.F.mid), at = admPerDay(A.F.typical);
+  const c = agg(A.F.mid), t = agg(A.F.typical);
   const d = (a, b, kind) => {
-    if (kind === 'pct') { const v = Math.round((a - b) * 100); return v === 0 ? 'same as without season' : `${v > 0 ? '+' : '−'}${Math.abs(v)} pts vs without season`; }
-    if (kind === 'rel') { const v = Math.round((a / Math.max(1e-6, b) - 1) * 100); return v === 0 ? 'same as without season' : `${v > 0 ? '+' : '−'}${Math.abs(v)}% vs without season`; }
-    const v = a - b; return Math.abs(v) < 0.05 ? 'same as without season' : `${v > 0 ? '+' : '−'}${Math.abs(v).toFixed(kind === 'h' ? 1 : 0)}${kind === 'h' ? ' h' : ''} vs without season`;
+    const tail = ' vs without season';
+    if (kind === 'pct') { const v = Math.round((a - b) * 100); return v === 0 ? 'same' + tail : `${v > 0 ? '+' : '−'}${Math.abs(v)} pts${tail}`; }
+    if (kind === 'rel') { const v = Math.round((a / Math.max(1e-6, b) - 1) * 100); return v === 0 ? 'same' + tail : `${v > 0 ? '+' : '−'}${Math.abs(v)}%${tail}`; }
+    const v = a - b; return Math.abs(v) < 0.05 ? 'same' + tail : `${v > 0 ? '+' : '−'}${Math.abs(v).toFixed(kind === 'h' ? 1 : 0)}${kind === 'h' ? ' h' : ''}${tail}`;
   };
   const heat = (v, w, cr) => v >= cr ? 'hot' : v >= w ? 'warm' : '';
   const node = (lbl, val, delta, cls) => `<div class="node ${cls || ''}"><span class="lbl">${lbl}</span><span class="val">${val}</span><span class="delta">${delta}</span></div>`;
-  const loc = n => Math.round(n).toLocaleString('en-IN');
   const stages = [
-    ['Demand', [
-      node('ED arrivals per day', loc(c.arr), d(c.arr, t.arr, 'rel'), heat(c.arr / t.arr, 1.12, 1.25)),
-      node('Admissions needing a bed', loc(ac) + '/day', d(ac, at, 'rel'), heat(ac / at, 1.12, 1.25))]],
-    ['Diagnostics & blood', [
-      node('Lab tests per day', loc(c.lab), d(c.lab, t.lab, 'rel'), heat(c.lab / t.lab, 1.1, 1.2)),
-      node('Worst lab turnaround', c.labTAT.toFixed(1) + ' h', d(c.labTAT, t.labTAT, 'h'), heat(c.labTAT / 2.5, .95, 1.05)),
-      node('Worst imaging turnaround', c.imgTAT.toFixed(1) + ' h', d(c.imgTAT, t.imgTAT, 'h'), heat(c.imgTAT / 3, .95, 1.05)),
-      node('Platelet units used per day', c.plt.toFixed(0), d(c.plt, t.plt, 'rel'), heat(c.plt / Math.max(0.1, t.plt), 1.3, 1.8)),
-      node('Platelet requests unmet', loc(c.pltShort), d(c.pltShort, t.pltShort, 'n'), heat(c.pltShort, 1, 10))]],
-    ['Emergency', [
-      node('Longest ED stay', c.edLOS.toFixed(1) + ' h', d(c.edLOS, t.edLOS, 'h'), heat(c.edLOS / 2.6, 1.15, 1.35)),
-      node('Patient-hours waiting in ED for a bed', loc(c.board), d(c.board, t.board, 'n'), heat(c.board, 50, 200)),
-      node('Hours ED over 100%', c.edOver, d(c.edOver, t.edOver, 'n'), heat(c.edOver, 1, 6)),
+    ['Demand', [node('ED arrivals per day', loc(c.arr), d(c.arr, t.arr, 'rel'), heat(c.arr / t.arr, 1.12, 1.25)), node('Peak ambulance use', pct(c.amb), d(c.amb, t.amb, 'pct'), heat(c.amb, .95, 1.05))]],
+    ['Diagnostics & supplies', [node('Lab tests per day', loc(c.lab), d(c.lab, t.lab, 'rel'), heat(c.lab / t.lab, 1.1, 1.2)), node('X-rays per day', loc(c.xr), d(c.xr, t.xr, 'rel'), heat(c.xr / t.xr, 1.1, 1.25)),
+      node('Worst lab / X-ray wait', `${c.labTAT.toFixed(1)} / ${c.xrayTAT.toFixed(1)} h`, d(c.labTAT, t.labTAT, 'h'), heat(Math.max(c.labTAT / 2.5, c.xrayTAT / 1.5), .95, 1.05)),
+      node('Oxygen used per day (cyl.-eq.)', loc(c.o2 * 24), d(c.o2, t.o2, 'rel'), heat(c.o2Short, 0.1, 5)), node('Platelet units per day', (c.plt * 24).toFixed(0), d(c.plt, t.plt, 'rel'), heat(c.pltShort, 1, 10))]],
+    ['Emergency', [node('Longest ED stay', c.edLOS.toFixed(1) + ' h', d(c.edLOS, t.edLOS, 'h'), heat(c.edLOS / 2.6, 1.15, 1.35)), node('Patient-hours waiting in ED for a bed', loc(c.board), d(c.board, t.board, 'n'), heat(c.board / S.P.sizeK, 50, 200)),
       node('Patients diverted to other hospitals', loc(c.div), d(c.div, t.div, 'n'), heat(c.div, 1, 10))]],
-    ['Wards & ICU', [
-      node('Peak Medicine load', pct(c.med), d(c.med, t.med, 'pct'), heat(c.med, .95, 1.05)),
-      node('Peak Paediatrics load', pct(c.peds), d(c.peds, t.peds, 'pct'), heat(c.peds, .95, 1.05)),
-      node('Peak ICU load', pct(c.icu), d(c.icu, t.icu, 'pct'), heat(c.icu, .95, 1.05)),
-      node('ICU patients waiting for step-down (pt-h)', loc(c.step), d(c.step, t.step, 'n'), heat(c.step, 10, 60))]],
-    ['Staff & planned care', [
-      node('Peak nurse cover needed', pct(c.nur), d(c.nur, t.nur, 'pct'), heat(c.nur, .95, 1.05)),
-      node('Elective operations at risk', loc(c.canc), d(c.canc, t.canc, 'n'), heat(c.canc, 1, 5)),
-      node('Peak Surgery load', pct(c.surg), d(c.surg, t.surg, 'pct'), heat(c.surg, .95, 1.05))]]
+    ['Wards, ICU & isolation', [node('Peak Medicine load', pct(c.med), d(c.med, t.med, 'pct'), heat(c.med, .95, 1.05)), node('Peak Paediatrics load', pct(c.peds), d(c.peds, t.peds, 'pct'), heat(c.peds, .95, 1.05)),
+      node('Peak ICU load', pct(c.icu), d(c.icu, t.icu, 'pct'), heat(c.icu, .95, 1.05)), node('Peak isolation load', pct(c.iso), d(c.iso, t.iso, 'pct'), heat(c.iso, .95, 1.05))]],
+    ['Staff & planned care', [node('Peak nurse cover needed', pct(c.nur), d(c.nur, t.nur, 'pct'), heat(c.nur, .95, 1.05)), node('Elective operations at risk', loc(c.canc), d(c.canc, t.canc, 'n'), heat(c.canc, 1, 5)), node('Peak Surgery load', pct(c.surg), d(c.surg, t.surg, 'pct'), heat(c.surg, .95, 1.05))]]
   ];
   $('cascade').innerHTML = stages.map(([h, nodes], i) => `<div class="stage"><div class="stage-h"><span class="eyebrow">${h}</span>${i < stages.length - 1 ? '<span class="arrow" aria-hidden="true">→</span>' : ''}</div>${nodes.join('')}</div>`).join('');
 }
 
 /* what-if */
 const LEVERS = [
-  { k: 'arrivalPct', label: 'Patient arrivals', min: -20, max: 60, step: 5, fmt: v => (v > 0 ? '+' : '') + v + '%', hint: 'All ED arrivals, any cause' },
-  { k: 'seasonScale', label: 'Seasonal illness intensity', min: 0.5, max: 3, step: 0.1, fmt: v => '×' + (+v).toFixed(1), hint: 'Dengue, flu, water-borne, pollution and festival curves' },
+  { k: 'arrivalPct', label: 'Patient arrivals', min: -20, max: 80, step: 5, fmt: v => (v > 0 ? '+' : '') + v + '%', hint: 'All ED arrivals, any cause' },
+  { k: 'seasonScale', label: 'Seasonal illness intensity', min: 0.5, max: 3, step: 0.1, fmt: v => '×' + (+v).toFixed(1), hint: 'All Mumbai seasonal infections' },
   { k: 'nurseShortPct', label: 'Nurse shortage', min: 0, max: 40, step: 5, fmt: v => v + '%', hint: 'Sickness, strike or vacancies' },
   { k: 'docShortPct', label: 'ED doctor shortage', min: 0, max: 50, step: 5, fmt: v => v + '%', hint: 'Fewer doctors on each ED shift' },
-  { k: 'medBedsClosed', label: 'Medicine beds closed', min: 0, max: 40, step: 2, fmt: v => v + ' beds', hint: 'Infection control, maintenance' },
-  { k: 'ventsDown', label: 'Ventilators unavailable', min: 0, max: 10, step: 1, fmt: v => v + ' of ' + S.P.vents, hint: 'Servicing or oxygen supply issue' },
+  { k: 'medBedsClosed', label: 'Medicine beds closed', min: 0, max: 200, step: 5, fmt: v => v + ' beds', hint: 'Infection control, repairs, leaking roofs' },
+  { k: 'ventsDown', label: 'Ventilators unavailable', min: 0, max: 40, step: 1, fmt: v => v + ' of ' + S.P.vents, hint: 'Servicing or oxygen supply issue' },
+  { k: 'o2CutPct', label: 'Oxygen supply cut', min: 0, max: 80, step: 10, fmt: v => v + '%', hint: 'Tanker delays, allocation cuts (as in April 2021)' },
+  { k: 'ambDownPct', label: 'Ambulances off road', min: 0, max: 60, step: 5, fmt: v => v + '%', hint: 'Breakdowns, waterlogged depots' },
   { k: 'labDownPct', label: 'Lab capacity lost', min: 0, max: 60, step: 10, fmt: v => v + '%', hint: 'Analyser failure, reagent shortage' },
-  { k: 'imgDownPct', label: 'Imaging capacity lost', min: 0, max: 100, step: 10, fmt: v => v + '%', hint: 'CT or USG out of service' },
+  { k: 'xrayDownPct', label: 'X-ray capacity lost', min: 0, max: 80, step: 10, fmt: v => v + '%', hint: 'Machine breakdown, technician shortage' },
+  { k: 'imgDownPct', label: 'CT / ultrasound capacity lost', min: 0, max: 100, step: 10, fmt: v => v + '%', hint: 'CT out of service' },
   { k: 'plateletCutPct', label: 'Platelet supply cut', min: 0, max: 80, step: 10, fmt: v => v + '%', hint: 'Fewer donors, apheresis kit shortage' },
   { k: 'startHour', label: 'Scenario starts', min: 0, max: 168, step: 6, fmt: v => v ? rel(+v) : 'now', hint: 'Delay the scenario to test a future event' }
 ];
 const PRESETS = [
+  { label: 'Mumbai flood (26 July-type)', set: { flood: true } },
   { label: 'Severe dengue outbreak', set: { outbreak: 'dengue' } },
   { label: 'Early flu wave + staff sickness', set: { outbreak: 'flu', nurseShortPct: 15, docShortPct: 10 } },
-  { label: 'Mass-casualty incident', set: { outbreak: 'mci', arrivalPct: 20 } },
-  { label: 'Lab analyser failure', set: { labDownPct: 50 } },
-  { label: 'Ward closed for infection control', set: { medBedsClosed: 24 } },
+  { label: 'Building collapse', set: { outbreak: 'mci' } },
+  { label: 'Oxygen supply crisis', set: { o2CutPct: 60 } },
+  { label: 'X-ray and lab breakdown', set: { xrayDownPct: 50, labDownPct: 40 } },
   { label: 'Nursing strike', set: { nurseShortPct: 30 } },
   { label: 'Blood donor shortage', set: { plateletCutPct: 50 } }
 ];
@@ -867,11 +1140,12 @@ function renderLevers() {
   if (!leversBuilt) {
     $('presets').innerHTML = '<span class="muted small" style="align-self:center">Start from:</span>' + PRESETS.map((p, i) => `<button class="btn small" type="button" data-preset="${i}">${esc(p.label)}</button>`).join('');
     $('levers').innerHTML = LEVERS.map(l => `<div class="lever"><label for="lv-${l.k}"><span>${l.label}</span><span class="num" id="lvv-${l.k}"></span></label><input type="range" id="lv-${l.k}" data-k="${l.k}" min="${l.min}" max="${l.max}" step="${l.step}"><small>${l.hint}</small></div>`).join('') +
-      `<div class="lever"><label for="lv-outbreak"><span>Outbreak or incident</span></label><select class="in" id="lv-outbreak">${Object.entries(S.OUTBREAKS).map(([k, o]) => `<option value="${k}">${esc(o.label)}</option>`).join('')}</select><small>Added on top of the seasonal pattern</small></div>`;
+      `<div class="lever"><label for="lv-outbreak"><span>Outbreak or incident</span></label><select class="in" id="lv-outbreak">${Object.entries(S.OUTBREAKS).map(([k, o]) => `<option value="${k}">${esc(o.label)}</option>`).join('')}</select><small>Added on top of the seasonal pattern</small></div>
+       <div class="lever"><label for="lv-flood"><span>Mumbai flood</span></label><label style="justify-content:flex-start;gap:8px"><input type="checkbox" id="lv-flood"> Extremely heavy rain (over 204.5 mm) for 36 h</label><small>Slows ambulances, then gastro and, 1–2 weeks later, leptospirosis</small></div>`;
     leversBuilt = true;
   }
   for (const l of LEVERS) { const el = $('lv-' + l.k); if (document.activeElement !== el) el.value = A.levers[l.k]; $('lvv-' + l.k).textContent = l.fmt(A.levers[l.k]); }
-  $('lv-outbreak').value = A.levers.outbreak;
+  $('lv-outbreak').value = A.levers.outbreak; $('lv-flood').checked = !!A.levers.flood;
 }
 function renderCompare() {
   const on = leversChanged();
@@ -880,8 +1154,7 @@ function renderCompare() {
   let h = `<thead><tr><th>Unit</th><th>Peak, current plan</th><th>Peak, scenario</th><th>Change</th><th>Hours ≥ 105%</th><th>Status</th></tr></thead><tbody>`;
   for (const u of U) {
     const a = Math.max(...base.map(x => x.p[u.id])), b = Math.max(...scen.map(x => x.p[u.id]));
-    const ca = base.filter(x => x.p[u.id] >= 1.05).length, cb = scen.filter(x => x.p[u.id] >= 1.05).length;
-    const dv = Math.round((b - a) * 100);
+    const ca = base.filter(x => x.p[u.id] >= 1.05).length, cb = scen.filter(x => x.p[u.id] >= 1.05).length, dv = Math.round((b - a) * 100);
     const s1 = ev0[u.id] ? ev0[u.id].sev : sevOf(a), s2 = A.F.sum[u.id] ? A.F.sum[u.id].sev : sevOf(b);
     h += `<tr><td>${esc(u.long)}</td><td class="num">${pct(a)}</td><td class="num">${on ? pct(b) : '—'}</td><td class="num ${dv > 0 ? 'up' : dv < 0 ? 'down' : ''}">${on ? (dv > 0 ? '+' : dv < 0 ? '−' : '') + Math.abs(dv) + ' pts' : '—'}</td><td class="num">${on ? `${ca} → ${cb}` : ca}</td><td>${on && s1 !== s2 ? pill(s1) + ' → ' + pill(s2) : pill(s2)}</td></tr>`;
   }
@@ -892,28 +1165,27 @@ function renderCompare() {
 function critHours(ser) { let n = 0; for (const x of ser) for (const u of U) if (x.p[u.id] >= 1.05) n++; return n; }
 function renderActions() {
   const F = A.F, units = Object.keys(F.sum).concat(Object.keys(F.risk)), h = H(), baseCrit = critHours(F.mid);
-  const cands = S.ACTIONS.filter(a => !A.approved.some(x => x.id === a.id) && !A.dismissed[a.id] && a.units.some(u => units.includes(u)));
-  const scored = cands.map(a => {
+  const worstUnits = (A.worst ? A.worst.rows.filter(r => r.full != null).map(r => r.id) : []);
+  const cands = S.ACTIONS.filter(a => !A.approved.some(x => x.id === a.id) && !A.dismissed[a.id] && (a.units.some(u => units.includes(u)) || (epiLevel() >= 2 && a.units.some(u => worstUnits.includes(u)))) || A.confirming === a.id);
+  const scored = cands.filter((a, i, arr) => arr.indexOf(a) === i).map(a => {
     const ser = S.simulate(A.state, A.now, h, baseRun({ actions: activeActions().concat([{ id: a.id, lead: a.lead }]) }));
     const deltas = a.units.filter(u => units.includes(u)).map(u => ({ u, before: Math.max(...F.mid.map(x => x.p[u])), after: Math.max(...ser.map(x => x.p[u])) }));
     const saved = baseCrit - critHours(ser);
-    return { a, deltas, critSaved: saved, gain: saved + deltas.reduce((s, d) => s + (d.before - d.after) * 100, 0) * 0.5 };
-  }).filter(x => x.gain > 0.3).sort((x, y) => y.gain - x.gain);
+    return { a, deltas, critSaved: saved, gain: saved + deltas.reduce((s, d) => s + (d.before - d.after) * 100, 0) * 0.5 + (epiLevel() >= 2 && a.units.some(u => worstUnits.includes(u)) ? 5 : 0) };
+  }).filter(x => x.gain > 0.3 || A.confirming === x.a.id).sort((x, y) => y.gain - x.gain);
   let html = '';
   for (const ap of A.approved) {
     const a = S.ACTION_BY_ID[ap.id], startsAt = ap.at + a.lead;
-    html += `<div class="act approved"><div style="display:grid;gap:4px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><h3>${esc(a.title)}</h3>${pill('info', 'Approved')}</div>
-      <p>Approved by <b>${esc(ap.by)}</b> at ${fmtT(ap.at)} · ${startsAt > A.now ? 'takes effect ' + fmtT(startsAt) : 'in effect'} · owner: ${esc(a.owner)}</p></div>
-      <div class="btns"><button class="btn small" type="button" data-revoke="${a.id}">Withdraw</button></div></div>`;
+    html += `<div class="act approved"><div style="display:grid;gap:4px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><h3>${esc(a.title)}</h3>${pill('info', 'Approved')}</div><p>Approved by <b>${esc(ap.by)}</b> at ${fmtT(ap.at)} · ${startsAt > A.now ? 'takes effect ' + fmtT(startsAt) : 'in effect'} · owner: ${esc(a.owner)}</p></div><div class="btns"><button class="btn small" type="button" data-revoke="${a.id}">Withdraw</button></div></div>`;
   }
   if (!scored.length && !A.approved.length) html += `<div class="empty">No preventive action is suggested: no unit is at risk in this window.</div>`;
-  for (const x of scored.slice(0, 6)) {
+  for (const x of scored.slice(0, 7)) {
     const a = x.a, conf = A.confirming === a.id;
     const imp = x.deltas.filter(d => d.before - d.after > 0.005).map(d => `${UID[d.u].name} ${pct(d.before)} → ${pct(d.after)}`).join(' · ');
-    html += `<div class="act"><div style="display:grid;gap:6px"><h3>${esc(a.title)}</h3><p>${esc(a.detail)}</p>
-      <div style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center"><span class="impact">${imp || 'Small effect on peaks'}${x.critSaved > 0 ? ` · ${x.critSaved} fewer unit-hours at critical` : ''}</span><span class="muted" style="font-size:.8rem">Owner: ${esc(a.owner)} · lead time ${a.lead ? a.lead + ' h' : 'none'}</span></div></div>
+    html += `<div class="act" id="act-${a.id}"><div style="display:grid;gap:6px"><h3>${esc(a.title)}</h3><p>${esc(a.detail)}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center"><span class="impact">${imp || 'Protects against the worst case'}${x.critSaved > 0 ? ` · ${x.critSaved} fewer unit-hours at critical` : ''}</span><span class="muted" style="font-size:.8rem">Owner: ${esc(a.owner)} · lead time ${a.lead ? a.lead + ' h' : 'none'}</span></div></div>
       <div class="btns"><button class="btn small primary" type="button" data-approve="${a.id}">Approve…</button><button class="btn small" type="button" data-try="${a.id}">Preview</button><button class="btn small ghost" type="button" data-dismiss="${a.id}">Dismiss</button></div>
-      ${conf ? `<form class="confirm" data-confirm="${a.id}"><label for="by-${a.id}">Approved by</label><input class="in" id="by-${a.id}" placeholder="Name and role" required value="${esc(store.get('approver', ''))}"><button class="btn small primary" type="submit">Confirm approval</button><button class="btn small ghost" type="button" data-cancel>Cancel</button><span class="muted" style="font-size:.8rem">Adds this action to the hospital plan from ${fmtT(A.now + a.lead)}.</span></form>` : ''}</div>`;
+      ${conf ? `<form class="confirm" data-confirm="${a.id}"><label for="by-${a.id}">Approved by</label><input class="in" id="by-${a.id}" placeholder="Name and role" required value="${esc(store.get('approver', ''))}"><button class="btn small primary" type="submit">Confirm approval</button><button class="btn small ghost" type="button" data-cancel>Cancel</button><span class="muted" style="font-size:.8rem">Adds this action to the plan from ${fmtT(A.now + a.lead)}.</span></form>` : ''}</div>`;
   }
   const nd = Object.keys(A.dismissed).length;
   if (nd) html += `<p class="muted small">${nd} suggestion${nd > 1 ? 's' : ''} dismissed. <button class="btn small ghost" type="button" data-undismiss>Show again</button></p>`;
@@ -924,103 +1196,132 @@ function renderActions() {
 function renderSeason() {
   const host = $('seasonChart'), W = Math.max(300, host.clientWidth || 600), Hh = 150, m = { l: 36, r: 10, t: 14, b: 22 };
   const d0 = -30, d1 = 90, f = feeds(), nowT = S.START + A.now * S.HOUR, pts = [];
-  for (let d = d0; d <= d1; d++) { const t = nowT + d * S.DAY; let up = 0; for (const se of S.SEASONS) up += se.amp * S.seasonRaw(se, t) * (f[se.id] || 1) * A.levers.seasonScale; pts.push([d, up * 100]); }
+  for (let d = d0; d <= d1; d++) { const t = nowT + d * S.DAY; let up = 0; for (const se of S.DISEASES) up += se.amp * S.seasonRaw(se, t) * (f[se.id] || 1) * A.levers.seasonScale; pts.push([d, up * 100]); }
   const yMax = Math.max(40, Math.ceil(Math.max(...pts.map(p => p[1])) / 10) * 10);
   const X = d => m.l + (d - d0) / (d1 - d0) * (W - m.l - m.r), Y = v => m.t + (1 - v / yMax) * (Hh - m.t - m.b);
   let g = '';
   for (let v = 0; v <= yMax; v += yMax > 60 ? 20 : 10) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${m.l - 5}" y="${Y(v) + 4}" text-anchor="end">+${v}%</text>`;
   for (let d = d0; d <= d1; d++) { const dt = new Date(nowT + d * S.DAY); if (dt.getDate() === 1) g += `<text x="${X(d) + 2}" y="${Hh - 6}">${MON[dt.getMonth()]}</text><line x1="${X(d)}" x2="${X(d)}" y1="${Hh - m.b}" y2="${Hh - m.b + 4}" stroke="var(--line)"/>`; }
   for (const [ht, name] of S.HOLIDAYS) { const dd = (ht - nowT) / S.DAY; if (dd > d0 && dd < d1) g += `<line x1="${X(dd)}" x2="${X(dd)}" y1="${Hh - m.b - 6}" y2="${Hh - m.b}" stroke="var(--accent)" stroke-width="2"><title>${esc(name)}</title></line>`; }
-  const area = `M${X(d0)} ${Y(0)}` + pts.map(p => `L${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join('') + `L${X(d1)} ${Y(0)}Z`;
-  g += `<path d="${area}" fill="var(--accent)" opacity=".15"/><path d="${pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
-  g += `<rect x="${X(0)}" y="${m.t}" width="${X(A.horizonDays) - X(0)}" height="${Hh - m.t - m.b}" fill="var(--ink)" opacity=".05"/>`;
-  g += `<line x1="${X(0)}" x2="${X(0)}" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--ink)"/><text x="${X(0) + 4}" y="${m.t + 8}" style="fill:var(--ink)">Today</text>`;
+  g += `<path d="M${X(d0)} ${Y(0)}${pts.map(p => `L${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join('')}L${X(d1)} ${Y(0)}Z" fill="var(--accent)" opacity=".15"/><path d="${pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  g += `<rect x="${X(0)}" y="${m.t}" width="${X(A.horizonDays) - X(0)}" height="${Hh - m.t - m.b}" fill="var(--ink)" opacity=".05"/><line x1="${X(0)}" x2="${X(0)}" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--ink)"/><text x="${X(0) + 4}" y="${m.t + 8}" style="fill:var(--ink)">Today</text>`;
   for (const e of S.DIWALI) { const dw = (e - nowT) / S.DAY; if (dw > d0 && dw < d1) g += `<line x1="${X(dw)}" x2="${X(dw)}" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--muted)" stroke-dasharray="3 3"/><text x="${X(dw) + 4}" y="${m.t + 8}">Diwali</text>`; }
-  host.innerHTML = `<p class="ink2" style="font-size:.85rem;margin-bottom:4px">Expected extra ED demand from seasonal illness in ${esc(S.CITY.name)}, % above a non-seasonal day (shaded: forecast window; ticks: public holidays)</p><svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Seasonal uplift on ED demand over 120 days">${g}</svg>`;
-  $('cityNote').textContent = S.CITY.note;
+  host.innerHTML = `<p class="ink2" style="font-size:.85rem;margin-bottom:4px">Expected extra ED demand from Mumbai's seasonal illness, % above a non-seasonal day (shaded: forecast window; ticks: public holidays)</p><svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Seasonal uplift on ED demand over 120 days">${g}</svg>`;
   const n = d1 - d0 + 1;
-  $('strips').innerHTML = S.SEASONS.map(se => {
+  $('strips').innerHTML = S.DISEASES.map(se => {
     let r = '';
-    for (let d = d0; d <= d1; d++) { const v = Math.min(1, S.seasonRaw(se, nowT + d * S.DAY) * (f[se.id] || 1)); if (v > 0.03) r += `<rect x="${(d - d0) / n * 100}%" y="2" width="${100 / n + 0.05}%" height="18" fill="var(--accent)" opacity="${(0.12 + v * 0.85).toFixed(2)}"/>`; }
-    r += `<line x1="${(0 - d0) / n * 100}%" x2="${(0 - d0) / n * 100}%" y1="0" y2="22" stroke="var(--ink)" stroke-width="1.5"/>`;
-    const nowV = S.seasonRaw(se, nowT) * (f[se.id] || 1);
-    return `<div class="strip"><div class="nm">${esc(se.name)}<small>${esc(se.window)} · now ${nowV < 0.05 ? 'inactive' : Math.round(Math.min(1.5, nowV) * 100) + '% of usual peak'}</small></div><svg role="img" aria-label="${esc(se.name)} intensity"><rect x="0" y="2" width="100%" height="18" fill="var(--surface-2)"/>${r}</svg></div>`;
+    for (let d = d0; d <= d1; d++) { const v = Math.min(1, S.seasonRaw(se, nowT + d * S.DAY) * (f[se.id] || 1)); if (v > 0.03) r += `<rect x="${(d - d0) / n * 100}%" y="2" width="${100 / n + 0.05}%" height="16" fill="var(--accent)" opacity="${(0.12 + v * 0.85).toFixed(2)}"/>`; }
+    r += `<line x1="${(0 - d0) / n * 100}%" x2="${(0 - d0) / n * 100}%" y1="0" y2="20" stroke="var(--ink)" stroke-width="1.5"/>`;
+    return `<div class="strip"><div class="nm">${esc(se.name)}<small>${esc(se.months)}</small></div><svg role="img" aria-label="${esc(se.name)} intensity"><rect x="0" y="2" width="100%" height="16" fill="var(--surface-2)"/>${r}</svg></div>`;
   }).join('');
 }
 function srcLine(s) { return `<span class="srcdot ${s.live ? 'live' : ''}"></span>${esc(s.msg)}`; }
 function renderFeeds() {
-  const v = A.feedVals, f = feeds(), dr = Math.round((v.dengueCases / v.dengueAvg - 1) * 100), c = S.CITY;
-  $('feedStatus').innerHTML = `Readings scale the seasonal model for ${esc(c.name)}. Weather and air quality come from Open-Meteo when the page can reach it; dengue and flu figures are entered from surveillance reports.`;
+  const v = A.feedVals, f = feeds();
+  const dr = Math.round((v.dengueCases / v.dengueAvg - 1) * 100), mr = Math.round((v.malariaCases / v.malariaAvg - 1) * 100);
+  $('feedStatus').innerHTML = 'Weather and air quality for Mumbai come from Open-Meteo when the page can reach it. Disease counts are entered from BMC / IDSP weekly reports.';
   $('feeds').innerHTML = [
-    `<div class="feed"><span class="eyebrow">Rain 2–5 weeks ago</span><span class="v">${Math.round(v.rainLag)} mm</span><span class="ink2 small">Mosquito breeding lag; dengue factor ×${f.rainF.toFixed(2)}. Last 7 days: ${Math.round(v.rain7)} mm.</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
-    `<div class="feed"><span class="eyebrow">Max temperature, next 3 days</span><span class="v">${Math.round(v.tmax)} °C</span><span class="ink2 small">Heat-illness factor ×${f.heat.toFixed(2)}</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
+    `<div class="feed"><span class="eyebrow">Rain today and next 3 days</span><span class="v">${Math.round(v.rainToday)} / ${Math.round(v.rainNext)} mm</span><span class="ink2 small">Today: ${S.rainClass(v.rainToday)} · worst coming day: ${S.rainClass(v.rainNext)} (IMD). Heavy rain slows ambulances.</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
+    `<div class="feed"><span class="eyebrow">Rain 2–5 weeks ago · heavy-rain days (14 d)</span><span class="v">${Math.round(v.rainLag)} mm · ${v.heavyRecent}</span><span class="ink2 small">Mosquito breeding lag (dengue ×${f.rainF.toFixed(2)}); heavy rain drives leptospirosis 1–2 weeks later.</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
     `<div class="feed"><span class="eyebrow">AQI forecast, next 3 days</span><span class="v">${v.aqi}</span><span class="ink2 small">${S.aqiBand(v.aqi)} · PM2.5 ${Math.round(v.pm25)}, PM10 ${Math.round(v.pm10)} µg/m³ (Indian AQI)</span><div class="row"><input class="in num" id="fd-aqi" type="number" min="0" max="500" value="${v.aqi}" aria-label="AQI override"><button class="btn small" type="button" data-feed="aqi">Override</button></div><span class="src">${srcLine(A.src.air)}</span></div>`,
-    `<div class="feed"><span class="eyebrow">Dengue cases, district, this week</span><span class="v">${v.dengueCases}</span><span class="ink2 small">${dr >= 0 ? '+' : '−'}${Math.abs(dr)}% vs 5-year average (${v.dengueAvg})</span><div class="row"><input class="in num" id="fd-dengue" type="number" min="0" max="50000" value="${v.dengueCases}" aria-label="Dengue weekly cases"><button class="btn small" type="button" data-feed="dengue">Record</button></div><span class="src"><span class="srcdot"></span>Enter from the IDSP / municipal weekly report</span></div>`,
-    `<div class="feed"><span class="eyebrow">Influenza-like illness index</span><span class="v">${(+v.ili).toFixed(2)}×</span><span class="ink2 small">Sentinel clinics vs seasonal norm</span><div class="row"><input class="in num" id="fd-ili" type="number" min="0.2" max="4" step="0.05" value="${v.ili}" aria-label="ILI index"><button class="btn small" type="button" data-feed="ili">Record</button></div><span class="src"><span class="srcdot"></span>Enter from sentinel surveillance</span></div>`
+    `<div class="feed"><span class="eyebrow">Max temperature, next 3 days</span><span class="v">${Math.round(v.tmax)} °C</span><span class="ink2 small">Heat-illness factor ×${f.heat.toFixed(2)}</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
+    `<div class="feed"><span class="eyebrow">Dengue cases, Mumbai, this week</span><span class="v">${v.dengueCases}</span><span class="ink2 small">${dr >= 0 ? '+' : '−'}${Math.abs(dr)}% vs usual (${v.dengueAvg})</span><div class="row"><input class="in num" id="fd-dengue" type="number" min="0" max="50000" value="${v.dengueCases}" aria-label="Dengue weekly cases"><button class="btn small" type="button" data-feed="dengue">Record</button></div><span class="src"><span class="srcdot"></span>Enter from the BMC weekly monsoon-illness report</span></div>`,
+    `<div class="feed"><span class="eyebrow">Malaria cases, Mumbai, this week</span><span class="v">${v.malariaCases}</span><span class="ink2 small">${mr >= 0 ? '+' : '−'}${Math.abs(mr)}% vs usual (${v.malariaAvg})</span><div class="row"><input class="in num" id="fd-malaria" type="number" min="0" max="50000" value="${v.malariaCases}" aria-label="Malaria weekly cases"><button class="btn small" type="button" data-feed="malaria">Record</button></div><span class="src"><span class="srcdot"></span>Enter from the BMC weekly monsoon-illness report</span></div>`,
+    `<div class="feed"><span class="eyebrow">Influenza-like illness index</span><span class="v">${(+v.ili).toFixed(2)}×</span><span class="ink2 small">Sentinel clinics vs seasonal norm</span><div class="row"><input class="in num" id="fd-ili" type="number" min="0.2" max="4" step="0.05" value="${v.ili}" aria-label="ILI index"><button class="btn small" type="button" data-feed="ili">Record</button></div><span class="src"><span class="srcdot"></span>Enter from IDSP sentinel surveillance</span></div>`
   ].join('');
 }
 
-/* live feeds (Open-Meteo, no key needed) */
+/* live feeds (Open-Meteo, no key) */
 async function getJSON(url) {
   const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 9000);
   try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); } finally { clearTimeout(to); }
 }
 const isoDay = t => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 async function fetchFeeds(quiet) {
-  const c = S.CITIES[A.setup.city], v = A.feedVals, today = isoDay(Date.now()), stamp = hh(new Date()) + ' ' + isoDay(Date.now());
-  const changes = [];
+  const c = S.MUMBAI, v = A.feedVals, today = isoDay(Date.now()), stamp = hh(new Date()) + ' ' + today, changes = [];
   try {
     const w = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&daily=precipitation_sum,temperature_2m_max&past_days=40&forecast_days=7&timezone=Asia%2FKolkata`);
     const T = w.daily.time, i = T.indexOf(today), pr = w.daily.precipitation_sum.map(x => x || 0);
     if (i < 0) throw new Error('no data for today');
     const sum = (a, b) => pr.slice(Math.max(0, i + a), Math.max(0, i + b)).reduce((x, y) => x + y, 0);
-    const lag = sum(-35, -13), r7 = sum(-7, 0), tmax = Math.max(...w.daily.temperature_2m_max.slice(i, i + 3).filter(x => x != null));
-    changes.push(`rain 2–5 weeks ago ${Math.round(v.rainLag)} → ${Math.round(lag)} mm, max temperature ${Math.round(tmax)} °C`);
-    Object.assign(v, { rainLag: lag, rain7: r7, tmax });
-    A.src.weather = { live: true, msg: `Live: Open-Meteo, ${c.name}, fetched ${stamp}` };
+    const rainDays = {}; T.forEach((d, j) => { rainDays[S.dayStart(new Date(d + 'T00:00').getTime())] = pr[j]; });
+    const tmax = Math.max(...w.daily.temperature_2m_max.slice(i, i + 3).filter(x => x != null));
+    const heavy = pr.slice(Math.max(0, i - 14), i).filter(x => x >= 64.5).length;
+    Object.assign(v, { rainLag: sum(-35, -13), rain7: sum(-7, 0), tmax, rainDays, rainToday: pr[i], rainNext: Math.max(...pr.slice(i + 1, i + 4)), heavyRecent: heavy });
+    changes.push(`rain today ${Math.round(pr[i])} mm (${S.rainClass(pr[i])}), ${heavy} heavy-rain day(s) in 2 weeks, max ${Math.round(tmax)} °C`);
+    A.src.weather = { live: true, msg: `Live: Open-Meteo, Mumbai, fetched ${stamp}` };
   } catch (e) { A.src.weather = { live: false, msg: `Simulated: live weather unavailable here (${e.name === 'AbortError' ? 'timed out' : 'blocked or offline'})` }; }
   try {
     const a = await getJSON(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${c.lat}&longitude=${c.lon}&hourly=pm2_5,pm10&past_days=1&forecast_days=4&timezone=Asia%2FKolkata`);
-    const T = a.hourly.time, by = {};
-    T.forEach((t, j) => { const d = t.slice(0, 10); (by[d] = by[d] || { p25: [], p10: [] }); if (a.hourly.pm2_5[j] != null) by[d].p25.push(a.hourly.pm2_5[j]); if (a.hourly.pm10[j] != null) by[d].p10.push(a.hourly.pm10[j]); });
+    const by = {};
+    a.hourly.time.forEach((t, j) => { const d = t.slice(0, 10); (by[d] = by[d] || { p25: [], p10: [] }); if (a.hourly.pm2_5[j] != null) by[d].p25.push(a.hourly.pm2_5[j]); if (a.hourly.pm10[j] != null) by[d].p10.push(a.hourly.pm10[j]); });
     const mean = x => x.reduce((p, q) => p + q, 0) / Math.max(1, x.length);
     const days = Object.keys(by).filter(d => d >= today).slice(0, 3).map(d => ({ p25: mean(by[d].p25), p10: mean(by[d].p10) })).filter(d => d.p25 > 0);
     if (!days.length) throw new Error('no forecast');
-    const worst = days.reduce((x, y) => S.indianAQI(y.p25, y.p10) > S.indianAQI(x.p25, x.p10) ? y : x);
-    const aqi = S.indianAQI(worst.p25, worst.p10);
+    const worst = days.reduce((x, y) => S.indianAQI(y.p25, y.p10) > S.indianAQI(x.p25, x.p10) ? y : x), aqi = S.indianAQI(worst.p25, worst.p10);
     changes.push(`AQI ${v.aqi} → ${aqi}`);
     Object.assign(v, { pm25: worst.p25, pm10: worst.p10, aqi });
     A.src.air = { live: true, msg: `Live: Open-Meteo air quality, fetched ${stamp}` };
   } catch (e) { A.src.air = { live: false, msg: `Simulated: live air quality unavailable here (${e.name === 'AbortError' ? 'timed out' : 'blocked or offline'})` }; }
-  if (A.src.weather.live || A.src.air.live) { addLog(`Live external data for ${c.name}: ${changes.join('; ')}. Forecast recalculated.`); recompute(false); }
+  A.lastFetch = Date.now();
+  if (A.src.weather.live || A.src.air.live) { addLog(`Live Mumbai data: ${changes.join('; ')}. Forecast recalculated.`); A.netAt = -999; recompute(false); }
   else { if (!quiet) toast('Live weather and air-quality data could not be reached; using simulated readings'); renderFeeds(); }
 }
 
 /* alerts */
+function recipientsFor(unit, sev) { return A.people.filter(p => (p.units === 'ALL' || p.units.split(',').includes(unit)) && (p.minSev === 'warning' || sev === 'critical')); }
 function evaluateAlerts() {
   const order = { warning: 1, critical: 2 }, min = order[A.rule.minSev];
   for (const s of ranked()) {
     const e = s.sev === 'critical' ? s.firstSerious : s.first;
     if (order[s.sev] < min || e.start > A.rule.leadH || s.pFirst < A.rule.prob) continue;
-    const existing = A.alerts.find(a => a.unit === s.unit && a.status !== 'dismissed' && a.startAbs > A.now - 24);
+    const existing = A.alerts.find(a => a.unit === s.unit && (a.status === 'review' || a.created > A.now - 72));
     if (existing && order[existing.sev] >= order[s.sev]) continue;
-    A.alerts.unshift(makeAlert(s, e));
+    pushAlert(makeAlert(s, e));
     addLog(`Alert drafted for ${UID[s.unit].long} (${s.sev}, ${Math.round(s.pFirst * 100)}% chance). Waiting for review.`, s.sev);
   }
 }
+function evaluateEpiAlert() {
+  const lv = epiLevel();
+  if (lv < 2) { if (A.epiAlertLevel >= 2 && lv < 1) { addLog('Outbreak watch back to normal on all syndromes.', 'ok'); A.epiAlertLevel = 0; } return; }
+  if (lv <= A.epiAlertLevel) return;
+  A.epiAlertLevel = lv;
+  const f = A.epiFit, d = A.det[f.syn], w = A.worst;
+  const short = w.rows.filter(r => r.full != null || (r.short && r.short[0] > 0.5)).map(r => `  • ${r.what}: ${r.full != null ? 'runs out ' + rel(r.full) + ' (' + fmtT(A.now + r.full) + ')' : ''}${r.short && r.short[0] > 0.5 ? ` — ${loc(r.short[0])} ${r.unit} short at worst` : ''}`).join('\n') || '  • No shortfall in the worst case.';
+  const acts = []; for (const r of w.rows) if (r.full != null || (r.short && r.short[0] > 0.5)) for (const id of r.act) if (!acts.includes(id)) acts.push(id);
+  const subject = `[Surge Watch] ${S.LEVELS[lv].toUpperCase()}: ${S.SYNDROMES[f.syn]} patients ${d.ratio.toFixed(2)}× expected at ${A.setup.name}`;
+  const body = `EPIDEMIC EARLY WARNING — Surge Watch, ${A.setup.name}, Mumbai
+Issued ${fmtT(A.now)}. Level: ${S.LEVELS[lv]}.
+
+Patients with ${S.SYNDROMES[f.syn].toLowerCase()} over the last 3 days: ${d.ratio.toFixed(2)}× the seasonal expectation (z = ${d.z.toFixed(1)})${d.doubling ? `, doubling about every ${d.doubling.toFixed(1)} days` : ''}.
+Other syndromes: ${Object.entries(A.det).filter(([k]) => k !== f.syn).map(([k, x]) => `${S.SYNDROMES[k].split(' (')[0]} ${x.ratio.toFixed(2)}× (${S.LEVELS[x.level]})`).join('; ')}.
+
+Prepare for the worst — ${w.title.toLowerCase()} (next ${w.days} days, with staff sickness and supply disruption):
+${short}
+
+Recommended preparedness actions (not yet approved):
+${acts.slice(0, 8).map(id => `  • ${S.ACTION_BY_ID[id].title} (owner: ${S.ACTION_BY_ID[id].owner}, lead time ${S.ACTION_BY_ID[id].lead} h)`).join('\n') || '  • Review isolation, oxygen and staffing plans.'}
+
+Please confirm the cluster with laboratory testing and notify the BMC Epidemiology Cell / IDSP as per protocol.
+Data: ${A.imported ? 'imported census data' : 'SIMULATED observations' + (A.drill ? ' including an OUTBREAK DRILL' : '')}. No action has been taken automatically; decisions rest with hospital staff.`;
+  pushAlert({ id: 'e' + Date.now(), unit: 'EPI', epi: true, sev: 'critical', created: A.now, startAbs: A.now, subject, body, to: recipientsFor('EPI', 'critical').map(p => p.email), status: 'review' });
+  addLog(`${S.LEVELS[lv]} detected: ${S.SYNDROMES[f.syn]} at ${d.ratio.toFixed(2)}× expected. Epidemic alert drafted; forecasts now include the outbreak.`, 'critical');
+  notify(`${S.LEVELS[lv]}: ${S.SYNDROMES[f.syn]}`, `${d.ratio.toFixed(2)}× expected at ${A.setup.name}. Alert draft waiting for review.`);
+}
+function pushAlert(a) { A.alerts.unshift(a); if (!a.epi) notify(a.subject.replace('[Surge Watch] ', ''), 'Alert draft waiting for review.'); }
 function makeAlert(s, e) {
   const u = UID[s.unit], x = explain(s.unit);
-  const recips = A.people.filter(p => (p.units === 'ALL' || p.units.split(',').includes(s.unit)) && (p.minSev === 'warning' || s.sev === 'critical'));
   const drivers = x.drivers.filter(d => d.delta > 0).slice(0, 3).map(d => `  • ${d.name} (+${d.delta.toFixed(0)} pts)`).join('\n');
   const knock = Object.values(A.F.sum).filter(o => o.unit !== s.unit).map(o => `  • ${UID[o.unit].long}: ${o.sev}, from ${fmtT(A.now + o.firstSerious.start)}`).join('\n') || '  • No other unit expected above 95%.';
   const acts = S.ACTIONS.filter(a => a.units.includes(s.unit) && !A.approved.some(p => p.id === a.id)).slice(0, 3).map(a => `  • ${a.title} (owner: ${a.owner})`).join('\n');
+  const spare = (A.net || []).filter(r => !r.focus).sort((a, b) => b.genFree - a.genFree).slice(0, 2).map(r => `${r.h.name} (~${loc(r.genFree)} ward beds)`).join(', ');
   const subject = `[Surge Watch] ${SEV_LABEL[s.sev]}: ${u.long} expected to reach ${pct(s.worst.peak)} from ${fmtT(A.now + e.start)}`;
-  const body = `Early warning from Surge Watch, ${A.setup.name}
+  const body = `Early warning from Surge Watch, ${A.setup.name}, Mumbai
 Issued ${fmtT(A.now)} for review by the recipients below.
 
 ${u.long} is expected to pass the ${s.sev === 'critical' ? 'critical (105%)' : 'warning (95%)'} level ${rel(e.start)}, at ${fmtT(A.now + e.start)}.
 Expected peak: ${pct(s.worst.peak)} on ${fmtT(A.now + s.worst.peakAt)}. Above 95% for ${s.hours} h in the next ${A.horizonDays} days.
-Probability: ${Math.round(s.pFirst * 100)}% of ${A.F.ens.n} simulated futures reach this level by then; ${Math.round(s.pCrit * 100)}% pass 105% within ${A.horizonDays} days.
+Probability: ${Math.round(s.pFirst * 100)}% of ${A.F.ens.n} simulated futures reach this level by then.
 Measure: ${u.measure}.
 
 Main contributing factors
@@ -1031,62 +1332,66 @@ ${knock}
 
 Preventive actions for consideration (not yet approved)
 ${acts || '  • See Surge Watch for options.'}
-
-Data: ${A.imported ? 'imported census data' : 'simulated observations'}; weather ${A.src.weather.live ? 'live' : 'simulated'}; air quality ${A.src.air.live ? 'live' : 'simulated'}.
-This is a decision-support forecast. No action has been taken automatically; please record decisions in Surge Watch.`;
-  return { id: 'a' + Date.now() + Math.random().toString(36).slice(2, 6), unit: s.unit, sev: s.sev, created: A.now, startAbs: A.now + e.start, subject, body, to: recips.map(p => p.email), status: 'review' };
+${spare ? `\nNearby hospitals with most estimated spare beds: ${spare}.\n` : ''}
+Data: ${A.imported ? 'imported census data' : 'SIMULATED observations'}; weather ${A.src.weather.live ? 'live' : 'simulated'}; air quality ${A.src.air.live ? 'live' : 'simulated'}.
+This is a decision-support forecast. No action has been taken automatically.`;
+  return { id: 'a' + Date.now() + Math.random().toString(36).slice(2, 6), unit: s.unit, sev: s.sev, created: A.now, startAbs: A.now + e.start, subject, body, to: recipientsFor(s.unit, s.sev).map(p => p.email), status: 'review' };
+}
+function notify(title, body) {
+  try { if ('Notification' in window && Notification.permission === 'granted') new Notification('Surge Watch — ' + title, { body }); } catch (e) {}
 }
 function renderAlerts() {
   $('ruleSev').value = A.rule.minSev; $('ruleLead').value = String(A.rule.leadH); $('ruleProb').value = String(A.rule.prob);
-  const paused = leversChanged() ? `<div class="empty">New alerts are paused while a what-if scenario is on, so hypothetical numbers are never sent to stakeholders. Clear the scenario to resume.</div>` : '';
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  $('notifyStatus').textContent = perm === 'granted' ? 'Desktop notifications are on for new alert drafts.' : perm === 'denied' ? 'Notifications are blocked in this browser or viewer.' : perm === 'unsupported' ? 'This browser does not support notifications.' : 'Off.';
+  $('notifyBtn').hidden = perm === 'granted' || perm === 'unsupported';
+  const paused = leversChanged() ? `<div class="empty">Routine alerts are paused while a what-if scenario is on, so hypothetical numbers are never sent. Epidemic alerts still fire from observed data.</div>` : '';
   const list = A.alerts.filter(a => a.status !== 'dismissed');
-  if (!list.length) { $('alerts').innerHTML = paused + `<div class="empty">No alert drafts. A draft appears here when a ${A.rule.minSev === 'critical' ? 'critical' : 'warning or critical'} bottleneck has at least a ${Math.round(A.rule.prob * 100)}% chance of starting within ${A.rule.leadH} h.</div>`; return; }
-  $('alerts').innerHTML = paused + list.slice(0, 6).map(a => `<div class="alert"><div class="alert-head"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${pill(a.sev)}<b>${esc(UID[a.unit].long)}</b><span class="muted" style="font-size:.82rem">drafted ${fmtT(a.created)}</span></div>
+  if (!list.length) { $('alerts').innerHTML = paused + `<div class="empty">No alert drafts. A draft appears when a ${A.rule.minSev === 'critical' ? 'critical' : 'warning or critical'} bottleneck has at least a ${Math.round(A.rule.prob * 100)}% chance of starting within ${A.rule.leadH} h, or when an outbreak is detected.</div>`; return; }
+  $('alerts').innerHTML = paused + list.slice(0, 6).map(a => `<div class="alert ${a.epi ? 'epi' : ''}"><div class="alert-head"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${pill(a.sev, a.epi ? 'Epidemic' : SEV_LABEL[a.sev])}<b>${esc(a.epi ? 'Outbreak watch' : UID[a.unit].long)}</b><span class="muted" style="font-size:.82rem">drafted ${fmtT(a.created)}</span></div>
     ${a.status === 'sent' ? pill('info', 'Marked sent by ' + a.sentBy) : pill('watch', 'Needs review')}</div>
     <div><span class="eyebrow">To</span> <span class="recips">${esc(a.to.join(', ') || 'No matching stakeholders')}</span></div>
     <div><span class="eyebrow">Subject</span> <span style="font-size:.9rem">${esc(a.subject)}</span></div>
-    <details><summary style="cursor:pointer;font-size:.88rem">Email text</summary><div class="email" tabindex="0">${esc(a.body)}</div></details>
+    <details ${a.epi ? 'open' : ''}><summary style="cursor:pointer;font-size:.88rem">Email text</summary><div class="email" tabindex="0">${esc(a.body)}</div></details>
     <div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn small primary" type="button" data-copy="${a.id}">Copy email</button><a class="btn small" href="mailto:${encodeURIComponent(a.to.join(','))}?subject=${encodeURIComponent(a.subject)}&body=${encodeURIComponent(a.body)}" target="_blank" rel="noopener">Open in mail app</a>${a.status !== 'sent' ? `<button class="btn small" type="button" data-sent="${a.id}">Mark as sent</button>` : ''}<button class="btn small ghost" type="button" data-dismiss-alert="${a.id}">Dismiss</button></div></div>`).join('');
 }
 function renderPeople() {
-  $('people').innerHTML = `<thead><tr><th>Role</th><th>Email</th><th>Units</th><th>Notify on</th><th></th></tr></thead><tbody>` + A.people.map((p, i) => `<tr><td>${esc(p.role)}</td><td class="mono" style="font-size:.8rem;overflow-wrap:anywhere">${esc(p.email)}</td><td>${p.units === 'ALL' ? 'All' : esc(p.units.split(',').map(u => UID[u] ? UID[u].name : u).join(', '))}</td><td><select class="in" data-psev="${i}" aria-label="Severity for ${esc(p.role)}"><option value="warning"${p.minSev === 'warning' ? ' selected' : ''}>Warning+</option><option value="critical"${p.minSev === 'critical' ? ' selected' : ''}>Critical</option></select></td><td><button class="btn small ghost" type="button" data-pdel="${i}" aria-label="Remove ${esc(p.role)}">Remove</button></td></tr>`).join('') + '</tbody>';
-  const sel = $('pUnits'); if (sel.options.length === 1) sel.innerHTML += U.map(u => `<option value="${u.id}">${esc(u.long)}</option>`).join('');
+  const un = u => u === 'ALL' ? 'All' : u.split(',').map(x => x === 'EPI' ? 'Outbreaks' : UID[x] ? UID[x].name : x).join(', ');
+  $('people').innerHTML = `<thead><tr><th>Role</th><th>Email</th><th>Covers</th><th>Notify on</th><th></th></tr></thead><tbody>` + A.people.map((p, i) => `<tr><td>${esc(p.role)}</td><td class="mono" style="font-size:.8rem;overflow-wrap:anywhere">${esc(p.email)}</td><td>${esc(un(p.units))}</td><td><select class="in" data-psev="${i}" aria-label="Severity for ${esc(p.role)}"><option value="warning"${p.minSev === 'warning' ? ' selected' : ''}>Warning+</option><option value="critical"${p.minSev === 'critical' ? ' selected' : ''}>Critical</option></select></td><td><button class="btn small ghost" type="button" data-pdel="${i}" aria-label="Remove ${esc(p.role)}">Remove</button></td></tr>`).join('') + '</tbody>';
+  const sel = $('pUnits'); if (sel.options.length === 2) sel.innerHTML += U.map(u => `<option value="${u.id}">${esc(u.long)}</option>`).join('');
 }
 function renderLog() { $('log').innerHTML = A.log.map(l => `<div><span class="num">${fmtT(l.at).replace(',', '')}</span><span>${l.sev && l.sev !== 'ok' ? pill(l.sev) + ' ' : ''}${esc(l.text)}</span></div>`).join(''); }
 function renderFoot() {
-  $('foot').textContent = `${A.imported ? 'Ward and ED observations come from the imported file; anything not in the file is simulated.' : 'Patients, census and surveillance figures are simulated for demonstration.'} The model is an hour-by-hour flow simulation: arrivals by hour, weekday and season; routing to wards; length of stay; discharge timing on weekdays, weekends and public holidays; bed cleaning; lab and imaging queues; platelet stock; and nurse ratios. Uncertainty comes from ${A.F.ens.n} Monte Carlo runs with random arrivals, admissions, discharges, day-to-day demand shocks and outbreak strength. Forecasts support decisions by hospital staff; they do not make them.`;
+  $('foot').textContent = `${A.imported ? 'Observations for this hospital come from the imported file; anything not in the file is simulated.' : 'Hospital occupancy, patients and stocks are simulated: Mumbai hospitals do not publish live bed data.'} Bed counts are from public sources; other capacities are estimated from bed counts with typical ratios. The model is an hour-by-hour flow simulation of arrivals by hour, weekday and Mumbai season; routing to wards, ICU and isolation; length of stay; discharges on weekdays, weekends and holidays; bed cleaning; lab, X-ray and CT queues; oxygen, platelets and ambulances; and nurse ratios. Uncertainty comes from ${A.F.ens.n} Monte Carlo runs. Forecasts support decisions by hospital staff; they do not make them.`;
+  $('sources').innerHTML = 'Sources: bed counts — KEM Medical Records report 2021–23; hospital websites, Wikipedia and published profiles (hover "source" in the network table). Disease figures — BMC data via Free Press Journal and The Week (2025–2026). Oxygen context — BMC liquid-oxygen tank programme and the April 2021 shortage. Rain classes — India Meteorological Department. AQI — CPCB National AQI breakpoints. Weather and air quality — Open-Meteo.';
 }
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3200); }
 
 /* ---------------- accuracy (backtest) ---------------- */
 function backtest() {
-  const hist = A.history, byK = new Map(hist.map(x => [x.k, x])), res = {}, cover = {}, cnt = {};
+  const byK = new Map(A.history.map(x => [x.k, x])), res = {}, cover = {};
   for (const u of U) { res[u.id] = []; cover[u.id] = [0, 0]; }
   const origins = [];
-  for (let d = 1; d <= 7; d++) { const o = A.now - 24 * d; const prev = byK.get(o - 1); if (prev && prev.state && byK.get(o + 23)) origins.push([o, prev.state]); }
+  for (let d = 1; d <= 7; d++) { const o = A.now - 24 * d, prev = byK.get(o - 1); if (prev && prev.state && byK.get(o + 23)) origins.push([o, prev.state]); }
   for (const [o, st] of origins) {
-    const run = { levers: S.defaultLevers(), actions: [], feeds: feeds(), flags: {} };
+    const run = { levers: S.defaultLevers(), actions: [], feeds: feeds(), flags: {}, epi: A.drill };
     const det = S.simulate(st, o, 24, run), ens = S.ensemble(st, o, 24, run, 12, o + 5);
     for (let i = 0; i < 24; i++) {
       const act = byK.get(o + i); if (!act) continue;
-      for (const u of U) {
-        const a = act.p[u.id]; if (a == null) continue;
-        res[u.id].push(Math.abs(det[i].p[u.id] - a));
-        cover[u.id][1]++; if (a >= ens.p10[i].p[u.id] - 0.005 && a <= ens.p90[i].p[u.id] + 0.005) cover[u.id][0]++;
-      }
+      for (const u of U) { const a = act.p[u.id]; if (a == null) continue; res[u.id].push(Math.abs(det[i].p[u.id] - a)); cover[u.id][1]++; if (a >= ens.p10[i].p[u.id] - 0.005 && a <= ens.p90[i].p[u.id] + 0.005) cover[u.id][0]++; }
     }
   }
   A.acc = { origins: origins.length, units: U.map(u => ({ id: u.id, mae: res[u.id].length ? res[u.id].reduce((a, b) => a + b, 0) / res[u.id].length * 100 : null, cov: cover[u.id][1] ? cover[u.id][0] / cover[u.id][1] : null, n: res[u.id].length })) };
 }
 function renderAcc() {
   const a = A.acc;
-  if (!a || !a.origins) { $('accNote').textContent = 'Needs at least two days of history with full hourly data. Import more rows or let the clock run.'; $('acc').innerHTML = ''; return; }
+  if (!a || !a.origins) { $('accNote').textContent = 'Needs at least two days of history with full hourly data.'; $('acc').innerHTML = ''; return; }
   $('accNote').textContent = `Each of the last ${a.origins} days, the model forecast the next 24 h from the state it saw at that hour. This compares those forecasts with what was then observed${A.imported ? ' in your imported data' : ' (simulated observations, so this checks the method, not real-world accuracy)'}.`;
   $('acc').innerHTML = `<thead><tr><th>Unit</th><th>Average error, 24 h ahead</th><th>Hours inside the 80% range</th><th>Hours compared</th></tr></thead><tbody>` + a.units.map(u => `<tr><td>${esc(UID[u.id].long)}</td><td class="num">${u.mae == null ? '—' : u.mae.toFixed(1) + ' pts'}</td><td class="num">${u.cov == null ? '—' : Math.round(u.cov * 100) + '%'}</td><td class="num">${u.n || '—'}</td></tr>`).join('') + '</tbody>';
 }
 
 /* ---------------- data import ---------------- */
-const COLS = ['timestamp', 'ed_arrivals', 'ed_census', 'ed_waiting_for_bed', 'med_occupied', 'surg_occupied', 'icu_occupied', 'peds_occupied', 'lab_backlog', 'platelet_stock'];
+const COLS = ['timestamp', 'ed_arrivals', 'ed_census', 'ed_waiting_for_bed', 'med_occupied', 'surg_occupied', 'icu_occupied', 'peds_occupied', 'iso_occupied', 'lab_backlog', 'platelet_stock', 'oxygen_stock', 'ambulances_busy'];
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) throw new Error('Need a header row and at least one data row.');
@@ -1104,118 +1409,120 @@ function parseCSV(text) {
   }).sort((a, b) => a.t - b.t);
   return { rows, head, unknown };
 }
-function rowState(r, prevState) {
-  const st = prevState ? S.cloneState(prevState) : S.initialState();
+const WCOL = [['med_occupied', 'MED'], ['surg_occupied', 'SURG'], ['icu_occupied', 'ICU'], ['peds_occupied', 'PEDS'], ['iso_occupied', 'ISO']];
+function rowState(r, prev) {
+  const st = prev ? S.cloneState(prev) : S.initialState();
   if (r.ed_census != null) st.ed = r.ed_census;
-  if (r.ed_waiting_for_bed != null) { st.bd = { MED: r.ed_waiting_for_bed * 0.7, SURG: r.ed_waiting_for_bed * 0.1, ICU: r.ed_waiting_for_bed * 0.05, PEDS: r.ed_waiting_for_bed * 0.15 }; }
-  for (const [c, u] of [['med_occupied', 'MED'], ['surg_occupied', 'SURG'], ['icu_occupied', 'ICU'], ['peds_occupied', 'PEDS']]) if (r[c] != null) st.occ[u] = r[c];
+  if (r.ed_waiting_for_bed != null) { const w = r.ed_waiting_for_bed; st.bd = { MED: w * 0.68, SURG: w * 0.1, ICU: w * 0.05, PEDS: w * 0.15, ISO: w * 0.02 }; }
+  for (const [c, u] of WCOL) if (r[c] != null) st.occ[u] = r[c];
   if (r.lab_backlog != null) st.labQ = r.lab_backlog;
   if (r.platelet_stock != null) st.plt = r.platelet_stock;
+  if (r.oxygen_stock != null) st.o2 = r.oxygen_stock;
+  if (r.ambulances_busy != null) st.amb = r.ambulances_busy;
   return st;
 }
-function applyImport(parsed, silent) {
+function applyImport(parsed) {
   const { rows } = parsed, last = rows[rows.length - 1];
-  const stepH = rows.length > 1 ? Math.max(1, Math.round((rows[rows.length - 1].t - rows[0].t) / S.HOUR / (rows.length - 1))) : 1;
+  const stepH = rows.length > 1 ? Math.max(1, Math.round((last.t - rows[0].t) / S.HOUR / (rows.length - 1))) : 1;
   S.setStart(last.t + S.HOUR);
-  // Calibrate demand from ED arrivals against what the model expects for the same hours.
   let act = 0, exp = 0;
   const f = feeds();
-  P_reset();
+  applyConfig(); S.P.arrScale = 1;
   for (const r of rows) if (r.ed_arrivals != null) { act += r.ed_arrivals; for (let i = 0; i < stepH; i++) exp += S.expectedAt(r.t - (stepH - 1 - i) * S.HOUR, f); }
-  if (exp > 0) S.P.arrScale = Math.max(0.3, Math.min(3, act / exp));
+  A.arrScale = exp > 0 ? Math.max(0.3, Math.min(3, act / exp)) : 1; S.P.arrScale = A.arrScale;
   A.history = []; let st = null;
   for (const r of rows) {
     st = rowState(r, st);
     const k = Math.round((r.t - S.START) / S.HOUR), p = {};
-    const bd = st.bd.MED + st.bd.SURG + st.bd.ICU + st.bd.PEDS;
     if (r.ed_census != null) p.ED = (r.ed_census + (r.ed_waiting_for_bed || 0)) / S.P.edSpaces;
-    for (const [c, u] of [['med_occupied', 'MED'], ['surg_occupied', 'SURG'], ['peds_occupied', 'PEDS']]) if (r[c] != null) p[u] = r[c] / S.P.beds[u];
-    if (r.icu_occupied != null) p.ICU = r.icu_occupied / S.P.beds.ICU;
-    const exph = S.expectedAt(r.t, f) * stepH;
-    A.history.push({ k, t: r.t, p, arrivals: r.ed_arrivals != null ? r.ed_arrivals / stepH : null, expected: r.ed_arrivals != null ? exph / stepH : null, state: S.cloneState(st), stepH, boarders: bd });
+    for (const [c, u] of WCOL) if (r[c] != null) p[u] = r[c] / S.P.beds[u];
+    if (r.ambulances_busy != null) p.AMB = r.ambulances_busy / S.P.amb;
+    A.history.push({ k, t: r.t, p, arrivals: r.ed_arrivals != null ? r.ed_arrivals / stepH : null, expected: r.ed_arrivals != null ? S.expectedAt(r.t, f) : null, state: S.cloneState(st), boarders: r.ed_waiting_for_bed || 0 });
   }
   A.state = rowState(last, st);
-  A.imported = parsed;
-  if (!silent) addLog(`Imported ${rows.length} rows (${stepH === 24 ? 'daily' : stepH === 1 ? 'hourly' : 'every ' + stepH + ' h'}), ${fmtT(-Math.round((S.START - rows[0].t) / S.HOUR))} to ${fmtT(-1)}. ${act ? `Demand calibrated ×${S.P.arrScale.toFixed(2)} to your ED arrivals.` : 'No ED arrivals column, so demand uses the setup value.'}`);
+  addLog(`Imported ${rows.length} rows (${stepH === 24 ? 'daily' : stepH === 1 ? 'hourly' : 'every ' + stepH + ' h'}). ${act ? `Demand calibrated ×${A.arrScale.toFixed(2)} to your ED arrivals.` : 'No ED arrivals column, so demand uses the setup value.'}`);
 }
-function P_reset() { S.configure(A.setup); }
 function sampleCSV() {
-  const rows = A.history.filter(x => x.occ).slice(-24 * 7).filter((x, i) => i % 6 === 5);
-  const r2 = n => Math.round(n);
-  return 'timestamp,ed_arrivals,ed_census,ed_waiting_for_bed,med_occupied,surg_occupied,icu_occupied,peds_occupied,lab_backlog,platelet_stock\n' +
-    rows.map(x => { const d = new Date(x.t); const ts = `${isoDay(x.t)} ${hh(d)}`; const arr6 = A.history.filter(y => y.k > x.k - 6 && y.k <= x.k).reduce((a, y) => a + (y.arrivals || 0), 0);
-      return [ts, r2(arr6), r2(x.edCensus), r2(x.boarders), r2(x.occ.MED), r2(x.occ.SURG), r2(x.occ.ICU), r2(x.occ.PEDS), r2(x.state ? x.state.labQ : 0), r2(x.plt)].join(','); }).join('\n');
+  const rows = A.history.filter(x => x.occ).slice(-24 * 7).filter((x, i) => i % 6 === 5), r2 = Math.round;
+  return COLS.join(',') + '\n' + rows.map(x => { const arr6 = A.history.filter(y => y.k > x.k - 6 && y.k <= x.k).reduce((a, y) => a + (y.arrivals || 0), 0);
+    return [`${isoDay(x.t)} ${hh(new Date(x.t))}`, r2(arr6), r2(x.edCensus), r2(x.boarders), r2(x.occ.MED), r2(x.occ.SURG), r2(x.occ.ICU), r2(x.occ.PEDS), r2(x.occ.ISO), r2(x.state ? x.state.labQ : 0), r2(x.plt), r2(x.o2), r2(x.ambBusy)].join(','); }).join('\n');
 }
 
 /* ---------------- setup form ---------------- */
-function fillSetup() {
-  const s = A.setup;
-  $('s-city').innerHTML = Object.entries(S.CITIES).map(([k, c]) => `<option value="${k}">${esc(c.name)}</option>`).join('');
-  const set = (id, v) => { $(id).value = v; };
-  set('s-name', s.name); set('s-city', s.city); set('s-arr', s.arrPerDay); set('s-ed', s.edSpaces);
-  for (const u of ['MED', 'SURG', 'ICU', 'PEDS']) set('s-' + u, s.beds[u]);
-  set('s-vents', s.vents); s.nurses.forEach((v, i) => set('s-n' + i, v)); s.docs.forEach((v, i) => set('s-d' + i, v));
-  set('s-labd', s.lab.day); set('s-labn', s.lab.night); set('s-imgd', s.img.day); set('s-imgn', s.img.night); set('s-pltS', s.plateletSupply); set('s-pltN', s.plateletStock);
-}
+const SF = [['s-name', s => s.name], ['s-arr', s => s.arrPerDay], ['s-ed', s => s.edSpaces], ['s-amb', s => s.ambulances], ['s-MED', s => s.beds.MED], ['s-SURG', s => s.beds.SURG], ['s-ICU', s => s.beds.ICU], ['s-PEDS', s => s.beds.PEDS], ['s-ISO', s => s.beds.ISO], ['s-vents', s => s.vents],
+  ['s-n0', s => s.nurses[0]], ['s-n1', s => s.nurses[1]], ['s-n2', s => s.nurses[2]], ['s-d0', s => s.docs[0]], ['s-d1', s => s.docs[1]], ['s-d2', s => s.docs[2]], ['s-labd', s => s.lab.day], ['s-labn', s => s.lab.night],
+  ['s-xrd', s => s.xray.day], ['s-xrn', s => s.xray.night], ['s-imgd', s => s.img.day], ['s-imgn', s => s.img.night], ['s-o2c', s => s.o2Capacity], ['s-o2d', s => s.o2Delivery], ['s-pltS', s => s.plateletSupply], ['s-pltN', s => s.plateletStock]];
+function fillSetup(s) { for (const [id, f] of SF) $(id).value = f(s || A.setup); }
 function readSetup() {
   const n = id => { const v = +$(id).value; if (!isFinite(v) || v < 0) throw new Error('Check the value for ' + $(id).closest('label').querySelector('span').textContent); return v; };
-  return { name: $('s-name').value.trim() || 'Hospital', city: $('s-city').value, arrPerDay: n('s-arr'), edSpaces: n('s-ed'),
-    beds: { MED: n('s-MED'), SURG: n('s-SURG'), ICU: n('s-ICU'), PEDS: n('s-PEDS') }, vents: n('s-vents'),
-    nurses: [n('s-n0'), n('s-n1'), n('s-n2')], docs: [n('s-d0'), n('s-d1'), n('s-d2')],
-    lab: { day: n('s-labd'), night: n('s-labn') }, img: { day: n('s-imgd'), night: n('s-imgn') }, plateletSupply: n('s-pltS'), plateletStock: n('s-pltN') };
+  return { name: $('s-name').value.trim() || A.setup.name, arrPerDay: n('s-arr'), edSpaces: n('s-ed'), ambulances: n('s-amb'),
+    beds: { MED: n('s-MED'), SURG: n('s-SURG'), ICU: n('s-ICU'), PEDS: n('s-PEDS'), ISO: n('s-ISO') }, vents: n('s-vents'),
+    nurses: [n('s-n0'), n('s-n1'), n('s-n2')], docs: [n('s-d0'), n('s-d1'), n('s-d2')], lab: { day: n('s-labd'), night: n('s-labn') },
+    xray: { day: n('s-xrd'), night: n('s-xrn') }, img: { day: n('s-imgd'), night: n('s-imgn') }, o2Capacity: n('s-o2c'), o2Delivery: n('s-o2d'), plateletSupply: n('s-pltS'), plateletStock: n('s-pltN') };
 }
 
 /* ---------------- clock ---------------- */
 function advance(hours) {
   for (let i = 0; i < hours; i++) {
-    const rec = S.step(A.state, 0, A.now, { levers: S.defaultLevers(), actions: activeActions(), feeds: feeds(), rand: A.rand });
+    const rec = S.step(A.state, 0, A.now, obsRun());
     rec.state = S.cloneState(A.state);
     A.history.push(rec); A.now++;
     if (A.history.length > 24 * 40) A.history.shift();
     if (tOf(A.now).getHours() === 8) dailyUpdate();
   }
-  updateNowcast();
+  updateNowcast(); detect();
   recompute(false);
   if (hours >= 24 || tOf(A.now).getHours() === 9) { backtest(); renderAcc(); }
 }
 function dailyUpdate() {
-  const v = A.feedVals, r = A.rand, t = S.START + A.now * S.HOUR, se = S.SEASONS[0];
-  const prevD = v.dengueCases;
-  const trend = S.seasonRaw(se, t) / Math.max(0.05, S.seasonRaw(se, t - 7 * S.DAY));
-  v.dengueCases = Math.max(5, Math.round(v.dengueCases * Math.pow(trend, 1 / 7) * (1 + (r() - 0.45) * 0.12)));
-  v.dengueAvg = Math.max(5, Math.round(v.dengueAvg * Math.pow(trend, 1 / 7)));
-  let msg = `Daily surveillance update: dengue ${prevD} → ${v.dengueCases} cases/week.`;
-  if (A.mode === 'fast' && !A.src.air.live) {
-    const dDiwali = Math.min(...S.DIWALI.map(e => (e - t) / S.DAY).filter(x => x > -6));
-    const prevA = v.aqi; v.aqi = Math.max(30, Math.min(480, Math.round(v.aqi + (dDiwali < 25 ? 8 : -3) + (r() - 0.5) * 24))); msg += ` AQI ${prevA} → ${v.aqi} (simulated).`;
-  }
-  addLog(msg);
+  const v = A.feedVals, r = A.rand, t = S.START + A.now * S.HOUR;
+  const drift = (id, key, avg) => { const se = S.DISEASES.find(d => d.id === id), tr = S.seasonRaw(se, t) / Math.max(0.05, S.seasonRaw(se, t - 7 * S.DAY)); v[key] = Math.max(5, Math.round(v[key] * Math.pow(tr, 1 / 7) * (1 + (r() - 0.45) * 0.1))); v[avg] = Math.max(5, Math.round(v[avg] * Math.pow(tr, 1 / 7))); };
+  const pd = v.dengueCases, pm = v.malariaCases;
+  drift('dengue', 'dengueCases', 'dengueAvg'); drift('malaria', 'malariaCases', 'malariaAvg');
+  addLog(`Daily surveillance update: dengue ${pd} → ${v.dengueCases}, malaria ${pm} → ${v.malariaCases} cases/week${A.mode === 'fast' ? ' (simulated)' : ''}.`);
 }
 function setLive(on) {
   A.live = on; clearInterval(A.timer); A.timer = null;
   if (on && A.mode === 'fast') A.timer = setInterval(() => advance(1), 2500);
   if (on && A.mode === 'real') {
-    const tick = () => { const due = Math.floor((S.floorHour(Date.now()) - S.START) / S.HOUR) - A.now; if (due > 0) advance(Math.min(due, 48)); };
-    tick(); A.timer = setInterval(() => { tick(); if (Date.now() - (A.lastFetch || 0) > 30 * 60e3) { A.lastFetch = Date.now(); fetchFeeds(true); } }, 30e3);
+    const tick = () => { const due = Math.floor((S.floorHour(Date.now()) - S.START) / S.HOUR) - A.now; if (due > 0) advance(Math.min(due, 48)); if (Date.now() - (A.lastFetch || 0) > 30 * 60e3) fetchFeeds(true); };
+    A.timer = setInterval(tick, 30e3);
   }
   renderBar();
 }
 
 /* ---------------- events ---------------- */
+function switchHospital(id) {
+  store.set('hospital', id); setLive(false);
+  boot({ feedVals: A.feedVals, src: A.src, mode: A.mode, drill: A.drill });
+  fillSetup(); toast('Now forecasting ' + A.setup.name);
+}
 document.addEventListener('click', e => {
+  const g = e.target.closest('g[data-hosp]'); if (g) { switchHospital(g.dataset.hosp); return; }
   const t = e.target.closest('button, a, td[data-unit]');
   if (!t) return;
   const d = t.dataset;
-  if (d.unit) { A.selUnit = d.unit; renderCards(); renderTabs(); renderChart(); renderWhy(); renderHeat(); if (t.classList.contains('card') || t.tagName === 'TD') $('h-fc').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (d.hosp) { switchHospital(d.hosp); return; }
+  if (d.unit) { A.selUnit = d.unit; renderCards(); renderTabs(); renderChart(); renderWhy(); renderHeat(); if (t.classList.contains('card') || t.classList.contains('tile') || t.tagName === 'TD') $('h-fc').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   if (t.id === 'liveBtn') return setLive(!A.live);
   if (t.id === 'stepBtn') return advance(1);
   if (t.id === 'dayBtn') return advance(24);
-  if (t.id === 'resetBtn') { setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: A.imported }); toast('Forecast restarted'); return; }
-  if (t.id === 'refetch') { toast('Fetching live weather and air quality…'); fetchFeeds(false); return; }
+  if (t.id === 'resetBtn') { setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: A.imported, mode: A.mode }); toast('Forecast restarted'); return; }
+  if (t.id === 'refetch') { toast('Fetching live Mumbai weather and air quality…'); fetchFeeds(false); return; }
+  if (t.id === 'notifyBtn') { try { Notification.requestPermission().then(() => renderAlerts(), () => renderAlerts()); } catch (err) { toast('Notifications are not available here'); } return; }
+  if (t.id === 'drillStart') {
+    const pth = $('drillPathogen').value;
+    A.drill = { pathogen: pth, t0: A.now, a0: 0.25, r: Math.log(2) / (S.PATHOGENS[pth].doubling * 24), cap: 40 };
+    addLog(`Outbreak drill started: ${S.PATHOGENS[pth].name}. Simulated patients are being added to observed arrivals.`, 'watch');
+    if (A.mode !== 'fast') { setLive(false); A.mode = 'fast'; } setLive(true);
+    renderEpidemic(); renderLog(); toast('Drill started in fast-forward mode; detection usually takes 2–4 simulated days'); return;
+  }
+  if (t.id === 'drillStop') { if (A.drill) addLog('Outbreak drill stopped.'); A.drill = null; renderEpidemic(); renderLog(); return; }
   if (d.h) { A.horizonDays = +d.h; store.set('horizon', A.horizonDays); recompute(true); return; }
   if (d.hm) { A.heatMode = d.hm; renderHeat(); return; }
   if (d.clear !== undefined) { A.levers = S.defaultLevers(); recompute(true); toast('Scenario cleared'); return; }
   if (d.preset) { A.levers = Object.assign(S.defaultLevers(), PRESETS[+d.preset].set); recompute(true); toast('Scenario: ' + PRESETS[+d.preset].label); return; }
+  if (d.approveJump) { A.confirming = d.approveJump; renderActions(); const el = $('act-' + d.approveJump); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { const i = $('by-' + d.approveJump); if (i) i.focus(); }, 300); return; }
   if (d.approve) { A.confirming = d.approve; renderActions(); setTimeout(() => { const el = $('by-' + d.approve); if (el) el.focus(); }, 0); return; }
   if (d.cancel !== undefined) { A.confirming = null; renderActions(); return; }
   if (d.try) { const a = S.ACTION_BY_ID[d.try]; A.selUnit = a.units.find(u => A.F.sum[u] || A.F.risk[u]) || a.units[0]; renderTabs(); renderChart({ ser: S.simulate(A.state, A.now, H(), baseRun({ actions: activeActions().concat([{ id: a.id, lead: a.lead }]) })), title: a.title }); $('h-fc').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
@@ -1226,17 +1533,16 @@ document.addEventListener('click', e => {
   if (d.copy) { const a = A.alerts.find(x => x.id === d.copy), text = `To: ${a.to.join(', ')}\nSubject: ${a.subject}\n\n${a.body}`;
     const p = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : Promise.reject();
     p.then(() => toast('Email copied'), () => { const box = t.closest('.alert'); box.querySelector('details').open = true; const r = document.createRange(); r.selectNodeContents(box.querySelector('.email')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Text selected — press Ctrl+C to copy'); }); return; }
-  if (d.sent) { const a = A.alerts.find(x => x.id === d.sent); a.status = 'sent'; a.sentBy = store.get('approver', '') || 'reviewer'; addLog(`Alert for ${UID[a.unit].long} marked as sent by ${a.sentBy}.`); renderAlerts(); renderLog(); return; }
-  if (d.dismissAlert) { const a = A.alerts.find(x => x.id === d.dismissAlert); a.status = 'dismissed'; addLog(`Alert for ${UID[a.unit].long} dismissed.`); renderAlerts(); renderLog(); return; }
+  if (d.sent) { const a = A.alerts.find(x => x.id === d.sent); a.status = 'sent'; a.sentBy = store.get('approver', '') || 'reviewer'; addLog(`Alert "${a.subject.replace('[Surge Watch] ', '')}" marked as sent by ${a.sentBy}.`); renderAlerts(); renderLog(); return; }
+  if (d.dismissAlert) { const a = A.alerts.find(x => x.id === d.dismissAlert); a.status = 'dismissed'; addLog('Alert dismissed.'); renderAlerts(); renderLog(); return; }
   if (d.pdel) { A.people.splice(+d.pdel, 1); store.set('people', A.people); renderPeople(); return; }
-  if (t.id === 'setupDefaults') { A.setup = JSON.parse(JSON.stringify(S.DEFAULT_SETUP)); store.set('setup', null); fillSetup(); return; }
+  if (t.id === 'setupDefaults') { const ov = store.get('overrides', {}); delete ov[A.hospitalId]; store.set('overrides', ov); fillSetup(S.setupFor(S.HOSPITALS.find(h => h.id === A.hospitalId))); toast('Estimates restored; save to apply'); return; }
   if (t.id === 'csvSample') { $('csvText').value = sampleCSV(); $('csvStatus').textContent = '7 days of example data, one row every 6 hours. Edit it or click Import.'; return; }
-  if (t.id === 'csvClear') { setLive(false); boot({ feedVals: A.feedVals, src: A.src }); $('csvStatus').textContent = 'Back to simulated observations.'; return; }
+  if (t.id === 'csvClear') { setLive(false); boot({ feedVals: A.feedVals, src: A.src, mode: A.mode }); $('csvStatus').textContent = 'Back to simulated observations.'; return; }
   if (t.id === 'csvImport') {
-    try { const parsed = parseCSV($('csvText').value); setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: parsed });
+    try { const parsed = parseCSV($('csvText').value); setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: parsed, mode: A.mode });
       $('csvStatus').textContent = `Imported ${parsed.rows.length} rows.` + (parsed.unknown.length ? ` Ignored columns: ${parsed.unknown.join(', ')}.` : ''); toast('Data imported; forecast restarted from your last row'); }
     catch (err) { $('csvStatus').textContent = err.message; }
-    return;
   }
 });
 document.addEventListener('submit', e => {
@@ -1252,9 +1558,8 @@ document.addEventListener('submit', e => {
   }
   if (f.id === 'addPerson') { A.people.push({ role: $('pRole').value.trim(), email: $('pEmail').value.trim(), units: $('pUnits').value, minSev: 'warning' }); store.set('people', A.people); f.reset(); renderPeople(); toast('Stakeholder added'); return; }
   if (f.id === 'setupForm') {
-    try { const s = readSetup(), cityChanged = s.city !== A.setup.city; store.set('setup', s); setLive(false);
-      boot({ feedVals: cityChanged ? simulatedFeeds(s.city) : A.feedVals, src: cityChanged ? undefined : A.src, imported: A.imported });
-      toast('Setup saved; forecast restarted'); if (cityChanged) fetchFeeds(true); }
+    try { const s = readSetup(), ov = store.get('overrides', {}); ov[A.hospitalId] = s; store.set('overrides', ov); setLive(false);
+      boot({ feedVals: A.feedVals, src: A.src, imported: A.imported, mode: A.mode, drill: A.drill }); fillSetup(); toast('Setup saved; forecast restarted'); }
     catch (err) { toast(err.message); }
   }
 });
@@ -1264,11 +1569,13 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
+  if (el.id === 'focusHosp') { switchHospital(el.value); return; }
   if (el.id === 'lv-outbreak') { A.levers.outbreak = el.value; recompute(true); }
+  if (el.id === 'lv-flood') { A.levers.flood = el.checked; recompute(true); }
   if (el.id === 'ruleSev') { A.rule.minSev = el.value; evaluateAlerts(); renderAlerts(); renderLog(); }
   if (el.id === 'ruleLead') { A.rule.leadH = +el.value; evaluateAlerts(); renderAlerts(); renderLog(); }
   if (el.id === 'ruleProb') { A.rule.prob = +el.value; evaluateAlerts(); renderAlerts(); renderLog(); }
-  if (el.id === 'mode') { const was = A.live; setLive(false); A.mode = el.value; if (A.mode === 'real') toast('Real time: the clock follows your computer and live data refreshes every 30 minutes'); if (was) setLive(true); renderBar(); }
+  if (el.id === 'mode') { setLive(false); A.mode = el.value; toast(A.mode === 'real' ? 'Real time: the forecast refreshes every hour and live data every 30 minutes' : 'Fast-forward: one simulated hour every 2.5 seconds'); setLive(true); }
   if (el.id === 'csvFile' && el.files[0]) { const r = new FileReader(); r.onload = () => { $('csvText').value = r.result; $('csvStatus').textContent = `Loaded ${el.files[0].name}. Click Import.`; }; r.readAsText(el.files[0]); }
   if (el.dataset.psev) { A.people[+el.dataset.psev].minSev = el.value; store.set('people', A.people); }
 });
@@ -1276,10 +1583,11 @@ let rcT; function scheduleRecompute() { clearTimeout(rcT); rcT = setTimeout(() =
 function recordFeed(kind) {
   const v = A.feedVals, n = parseFloat($('fd-' + kind).value);
   if (!isFinite(n) || n < 0) { toast('Enter a number'); return; }
-  const before = kind === 'dengue' ? v.dengueCases : v[kind];
-  if (kind === 'dengue') v.dengueCases = Math.round(n); else if (kind === 'aqi') { v.aqi = Math.round(n); A.src.air = { live: false, msg: 'Entered manually' }; } else v.ili = n;
-  addLog(`New reading recorded: ${kind === 'dengue' ? 'dengue cases' : kind === 'aqi' ? 'AQI forecast' : 'ILI index'} ${before} → ${n}. Forecast recalculated.`);
-  recompute(false); toast('Reading recorded, forecast updated');
+  const key = { dengue: 'dengueCases', malaria: 'malariaCases', aqi: 'aqi', ili: 'ili' }[kind], before = v[key];
+  v[key] = kind === 'ili' ? n : Math.round(n);
+  if (kind === 'aqi') A.src.air = { live: false, msg: 'Entered manually' };
+  addLog(`New reading recorded: ${kind} ${before} → ${v[key]}. Forecast recalculated.`);
+  A.netAt = -999; recompute(false); toast('Reading recorded, forecast updated');
 }
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { renderChart(); renderSeason(); }, 150); });
 

@@ -1,59 +1,56 @@
-# Surge Watch
+# Surge Watch Mumbai
 
-A decision-support tool that forecasts hospital bottlenecks before they happen. It combines live operating conditions with predictable seasonal patterns. It runs entirely in the browser, with no build step or backend.
+A decision-support tool that forecasts bottlenecks in Mumbai hospitals before they happen. It covers beds, ICU, isolation, oxygen, ambulances, the laboratory, X-ray, CT/ultrasound, nursing and platelets. It accounts for Mumbai's seasonal infections, monsoon flooding and public holidays, and it watches incoming patients for signs of an epidemic. It runs entirely in the browser, with no build step or backend.
 
-> Hospital observations are **simulated** unless you import your own census data. The example hospital ("Meridian District Hospital", 344 beds) is fictional. Weather and air quality are **live** when the page can reach Open-Meteo.
+> **What is real and what is simulated.** Hospital bed counts come from public sources, and weather and air quality are live from Open-Meteo. Mumbai hospitals do not publish live occupancy, so patient numbers, stock levels and per-hospital load are **simulated** until you import your own census data.
 
 ## Run it
-
-Serve the folder and open it in a browser. Live weather needs a real web origin, not `file://`.
 
 ```bash
 python -m http.server 8000
 ```
 
-Then visit http://localhost:8000. It also works as-is on GitHub Pages.
+Then open http://localhost:8000. It also works on GitHub Pages. Live weather needs a real web origin, not `file://`.
 
-## What it does
+## What it covers
 
-| Requirement | How Surge Watch covers it |
+| Need | How |
 |---|---|
-| Find future bottlenecks | Hour-by-hour flow simulation across 9 units: Emergency, Medicine, Surgery, ICU, Paediatrics, Laboratory, Imaging, Nursing and the blood bank (platelets). Load above 95% is a warning; above 105% is critical. |
-| Seasonal & recurring patterns | City-specific curves for 10 Indian cities. They cover dengue (driven by rain 2–5 weeks earlier), influenza (winter and monsoon waves), water-borne illness and leptospirosis, heat illness (driven by forecast temperature), air pollution (driven by the forecast Indian AQI) and Diwali burns and trauma. Also weekday arrival patterns, weekend discharge slowdowns and public holidays (Dussehra, Diwali, Guru Nanak Jayanti…). |
-| Timing, severity, explanation | Each bottleneck shows its onset, peak and hours above threshold, plus a **probability** from 30 Monte Carlo runs. The *Why* panel re-runs the forecast without each factor to show how many points that factor adds. |
-| Downstream effects | Demand → lab and imaging turnaround and platelet use → ED stay, boarding and ambulance diversion → ward and ICU load → step-down delays → nurse cover and cancelled electives. |
-| What-if scenarios | Sliders for arrivals, seasonal intensity, staff shortages, closed beds, ventilators, lab, imaging and platelet supply. Also outbreaks, a mass-casualty incident, a delayed start, and 7 presets. |
-| Preventive actions & alerts | 13 actions ranked by simulated impact. Each needs a named approver before it joins the plan. Alert emails are drafted when a breach passes a probability threshold within a lead time, then reviewed and sent by a person. Alerts pause while a hypothetical scenario is on. |
-| Continuous updates, human control | *Real time* mode follows the wall clock and refreshes live data every 30 minutes; *Fast-forward* is for demos. Forecasts lean toward observed arrivals, and a log records every change. A 7-day backtest shows forecast error and how well the 80% range is calibrated. |
+| Seasonal infections that fill beds | 11 Mumbai illnesses, each with its own season, admission rate, ICU share and resource needs: malaria, dengue, leptospirosis, chikungunya, gastroenteritis and cholera, hepatitis A/E and typhoid, influenza (H1N1/H3N2), pollution-related respiratory illness, heat illness, monsoon injuries, and Diwali burns. TB is treated as year-round load, and COVID-type epidemics are handled by outbreak detection. The table shows how many beds and ICU beds each illness adds at its peak. |
+| Mumbai hospitals | 13 hospitals with published bed counts (KEM, J J, Nair, Sion, Cooper, Kokilaben, Hinduja, Bombay, Jaslok, Nanavati, Lilavati, Fortis Mulund, Breach Candy), plus Kasturba's isolation reserve and upcoming BMC beds. Pick any hospital to forecast it; the network view estimates free beds, ICU, isolation, oxygen and ambulances across the city. |
+| Keeps updating | *Real time* mode (the default) re-forecasts every hour and refreshes live rain, temperature and AQI every 30 minutes. *Fast-forward* is for demos. |
+| Epidemic / pandemic alerts | Every hour, arrivals by syndrome (fever, respiratory, diarrhoea/jaundice, injuries) are compared with the seasonal expectation. The level escalates from Watch to Outbreak, Epidemic and Severe epidemic. Once an outbreak is detected, its growth goes into every forecast. An epidemic alert email is drafted, a red banner appears, and a desktop notification is sent where the browser allows it. |
+| Prepared for the worst | A reasonable worst case (faster growth, 15% fewer nurses, 30% oxygen supply cut, 15% of ambulances off road) shows when each resource runs out and by how much. A preparedness checklist lists each action, its owner, its lead time and a *decide by* time. With no outbreak, it runs a stress test of a COVID-like epidemic starting today. |
+| Beds, oxygen, ambulances, labs, X-ray | Availability tiles show free general, ICU and isolation beds; free ventilators; oxygen days of supply (liquid tank and cylinders, in D-type cylinder equivalents); ambulances available and current trip time (Mumbai traffic, and IMD heavy-rain classes slow trips); lab turnaround; X-ray wait; CT/ultrasound wait; and platelet stock. Each shows its lowest point in the next 72 h. |
+| What-if | Mumbai flood (26 July-type), dengue outbreak, flu wave with staff sickness, building collapse, oxygen supply crisis, X-ray and lab breakdown, nursing strike, and blood donor shortage, plus 13 sliders. |
+| Human control | 20 preventive actions, each needing a named approver. Alerts are drafts that a person reviews and sends. Outbreak drills test detection without touching real data. |
 
-## How realistic is it?
+## Data sources
 
-- **Uncertainty is simulated, not guessed.** Each forecast runs 30 futures with Poisson arrivals, admissions and discharges, day-level demand shocks, and run-level outbreak strength. The band is the 10th–90th percentile.
-- **Real operational frictions:**
-  - Discharges cluster at 11:00–14:00 and fall at weekends and on holidays.
-  - Beds take 2–4 h to clean.
-  - ICU patients wait for a Medicine bed before stepping down.
-  - Morning blood draws create a 05:00–09:00 lab backlog, and slow lab results lengthen ED stays.
-  - Overflowing EDs divert ambulances.
-  - Platelets expire after 5 days.
-- **Live external data:**
-  - [Open-Meteo](https://open-meteo.com/) rainfall and temperature, and PM2.5/PM10 converted to the CPCB Indian AQI, for the hospital's city. No API key is needed.
-  - Dengue and influenza-like-illness figures are entered from IDSP or municipal reports, since no open API exists.
-- **Your own data:** the *Hospital setup and data* panel takes your beds, staffing, lab, imaging and blood-bank capacity. It also imports a CSV census export, which recalibrates demand and powers the accuracy check.
-- **Limits:** clinical rates (routing, length of stay, nurse ratios) are typical values, not fitted to a specific hospital. Validate them against your own records before using this for real decisions.
+- **Bed counts:**
+  - KEM Medical Records annual statistical report 2021–23 (2,250 beds).
+  - Hospital websites, Wikipedia and published profiles for the others. Sources disagree for some hospitals (e.g. Cooper 500–1,462), and each figure's source is shown in the app.
+- **Mumbai disease figures:** BMC data reported by the Free Press Journal and The Week (2025–2026). For example, July 2026 had 1,380 malaria, 466 dengue, 78 leptospirosis, 851 gastroenteritis and 105 H1N1 cases.
+- **Oxygen:** the BMC liquid-oxygen tank programme, and the April 2021 shortage as context.
+- **Rain classes:** India Meteorological Department (heavy ≥ 64.5 mm, very heavy ≥ 115.6 mm, extremely heavy ≥ 204.5 mm per day).
+- **AQI:** CPCB National AQI breakpoints, from Open-Meteo PM2.5/PM10.
+
+## Limits
+
+- **Capacities other than beds are estimated.** ICU share, ventilators, staff, lab, X-ray, oxygen, ambulances and platelets are derived from bed counts using typical ratios. Edit them in *Hospital setup and data*.
+- **Clinical rates are typical values,** not fitted to any hospital. Validate against your own records before using this for real decisions.
+- **Disease counts have no open API,** so they're entered by hand from BMC/IDSP reports.
 
 ## Data import format
 
 One row per hour or per day. Only `timestamp` is required.
 
 ```
-timestamp,ed_arrivals,ed_census,ed_waiting_for_bed,med_occupied,surg_occupied,icu_occupied,peds_occupied,lab_backlog,platelet_stock
-2026-10-14 08:00,9,24,2,168,72,20,36,40,58
+timestamp,ed_arrivals,ed_census,ed_waiting_for_bed,med_occupied,surg_occupied,icu_occupied,peds_occupied,iso_occupied,lab_backlog,platelet_stock,oxygen_stock,ambulances_busy
+2026-10-14 08:00,40,120,12,880,520,120,190,20,200,230,5200,9
 ```
-
-`ed_arrivals` is the count during the period ending at that timestamp. The other columns are snapshots.
 
 ## Files
 
-- `index.html`: the interface (dashboard, charts, what-if, actions, alerts, setup, import)
-- `model.js`: the simulation model, with no dependencies. Clinical rates are in `R`, the example hospital in `DEFAULT_SETUP`, city seasonality in `CITIES`, and holidays in `HOLIDAYS`.
+- `index.html`: the interface.
+- `model.js`: the simulation model, with no dependencies. It contains the hospitals in `HOSPITALS`, the illnesses in `DISEASES`, the epidemic profiles in `PATHOGENS`, the clinical rates in `R`, and the actions in `ACTIONS`.
