@@ -273,6 +273,36 @@ table.cmp td.mc.k-P { font-weight: 700; }
 table.cmp td.mc.now { box-shadow: inset 0 -2px 0 var(--accent); }
 ol.srcs { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: .84rem; }
 ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
+/* app shell */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.bar:not(.demo-mode) .demo { display: none; }
+#focusHosp { max-width: 260px; }
+@media (max-width: 640px) { .ctrls { margin-left: 0; width: 100%; } #focusHosp { flex: 1; max-width: none; } .clock { display: none; } }
+.bar-in { max-width: 1480px; }
+.shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; max-width: 1480px; margin: 0 auto; align-items: start; }
+.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 2px; padding-block: 18px; }
+.side .grp { font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 14px 10px 4px; }
+.side .grp:first-child { padding-top: 0; }
+.side a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: var(--ink-2); text-decoration: none; font-size: .92rem; }
+.side a:hover { background: var(--surface-2); color: var(--ink); }
+.side a[aria-current="page"] { background: var(--accent-soft); color: var(--ink); font-weight: 700; box-shadow: inset 3px 0 0 var(--accent); }
+.side svg { flex: none; width: 18px; height: 18px; }
+.nb { margin-left: auto; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 9px; font-size: .7rem; font-weight: 700; display: inline-grid; place-items: center; font-family: var(--f-data); background: var(--surface-2); color: var(--ink-2); }
+.nb:empty { display: none; }
+.nb.crit { background: var(--crit); color: #fff; }
+.nb.warn { background: var(--warn); color: #241a00; }
+.side .meta { margin-top: 14px; padding: 10px; border-top: 1px solid var(--line); font-size: .76rem; color: var(--muted); display: grid; gap: 4px; }
+main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; }
+.viewhead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.viewhead h1 { font-size: clamp(1.35rem, 2.6vw, 1.8rem); }
+.viewhead p { color: var(--ink-2); max-width: 70ch; }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .side { position: sticky; top: 0; z-index: 15; display: flex; overflow-x: auto; gap: 4px; padding: 8px 0; margin-inline: -16px; padding-inline: 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .side .grp, .side .meta { display: none; }
+  .side a { white-space: nowrap; padding: 6px 10px; }
+  .side a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--accent); }
+}
 .foot { color: var(--muted); font-size: .82rem; max-width: 92ch; }
 .toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: .88rem; z-index: 50; max-width: calc(100vw - 32px); }
 </style>
@@ -286,27 +316,45 @@ ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
     </div>
     <div class="clock"><span class="eyebrow">Hospital time</span><span class="num" id="clock"></span></div>
     <div class="ctrls">
-      <label class="small muted" for="focusHosp">Hospital</label>
+      <label class="sr" for="focusHosp">Hospital</label>
       <select class="in" id="focusHosp" aria-label="Hospital to forecast"></select>
       <select class="in" id="mode" aria-label="Clock mode"><option value="real">Real time</option><option value="fast">Fast-forward demo</option></select>
       <button class="btn" id="liveBtn" type="button"><span class="live-dot"></span><span id="liveLbl">Run</span></button>
-      <button class="btn" id="stepBtn" type="button" title="Advance one hour">+1 h</button>
-      <button class="btn" id="dayBtn" type="button" title="Advance one day">+1 day</button>
-      <button class="btn ghost" id="resetBtn" type="button">Reset</button>
+      <button class="btn demo" id="stepBtn" type="button" title="Advance one hour">+1 h</button>
+      <button class="btn demo" id="dayBtn" type="button" title="Advance one day">+1 day</button>
+      <button class="btn ghost demo" id="resetBtn" type="button">Reset</button>
     </div>
   </div>
 </header>
 
+<div class="shell">
+<nav class="side" id="side" aria-label="Sections">
+  <span class="grp">Monitor</span>
+  <a href="#overview" data-nav="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview<span class="nb" id="nb-overview"></span></a>
+  <a href="#forecast" data-nav="forecast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 20h18M5 16l4-5 4 3 6-8"/></svg>Forecast<span class="nb" id="nb-forecast"></span></a>
+  <a href="#city" data-nav="city"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>City network<span class="nb" id="nb-city"></span></a>
+  <a href="#diseases" data-nav="diseases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Seasonal diseases<span class="nb" id="nb-diseases"></span></a>
+  <a href="#outbreak" data-nav="outbreak"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 4 6v6c0 4.4 3.4 8.2 8 9 4.6-.8 8-4.6 8-9V6z"/><path d="M12 8v5M12 16v.5"/></svg>Outbreak watch<span class="nb" id="nb-outbreak"></span></a>
+  <span class="grp">Plan</span>
+  <a href="#scenarios" data-nav="scenarios"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>What-if scenarios<span class="nb" id="nb-scenarios"></span></a>
+  <a href="#actions" data-nav="actions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>Preventive actions<span class="nb" id="nb-actions"></span></a>
+  <a href="#alerts" data-nav="alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>Alerts<span class="nb" id="nb-alerts"></span></a>
+  <span class="grp">Data</span>
+  <a href="#datasrc" data-nav="data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Data sources<span class="nb" id="nb-data"></span></a>
+  <a href="#setup" data-nav="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Setup &amp; import<span class="nb" id="nb-setup"></span></a>
+  <div class="meta" id="sideMeta"></div>
+</nav>
 <main class="wrap" id="main">
   <div id="epiBanner" hidden></div>
   <div id="scenarioBanner" hidden></div>
+  <div class="viewhead"><h1 id="viewTitle">Overview</h1><p id="viewSub"></p></div>
 
-  <section class="sec" aria-labelledby="h-avail">
+  <section class="sec" aria-labelledby="h-avail" data-view="overview">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Right now</span><h2 id="h-avail">Availability</h2></div><span class="muted small" id="availNote"></span></div>
     <div class="tiles" id="tiles"></div>
   </section>
 
-  <section class="sec" aria-labelledby="h-outlook">
+  <section class="sec" aria-labelledby="h-outlook" data-view="overview">
     <div class="sec-head">
       <div style="display:grid;gap:6px">
         <span class="eyebrow" id="h-outlook">Bottleneck outlook</span>
@@ -322,7 +370,7 @@ ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
     <div class="cards" id="cards"></div>
   </section>
 
-  <section class="grid2">
+  <section class="grid2" data-view="overview">
     <div class="panel sec" aria-labelledby="h-fc">
       <div class="sec-head"><h2 id="h-fc">Forecast by unit</h2><span class="muted small">Load as % of safe capacity · observed, then forecast</span></div>
       <div class="tabs" role="tablist" id="unitTabs"></div>
@@ -338,7 +386,7 @@ ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
     </div>
   </section>
 
-  <section class="panel sec" aria-labelledby="h-heat">
+  <section class="panel sec" aria-labelledby="h-heat" data-view="forecast">
     <div class="sec-head"><h2 id="h-heat">Day by day</h2>
       <div class="seg" role="group" aria-label="Heatmap measure" id="heatMode"><button type="button" data-hm="peak">Peak load</button><button type="button" data-hm="prob">Chance of critical</button></div>
     </div>
@@ -346,7 +394,7 @@ ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
     <div class="scroll-x"><table class="heat" id="heat"></table></div>
   </section>
 
-  <section class="panel sec" aria-labelledby="h-net">
+  <section class="panel sec" aria-labelledby="h-net" data-view="city">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">City view</span><h2 id="h-net">Mumbai hospital network</h2></div>
       <p>Bed counts come from public sources (listed per hospital). Mumbai does not publish live occupancy, so the load, free beds and forecasts for each hospital are <b>simulated estimates</b> from the same model.</p></div>
     <div class="tiles" id="cityTiles"></div>
@@ -357,13 +405,13 @@ ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
     <p class="ink2 small" id="netReserve"></p>
   </section>
 
-  <section class="panel sec" aria-labelledby="h-dis">
+  <section class="panel sec" aria-labelledby="h-dis" data-view="diseases">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Mumbai</span><h2 id="h-dis">Seasonal infections and diseases that fill beds</h2></div>
       <p>Monthly notified cases in Mumbai for 2026, from BMC data and the IDSP dengue series, with each figure's working on hover. These drive the seasonal part of every forecast.</p></div>
     <div class="scroll-x"><table class="cmp" id="diseases"></table></div>
   </section>
 
-  <section class="panel sec" aria-labelledby="h-epi" id="epidemic">
+  <section class="panel sec" aria-labelledby="h-epi" id="epidemic" data-view="outbreak">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Epidemic and pandemic readiness</span><h2 id="h-epi">Outbreak watch</h2></div>
       <p>Every hour, patients arriving with each syndrome are compared with what the seasonal model expects. A sustained excess raises the level; once an outbreak is detected, its growth is carried into every forecast and the worst case below.</p></div>
     <div class="levels" id="levels"></div>
@@ -390,25 +438,25 @@ ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
     </div>
   </section>
 
-  <section class="panel sec" aria-labelledby="h-casc">
+  <section class="panel sec" aria-labelledby="h-casc" data-view="forecast">
     <div class="sec-head"><h2 id="h-casc">Knock-on effects</h2><p>How expected demand moves through the hospital over the forecast window, compared with the same days without seasonal illness, outbreaks or scenario changes.</p></div>
     <div class="cascade" id="cascade"></div>
   </section>
 
-  <section class="panel sec" aria-labelledby="h-wi" id="whatif">
+  <section class="panel sec" aria-labelledby="h-wi" id="whatif" data-view="scenarios">
     <div class="sec-head"><h2 id="h-wi">What-if scenarios</h2><p>Change conditions to see the effect on every unit. A scenario is hypothetical: it changes the forecast on this page, not the plan, and routine alerts pause while it is on.</p></div>
     <div class="presets" id="presets"></div>
     <div class="levers" id="levers"></div>
     <div class="scroll-x"><table class="cmp" id="cmp"></table></div>
   </section>
 
-  <section class="sec" aria-labelledby="h-act">
+  <section class="sec" aria-labelledby="h-act" data-view="actions">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">For staff to decide</span><h2 id="h-act">Preventive actions</h2></div>
       <p>Ranked by simulated effect on the predicted bottlenecks. Nothing changes until a named person approves it; approved actions join the plan and the forecast is recalculated.</p></div>
     <div class="acts" id="acts"></div>
   </section>
 
-  <section class="grid2">
+  <section class="grid2" data-view="diseases">
     <div class="panel sec" aria-labelledby="h-season">
       <div class="sec-head"><h2 id="h-season">Seasonal calendar</h2><span class="muted small">30 days back · 90 days ahead</span></div>
       <div class="chart" id="seasonChart"></div>
@@ -421,7 +469,7 @@ ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
     </div>
   </section>
 
-  <section class="sec" aria-labelledby="h-alerts">
+  <section class="sec" aria-labelledby="h-alerts" data-view="alerts">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Early warning</span><h2 id="h-alerts">Notifications</h2></div>
       <p>Surge Watch drafts an email when a forecast crosses the rule below, and at once when an outbreak is detected. A person reviews each draft and sends it from their own mail account.</p></div>
     <div class="grid2">
@@ -452,12 +500,12 @@ ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
     </div>
   </section>
 
-  <section class="panel sec" aria-labelledby="h-acc">
+  <section class="panel sec" aria-labelledby="h-acc" data-view="data">
     <div class="sec-head"><h2 id="h-acc">Forecast accuracy</h2><p id="accNote"></p></div>
     <div class="scroll-x"><table class="cmp" id="acc"></table></div>
   </section>
 
-  <section class="panel sec" aria-labelledby="h-data" id="data">
+  <section class="panel sec" aria-labelledby="h-data" id="datasrc" data-view="data">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Where every number comes from</span><h2 id="h-data">Data sources and completeness</h2></div>
       <p>Every input to the forecast for this hospital, with its source. Forecasts, free beds and waiting times are model outputs calculated from these inputs. Mumbai hospitals do not publish live occupancy, so the current state is simulated until census data is imported.</p></div>
     <div class="legend" id="kindLegend"></div>
@@ -468,7 +516,7 @@ ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
     <ol class="srcs" id="srcList"></ol>
   </section>
 
-  <details class="panel setup" id="setupBox">
+  <details class="panel setup" id="setupBox" open data-view="setup">
     <summary><h2>Hospital setup and data</h2><span class="muted small">Capacities, staffing, oxygen, ambulances, and your own census data</span></summary>
     <div class="sec" style="margin-top:14px">
       <p class="ink2 small" style="max-width:80ch">Values are prefilled from the selected hospital's published bed count using typical ratios. Replace them with the hospital's real figures.</p>
@@ -532,6 +580,7 @@ ol.srcs a { color: var(--accent); overflow-wrap: anywhere; }
   <p class="foot" id="foot"></p>
   <p class="foot" id="sources"></p>
 </main>
+</div>
 <div id="toast" class="toast" hidden></div>
 
 <script src="data.js"></script>
@@ -822,6 +871,52 @@ function diseaseText(se) {
 }
 const LEVER_NAMES = { arrivalPct: 'arrival change', seasonScale: 'seasonal surge', outbreak: 'outbreak', flood: 'Mumbai flood', nurseShortPct: 'nurse shortage', docShortPct: 'ED doctor shortage', medBedsClosed: 'Medicine beds closed', ventsDown: 'ventilators out of service', labDownPct: 'lab capacity lost', xrayDownPct: 'X-ray capacity lost', imgDownPct: 'CT/USG capacity lost', plateletCutPct: 'platelet supply cut', o2CutPct: 'oxygen supply cut', ambDownPct: 'ambulances off road' };
 
+/* ---------------- views ---------------- */
+const VIEWS = {
+  overview: ['Overview', 'What is free now, what is about to run short, and why.'],
+  forecast: ['Forecast', 'Day-by-day load for every unit and how demand moves through the hospital.'],
+  city: ['City network', 'Published capacity of Mumbai hospitals and the model\'s view of where there is room.'],
+  diseases: ['Seasonal diseases', 'Mumbai notified cases by month (BMC) and live weather and air-quality signals.'],
+  outbreak: ['Outbreak watch', 'Syndromic detection, the reasonable worst case and the preparedness checklist.'],
+  scenarios: ['What-if scenarios', 'Test floods, outbreaks, staff shortages and supply failures before they happen.'],
+  actions: ['Preventive actions', 'Options ranked by simulated effect. Each needs a named approver.'],
+  alerts: ['Alerts', 'Early-warning drafts for review, stakeholders and the forecast log.'],
+  data: ['Data sources', 'Where every input comes from, what is missing, and how accurate the forecast has been.'],
+  setup: ['Setup & import', 'Replace placeholders with your hospital\'s figures or import census data.']
+};
+let currentView = 'overview';
+function showView(v, anchor) {
+  if (!VIEWS[v]) v = 'overview';
+  currentView = v;
+  document.querySelectorAll('main [data-view]').forEach(el => { el.hidden = el.dataset.view !== v; });
+  document.querySelectorAll('#side a').forEach(a => a.setAttribute('aria-current', a.dataset.nav === v ? 'page' : 'false'));
+  $('viewTitle').textContent = VIEWS[v][0]; $('viewSub').textContent = VIEWS[v][1];
+  if (A && A.F) { if (v === 'overview') renderChart(); if (v === 'diseases') renderSeason(); if (v === 'city') renderNetwork(); }
+  const el = anchor && $(anchor);
+  if (el) el.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
+}
+function route() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (VIEWS[h]) return showView(h);
+  const el = h && $(h);
+  if (el) { const sec = el.closest('[data-view]'); return showView(sec ? sec.dataset.view : 'overview', h); }
+  showView('overview');
+}
+function goTo(id) { if (location.hash === '#' + id) route(); else location.hash = id; }
+window.addEventListener('hashchange', route);
+function renderNav() {
+  const set = (id, txt, cls) => { const el = $('nb-' + id); if (!el) return; el.textContent = txt || ''; el.className = 'nb' + (cls ? ' ' + cls : ''); };
+  const r = ranked(), crit = r.filter(x => x.sev === 'critical').length;
+  set('overview', r.length ? r.length : '', crit ? 'crit' : r.length ? 'warn' : '');
+  const lv = epiLevel(); set('outbreak', lv ? S.LEVELS[lv] : '', lv >= 2 ? 'crit' : lv ? 'warn' : '');
+  const rev = A.alerts.filter(a => a.status === 'review').length; set('alerts', rev || '', rev ? 'crit' : '');
+  set('actions', A.approved.length ? A.approved.length + ' on' : '', '');
+  set('scenarios', leversChanged() ? 'on' : '', leversChanged() ? 'warn' : '');
+  const pv = A.setup.prov || {}, u = Object.values(pv).filter(x => x.kind === 'U').length; set('data', u ? u + ' U' : '', '');
+  const full = (A.net || []).filter(x => x.peak >= S.THRESH.crit).length; set('city', full || '', full ? 'warn' : '');
+  $('sideMeta').innerHTML = `<span>${esc(A.setup.name)}</span><span>${A.src.weather.live ? '<span class="srcdot live"></span>Live weather' : '<span class="srcdot"></span>Weather not live'} · ${A.src.air.live ? 'live AQI' : 'AQI not live'}</span><span>Forecast ${hh(tOf(A.now))}, ${fmtD(A.now)}</span>`;
+}
+
 /* ---------------- provenance ---------------- */
 const KIND = { P: 'published', D: 'derived from published figures', R: "another Mumbai hospital's published figure used as reference", U: 'not published: placeholder to replace', X: 'projection beyond the last published month', H: 'entered by hospital staff', L: 'live data' };
 const kb = (k, title) => k ? `<span class="kb k-${k}" title="${esc((title ? title + ' — ' : '') + KIND[k])}">${k}</span>` : '';
@@ -855,7 +950,7 @@ function renderData() {
 function render() {
   renderBar(); renderEpiBanner(); renderBanner(); renderTiles(); renderHeadline(); renderCards(); renderTabs(); renderChart(); renderWhy();
   renderHeat(); renderNetwork(); renderDiseases(); renderEpidemic(); renderCascade(); renderLevers(); renderCompare(); renderActions();
-  renderSeason(); renderFeeds(); renderAlerts(); renderPeople(); renderLog(); renderFoot(); renderData(); markSetup();
+  renderSeason(); renderFeeds(); renderAlerts(); renderPeople(); renderLog(); renderFoot(); renderData(); markSetup(); renderNav();
 }
 function renderBar() {
   $('hospLine').textContent = `${A.setup.name} · ${A.setup.type} · ${A.imported ? 'imported census data' : 'simulated load'}`;
@@ -863,6 +958,7 @@ function renderBar() {
   $('liveLbl').textContent = A.live ? (A.mode === 'real' ? 'Live · pause' : 'Pause') : A.mode === 'real' ? 'Follow real time' : 'Run';
   $('mode').value = A.mode;
   $('bar').classList.toggle('is-live', A.live);
+  $('bar').classList.toggle('demo-mode', A.mode === 'fast');
   for (const b of $('horizon').querySelectorAll('button')) b.setAttribute('aria-pressed', String(+b.dataset.h === A.horizonDays));
   const fs = $('focusHosp');
   if (!fs.options.length) fs.innerHTML = S.HOSPITALS.map(h => `<option value="${h.id}">${esc(h.name)} (${esc(h.area)})</option>`).join('');
@@ -925,7 +1021,7 @@ function renderTiles() {
   tile('IMG', 'CT / ultrasound wait', now.imgTAT.toFixed(1) + ' h', 'target 3', `worst in 72 h: ${mx[0].toFixed(1)} h`, now.p.IMG);
   tile('BLOOD', 'Platelets in stock', loc(now.plt), 'units', `${(now.pltDemand * 24).toFixed(0)} used/day`, now.p.BLOOD);
   $('tiles').innerHTML = T.map(t => `<button class="tile ${t.sev === 'critical' || t.sev === 'warning' ? t.sev : ''}" type="button" data-unit="${t.unit}"><span class="lbl">${esc(t.label)}${kb(unitQuality(t.unit).worst, 'Weakest input behind this figure')} ${t.sev !== 'ok' ? pill(t.sev) : ''}</span><span class="val">${t.val} <small>${esc(t.small)}</small></span><span class="sub">${esc(t.sub)}</span></button>`).join('');
-  $('availNote').innerHTML = `Model output for the next hour at ${esc(A.setup.name)}, from the inputs in <a href="#data">Data sources</a>`;
+  $('availNote').innerHTML = `Model output for the next hour at ${esc(A.setup.name)}, from the inputs in <a href="#datasrc">Data sources</a>`;
 }
 function renderHeadline() {
   const r = ranked(), c = r.filter(x => x.sev === 'critical').length, w = r.length - c;
@@ -1439,7 +1535,7 @@ function renderPeople() {
 }
 function renderLog() { $('log').innerHTML = A.log.map(l => `<div><span class="num">${fmtT(l.at).replace(',', '')}</span><span>${l.sev && l.sev !== 'ok' ? pill(l.sev) + ' ' : ''}${esc(l.text)}</span></div>`).join(''); }
 function renderFoot() {
-  $('foot').innerHTML = `${A.imported ? 'Observations for this hospital come from the imported file.' : 'Mumbai hospitals do not publish live bed data, so the current state is simulated from the published averages until census data is imported.'} Every input is labelled: ${kb('P')} published, ${kb('D')} derived from published figures, ${kb('R')} another Mumbai hospital's published figure used as reference, ${kb('U')} not published (placeholder for the hospital to replace), ${kb('X')} projection after the last published month, ${kb('L')} live. Forecasts are model outputs from these inputs (${A.F.ens.n} Monte Carlo runs) and support decisions by hospital staff; they do not make them. See <a href="#data">Data sources and completeness</a>.`;
+  $('foot').innerHTML = `${A.imported ? 'Observations for this hospital come from the imported file.' : 'Mumbai hospitals do not publish live bed data, so the current state is simulated from the published averages until census data is imported.'} Every input is labelled: ${kb('P')} published, ${kb('D')} derived from published figures, ${kb('R')} another Mumbai hospital's published figure used as reference, ${kb('U')} not published (placeholder for the hospital to replace), ${kb('X')} projection after the last published month, ${kb('L')} live. Forecasts are model outputs from these inputs (${A.F.ens.n} Monte Carlo runs) and support decisions by hospital staff; they do not make them. See <a href="#datasrc">Data sources and completeness</a>.`;
   $('sources').innerHTML = '';
 }
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3200); }
@@ -1590,7 +1686,7 @@ document.addEventListener('click', e => {
   if (!t) return;
   const d = t.dataset;
   if (d.hosp) { switchHospital(d.hosp); return; }
-  if (d.unit) { A.selUnit = d.unit; renderCards(); renderTabs(); renderChart(); renderWhy(); renderHeat(); if (t.classList.contains('card') || t.classList.contains('tile') || t.tagName === 'TD') $('h-fc').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (d.unit) { A.selUnit = d.unit; renderCards(); renderTabs(); renderChart(); renderWhy(); renderHeat(); if (t.classList.contains('card') || t.classList.contains('tile') || t.tagName === 'TD') goTo('h-fc'); return; }
   if (t.id === 'liveBtn') return setLive(!A.live);
   if (t.id === 'stepBtn') return advance(1);
   if (t.id === 'dayBtn') return advance(24);
@@ -1609,10 +1705,10 @@ document.addEventListener('click', e => {
   if (d.hm) { A.heatMode = d.hm; renderHeat(); return; }
   if (d.clear !== undefined) { A.levers = S.defaultLevers(); recompute(true); toast('Scenario cleared'); return; }
   if (d.preset) { A.levers = Object.assign(S.defaultLevers(), PRESETS[+d.preset].set); recompute(true); toast('Scenario: ' + PRESETS[+d.preset].label); return; }
-  if (d.approveJump) { A.confirming = d.approveJump; renderActions(); const el = $('act-' + d.approveJump); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { const i = $('by-' + d.approveJump); if (i) i.focus(); }, 300); return; }
+  if (d.approveJump) { A.confirming = d.approveJump; showView('actions'); renderActions(); const el = $('act-' + d.approveJump); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { const i = $('by-' + d.approveJump); if (i) i.focus(); }, 300); return; }
   if (d.approve) { A.confirming = d.approve; renderActions(); setTimeout(() => { const el = $('by-' + d.approve); if (el) el.focus(); }, 0); return; }
   if (d.cancel !== undefined) { A.confirming = null; renderActions(); return; }
-  if (d.try) { const a = S.ACTION_BY_ID[d.try]; A.selUnit = a.units.find(u => A.F.sum[u] || A.F.risk[u]) || a.units[0]; renderTabs(); renderChart({ ser: S.simulate(A.state, A.now, H(), baseRun({ actions: activeActions().concat([{ id: a.id, lead: a.lead }]) })), title: a.title }); $('h-fc').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (d.try) { const a = S.ACTION_BY_ID[d.try]; A.selUnit = a.units.find(u => A.F.sum[u] || A.F.risk[u]) || a.units[0]; renderTabs(); renderChart({ ser: S.simulate(A.state, A.now, H(), baseRun({ actions: activeActions().concat([{ id: a.id, lead: a.lead }]) })), title: a.title }); goTo('h-fc'); return; }
   if (d.dismiss) { A.dismissed[d.dismiss] = true; renderActions(); return; }
   if (d.undismiss !== undefined) { A.dismissed = {}; renderActions(); return; }
   if (d.revoke) { const a = A.approved.find(x => x.id === d.revoke); A.approved = A.approved.filter(x => x.id !== d.revoke); addLog(`Action withdrawn: ${S.ACTION_BY_ID[d.revoke].title} (approved earlier by ${a.by}).`); recompute(false); return; }
@@ -1678,6 +1774,7 @@ let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTime
 
 boot();
 fillSetup();
+route();
 fetchFeeds(true);
 })();
 </script>
