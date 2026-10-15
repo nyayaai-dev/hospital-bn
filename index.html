@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Surge Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky control bar, then a ward-round reading order — what breaks, when, why, what follows, what to do, who to tell. */
+:root {
+  --bg: #f2f4f3; --surface: #ffffff; --surface-2: #e9eeec; --ink: #13201d; --ink-2: #44524e; --muted: #6f7c78;
+  --line: #d6dedb; --accent: #0b6b66; --accent-ink: #ffffff; --accent-soft: #d5ebe8; --compare: #8a7f72;
+  --crit: #d03b3b; --crit-soft: #f7dcdb; --warn: #fab219; --warn-soft: #fdeecb; --watch-soft: #f6efe0; --good: #0c8a0c;
+  --shadow: 0 1px 2px rgba(19,32,29,.06), 0 4px 16px rgba(19,32,29,.05);
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1312; --surface: #141c1b; --surface-2: #1c2725; --ink: #e6efec; --ink-2: #b2c0bb; --muted: #84928e;
+  --line: #2a3634; --accent: #44b8ad; --accent-ink: #06201d; --accent-soft: #173733; --compare: #b3a796;
+  --crit: #e66767; --crit-soft: #3b1f1f; --warn: #fab219; --warn-soft: #3a2e12; --watch-soft: #2a2619; --good: #3cc23c;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0d1312; --surface: #141c1b; --surface-2: #1c2725; --ink: #e6efec; --ink-2: #b2c0bb; --muted: #84928e;
+  --line: #2a3634; --accent: #44b8ad; --accent-ink: #06201d; --accent-soft: #173733; --compare: #b3a796;
+  --crit: #e66767; --crit-soft: #3b1f1f; --warn: #fab219; --warn-soft: #3a2e12; --watch-soft: #2a2619; --good: #3cc23c;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html { color-scheme: light; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; padding-inline: 16px; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-block: 0 64px; display: grid; gap: 28px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; line-height: 1.2; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1rem; }
+p { margin: 0; }
+.num, .mono { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.ink2 { color: var(--ink-2); }
+.eyebrow { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* top bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line); margin-inline: -16px; padding: 10px 16px; }
+@media (max-width: 640px) { .bar { position: static; } }
+.bar-in { max-width: 1320px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand svg { flex: none; }
+.brand b { font-size: 1.15rem; }
+.brand small { display: block; color: var(--muted); font-size: .8rem; }
+.clock { display: grid; line-height: 1.2; }
+.clock .num { font-size: 1rem; font-weight: 500; }
+.ctrls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: auto; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.btn.small { padding: 3px 9px; font-size: .85rem; }
+.btn.ghost { background: transparent; }
+.btn[disabled] { opacity: .5; cursor: default; }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.is-live .live-dot { background: var(--good); animation: pulse 1.6s infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .is-live .live-dot { animation: none; } }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 5px 11px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+select.in, input.in { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; min-width: 0; }
+
+/* scenario banner */
+.banner { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 60%, var(--line)); border-radius: var(--r); padding: 10px 14px; }
+.banner b { margin-right: 4px; }
+
+/* sections */
+.sec { display: grid; gap: 14px; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.sec-head p { color: var(--ink-2); max-width: 70ch; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 16px; }
+.grid2 > * { min-width: 0; }
+@media (max-width: 980px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+
+/* summary */
+.headline { font-size: clamp(1.2rem, 2.4vw, 1.6rem); font-weight: 700; max-width: 52ch; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.card { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 8px; align-content: start; box-shadow: var(--shadow); }
+.card:hover { border-color: var(--accent); }
+.card[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: -1px; }
+.card-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.card-top b { font-size: 1.05rem; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: .88rem; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; }
+.empty { padding: 18px; border: 1px dashed var(--line); border-radius: var(--r); color: var(--ink-2); }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 1px 9px 1px 7px; font-size: .78rem; font-weight: 700; white-space: nowrap; border: 1px solid transparent; }
+.pill svg { flex: none; }
+.pill.critical { background: var(--crit-soft); color: var(--ink); border-color: color-mix(in srgb, var(--crit) 50%, transparent); }
+.pill.critical svg { color: var(--crit); }
+.pill.warning { background: var(--warn-soft); color: var(--ink); border-color: color-mix(in srgb, var(--warn) 60%, transparent); }
+.pill.warning svg { color: var(--warn); }
+.pill.watch { background: var(--watch-soft); color: var(--ink-2); border-color: var(--line); }
+.pill.ok { background: var(--surface-2); color: var(--ink-2); }
+.pill.ok svg { color: var(--good); }
+.pill.info { background: var(--accent-soft); color: var(--ink); }
+
+/* unit tabs + chart */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px; display: inline-flex; align-items: center; gap: 6px; font-size: .88rem; }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line); flex: none; }
+.dot.critical { background: var(--crit); border-color: var(--crit); }
+.dot.warning { background: var(--warn); border-color: var(--warn); }
+.dot.watch { background: color-mix(in srgb, var(--warn) 35%, var(--surface)); }
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { fill: var(--muted); font-family: var(--f-data); font-size: 11px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; color: var(--ink-2); }
+.legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+.legend i.band { height: 10px; border: 0; background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .8rem; box-shadow: var(--shadow); min-width: 170px; z-index: 5; }
+.tip b { display: block; margin-bottom: 2px; }
+.tip .row { display: flex; justify-content: space-between; gap: 12px; }
+.unit-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .88rem; color: var(--ink-2); }
+
+/* why */
+.why-list { display: grid; gap: 10px; }
+.drv { display: grid; gap: 4px; }
+.drv-top { display: flex; justify-content: space-between; gap: 10px; font-size: .9rem; }
+.drv-bar { height: 10px; background: var(--surface-2); border-radius: 0 4px 4px 0; position: relative; }
+.drv-bar span { position: absolute; top: 0; bottom: 0; left: 0; background: var(--accent); border-radius: 0 4px 4px 0; }
+.drv-bar span.neg { background: var(--good); }
+.drv-bar span.low { background: var(--compare); }
+.drv p { font-size: .82rem; color: var(--ink-2); }
+.narr { font-size: .95rem; color: var(--ink); background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+
+/* heatmap */
+.scroll-x { overflow-x: auto; }
+table.heat { border-collapse: separate; border-spacing: 2px; font-family: var(--f-data); font-size: .74rem; min-width: 100%; }
+table.heat th { font-weight: 500; color: var(--muted); padding: 2px 4px; text-align: center; white-space: nowrap; }
+table.heat th.rowh { text-align: left; font-family: var(--f-body); font-size: .85rem; color: var(--ink-2); position: sticky; left: 0; background: var(--surface); padding-right: 10px; }
+table.heat td { text-align: center; padding: 6px 2px; border-radius: 4px; min-width: 38px; background: var(--surface-2); color: var(--ink-2); cursor: pointer; }
+table.heat td.watch { background: var(--watch-soft); color: var(--ink); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn) 40%, transparent); }
+table.heat td.warning { background: var(--warn); color: #241a00; font-weight: 500; }
+table.heat td.critical { background: var(--crit); color: #fff; font-weight: 500; }
+table.heat tr.sel th.rowh { color: var(--ink); font-weight: 700; }
+.wkend { color: var(--ink-2) !important; }
+
+/* cascade */
+.cascade { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; position: relative; }
+@media (max-width: 1100px) { .cascade { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .cascade { grid-template-columns: minmax(0, 1fr); } }
+.stage { display: grid; gap: 8px; align-content: start; }
+.stage-h { display: flex; align-items: center; gap: 8px; }
+.stage-h .arrow { color: var(--muted); }
+.node { border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; background: var(--surface); display: grid; gap: 2px; }
+.node .lbl { font-size: .82rem; color: var(--ink-2); }
+.node .val { font-family: var(--f-data); font-size: 1.05rem; font-weight: 500; }
+.node .delta { font-family: var(--f-data); font-size: .78rem; color: var(--muted); }
+.node.hot { border-color: color-mix(in srgb, var(--crit) 55%, var(--line)); background: color-mix(in srgb, var(--crit-soft) 55%, var(--surface)); }
+.node.warm { border-color: color-mix(in srgb, var(--warn) 60%, var(--line)); }
+
+/* what-if */
+.levers { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px 18px; }
+.lever { display: grid; gap: 4px; }
+.lever label { display: flex; justify-content: space-between; gap: 8px; font-size: .88rem; }
+.lever label .num { color: var(--accent); font-weight: 500; }
+.lever small { color: var(--muted); font-size: .78rem; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+table.cmp { width: 100%; border-collapse: collapse; font-size: .88rem; }
+table.cmp th, table.cmp td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
+table.cmp th { color: var(--muted); font-weight: 700; font-size: .76rem; letter-spacing: .04em; text-transform: uppercase; }
+.up { color: var(--crit); }
+.down { color: var(--good); }
+
+/* actions */
+.acts { display: grid; gap: 10px; }
+.act { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: start; border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; background: var(--surface); }
+.act h3 { font-size: .98rem; }
+.act p { font-size: .86rem; color: var(--ink-2); }
+.act .impact { font-family: var(--f-data); font-size: .8rem; color: var(--ink); background: var(--accent-soft); border-radius: 6px; padding: 3px 8px; display: inline-block; }
+.act .btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.act .confirm { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+.act.approved { background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface)); }
+@media (max-width: 560px) { .act { grid-template-columns: minmax(0, 1fr); } .act .btns { justify-content: flex-start; } }
+
+/* seasonal */
+.strips { display: grid; gap: 6px; }
+.strip { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 10px; align-items: center; }
+.strip .nm { font-size: .85rem; color: var(--ink-2); line-height: 1.2; }
+.strip .nm small { display: block; color: var(--muted); font-size: .74rem; }
+.strip svg { width: 100%; height: 22px; display: block; }
+@media (max-width: 560px) { .strip { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+.feeds { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.feed { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; }
+.feed .v { font-family: var(--f-data); font-size: 1.2rem; font-weight: 500; }
+.feed .src { font-size: .76rem; color: var(--muted); }
+.feed .row { display: flex; gap: 6px; align-items: center; }
+.feed input { width: 90px; }
+
+/* alerts */
+.alerts { display: grid; gap: 10px; }
+.alert { border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 8px; background: var(--surface); }
+.alert-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: center; }
+.email { font-family: var(--f-data); font-size: .78rem; white-space: pre-wrap; background: var(--surface-2); border-radius: 8px; padding: 10px 12px; max-height: 260px; overflow: auto; color: var(--ink); user-select: text; }
+.recips { font-family: var(--f-data); font-size: .8rem; user-select: all; overflow-wrap: anywhere; }
+table.people { width: 100%; border-collapse: collapse; font-size: .86rem; }
+table.people td, table.people th { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.people th { font-size: .74rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.addrow { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 10px; }
+.log { display: grid; gap: 0; max-height: 360px; overflow: auto; font-size: .86rem; }
+.log div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.log .num { color: var(--muted); font-size: .78rem; }
+.foot { color: var(--muted); font-size: .82rem; max-width: 90ch; }
+.toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: .88rem; z-index: 50; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+
+<header class="bar" id="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="var(--accent)"/><path d="M5 17h5l2.5-6 4 11 3-8 1.5 3H25" fill="none" stroke="var(--accent-ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><b>Surge Watch</b><small>Meridian District Hospital · 344 beds · simulated data</small></div>
+    </div>
+    <div class="clock"><span class="eyebrow">Hospital time</span><span class="num" id="clock"></span></div>
+    <div class="ctrls">
+      <span class="muted" id="updated" style="font-size:.82rem"></span>
+      <button class="btn" id="liveBtn" type="button"><span class="live-dot"></span><span id="liveLbl">Run live</span></button>
+      <button class="btn" id="stepBtn" type="button" title="Advance one hour">+1 h</button>
+      <button class="btn" id="dayBtn" type="button" title="Advance one day">+1 day</button>
+      <button class="btn ghost" id="resetBtn" type="button">Reset</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="main">
+  <div id="scenarioBanner" hidden></div>
+
+  <section class="sec" aria-labelledby="h-outlook">
+    <div class="sec-head">
+      <div style="display:grid;gap:6px">
+        <span class="eyebrow" id="h-outlook">Bottleneck outlook</span>
+        <p class="headline" id="headline"></p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="muted" style="font-size:.85rem">Forecast window</span>
+        <div class="seg" role="group" aria-label="Forecast window" id="horizon">
+          <button type="button" data-h="7">7 days</button><button type="button" data-h="14">14 days</button><button type="button" data-h="30">30 days</button>
+        </div>
+      </div>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel sec" aria-labelledby="h-fc">
+      <div class="sec-head"><h2 id="h-fc">Forecast by unit</h2><span class="muted" style="font-size:.82rem">Load as % of safe capacity · past 48 h observed, then forecast</span></div>
+      <div class="tabs" role="tablist" id="unitTabs"></div>
+      <div class="unit-meta" id="unitMeta"></div>
+      <div class="chart" id="fcChart"></div>
+      <div class="legend" id="fcLegend"></div>
+    </div>
+    <div class="panel sec" aria-labelledby="h-why">
+      <div class="sec-head"><h2 id="h-why">Why this is predicted</h2></div>
+      <p class="narr" id="whyNarr"></p>
+      <div class="why-list" id="whyList"></div>
+      <p class="muted" style="font-size:.78rem">Each bar shows how many percentage points the peak would fall if that factor were absent, re-simulated with everything else unchanged.</p>
+    </div>
+  </section>
+
+  <section class="panel sec" aria-labelledby="h-heat">
+    <div class="sec-head"><h2 id="h-heat">Daily peak load by unit</h2>
+      <div class="legend"><span><span class="pill ok">below 85%</span></span><span><span class="pill watch">85–95% watch</span></span><span id="lgW"></span><span id="lgC"></span></div>
+    </div>
+    <div class="scroll-x"><table class="heat" id="heat"></table></div>
+  </section>
+
+  <section class="panel sec" aria-labelledby="h-casc">
+    <div class="sec-head"><h2 id="h-casc">Knock-on effects</h2><p>How the expected demand moves through the hospital over the forecast window, compared with a typical week without seasonal illness or scenario changes.</p></div>
+    <div class="cascade" id="cascade"></div>
+  </section>
+
+  <section class="panel sec" aria-labelledby="h-wi" id="whatif">
+    <div class="sec-head"><h2 id="h-wi">What-if scenarios</h2><p>Change conditions to see the effect on every unit. The scenario is hypothetical: it changes the forecast shown on this page, not the hospital's plan.</p></div>
+    <div class="presets" id="presets"></div>
+    <div class="levers" id="levers"></div>
+    <div class="scroll-x"><table class="cmp" id="cmp"></table></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-act">
+    <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">For staff to decide</span><h2 id="h-act">Preventive actions</h2></div>
+      <p>Suggestions are ranked by simulated effect on the predicted bottlenecks. Nothing changes until a named person approves it; approved actions are added to the plan and the forecast is recalculated.</p></div>
+    <div class="acts" id="acts"></div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel sec" aria-labelledby="h-season">
+      <div class="sec-head"><h2 id="h-season">Seasonal and recurring patterns</h2><span class="muted" style="font-size:.82rem">30 days back · 90 days ahead</span></div>
+      <div class="chart" id="seasonChart"></div>
+      <div class="strips" id="strips"></div>
+    </div>
+    <div class="panel sec" aria-labelledby="h-feeds">
+      <div class="sec-head"><h2 id="h-feeds">External signals</h2></div>
+      <p class="ink2" style="font-size:.88rem">These readings scale the seasonal model. Enter a new reading to see the forecast update; in live mode they refresh daily at 08:00.</p>
+      <div class="feeds" id="feeds"></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-alerts">
+    <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Early warning</span><h2 id="h-alerts">Notifications</h2></div>
+      <p>Surge Watch drafts an email when a forecast crosses the rule below. A person reviews each draft and sends it from their own mail account.</p></div>
+    <div class="grid2">
+      <div class="panel sec">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.9rem">
+          Draft an alert when a
+          <select class="in" id="ruleSev"><option value="critical">critical</option><option value="warning">warning or critical</option></select>
+          bottleneck is forecast to start within
+          <select class="in" id="ruleLead"><option value="24">24 h</option><option value="48">48 h</option><option value="72">72 h</option><option value="120">5 days</option><option value="168">7 days</option></select>
+        </div>
+        <div class="alerts" id="alerts"></div>
+      </div>
+      <div class="panel sec">
+        <h3>Stakeholders</h3>
+        <div class="scroll-x"><table class="people" id="people"></table></div>
+        <form class="addrow" id="addPerson" autocomplete="off">
+          <input class="in" id="pRole" placeholder="Role" required>
+          <input class="in" id="pEmail" placeholder="Email" type="email" required>
+          <select class="in" id="pUnits"><option value="ALL">All units</option></select>
+          <button class="btn" type="submit">Add stakeholder</button>
+        </form>
+        <h3 style="margin-top:8px">Forecast log</h3>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">All patients, capacities and surveillance readings on this page are simulated for demonstration. The model is an hour-by-hour flow simulation: arrivals by hour and weekday, seasonal illness curves for India, routing to wards, length of stay, discharge timing, lab and imaging queues, and nurse ratios. The shaded band is the range between lower (−10% arrivals) and higher (+10%) demand runs. Forecasts support decisions by hospital staff; they do not make them.</p>
+</main>
+<div id="toast" class="toast" hidden></div>
+
+<script src="model.js"></script>
+<script>
+(function () {
+'use strict';
+const S = window.SW, U = S.UNITS, UID = Object.fromEntries(U.map(u => [u.id, u]));
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pct = v => Math.round(v * 100) + '%';
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const tOf = abs => new Date(S.START + abs * S.HOUR);
+const hh = d => String(d.getHours()).padStart(2, '0') + ':00';
+const fmtT = abs => { const d = tOf(abs); return `${DAYS[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}, ${hh(d)}`; };
+const fmtD = abs => { const d = tOf(abs); return `${DAYS[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`; };
+const rel = h => { if (h <= 0) return 'now'; const d = Math.floor(h / 24), r = Math.round(h % 24); return 'in ' + (d ? d + ' d ' : '') + (r || !d ? r + ' h' : '').trim(); };
+const sevOf = v => v >= S.THRESH.crit ? 'critical' : v >= S.THRESH.warn ? 'warning' : v >= S.THRESH.watch ? 'watch' : 'ok';
+const SEV_LABEL = { critical: 'Critical', warning: 'Warning', watch: 'Watch', ok: 'Normal' };
+const ICON = {
+  critical: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 0h4l4 4v4l-4 4H4L0 8V4z" fill="currentColor"/><path d="M6 3v3.5M6 8.6v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  warning: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .5 11.5 11H.5z" fill="currentColor"/><path d="M6 4.5v3M6 9.2v.1" stroke="#241a00" stroke-width="1.4" stroke-linecap="round"/></svg>',
+  watch: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+  ok: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 5 9l5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+};
+const pill = (sev, text) => `<span class="pill ${sev}">${ICON[sev] || ''}${esc(text || SEV_LABEL[sev])}</span>`;
+const store = { get(k, d) { try { const v = localStorage.getItem('sw.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('sw.' + k, JSON.stringify(v)); } catch (e) {} } };
+
+/* ---------------- application state ---------------- */
+const DEFAULT_PEOPLE = [
+  { role: 'Medical Superintendent', email: 'ms@meridian-hospital.example', units: 'ALL', minSev: 'warning' },
+  { role: 'Head of Emergency', email: 'ed.head@meridian-hospital.example', units: 'ED,LAB,IMG', minSev: 'warning' },
+  { role: 'Nursing Superintendent', email: 'nursing@meridian-hospital.example', units: 'NUR,MED,SURG,PEDS,ICU', minSev: 'warning' },
+  { role: 'Head of Critical Care', email: 'icu@meridian-hospital.example', units: 'ICU', minSev: 'warning' },
+  { role: 'Lab Director', email: 'lab@meridian-hospital.example', units: 'LAB', minSev: 'warning' },
+  { role: 'District Surveillance Officer', email: 'dso@district-health.example', units: 'ALL', minSev: 'critical' }
+];
+let A;
+function freshApp() {
+  return {
+    now: 0, rand: S.mulberry(20261015), state: null, history: [],
+    feedVals: { dengueCases: 412, dengueAvg: 368, aqi: 182, ili: 0.9, rain: 18 },
+    nowcast: 1, levers: S.defaultLevers(), approved: [], dismissed: {}, confirming: null,
+    horizonDays: store.get('horizon', 14), selUnit: null, live: false, timer: null,
+    log: [], alerts: [], prevSummary: null, rule: { minSev: 'critical', leadH: 72 },
+    people: store.get('people', DEFAULT_PEOPLE), F: null
+  };
+}
+function feeds() {
+  const v = A.feedVals;
+  return { dengue: v.dengueCases / v.dengueAvg, aqi: Math.max(0.3, Math.min(2.5, v.aqi / 180)), flu: v.ili };
+}
+function activeActions() { return A.approved.map(a => ({ id: a.id, lead: Math.max(0, a.at + S.ACTION_BY_ID[a.id].lead - A.now) })); }
+function baseRun(extra) { return Object.assign({ levers: A.levers, actions: activeActions(), feeds: feeds(), nowcast: A.nowcast, flags: {} }, extra || {}); }
+const leversChanged = () => { const d = S.defaultLevers(); return Object.keys(d).some(k => k !== 'startHour' && A.levers[k] !== d[k]); };
+
+function boot() {
+  A = freshApp();
+  const st = S.initialState();
+  for (let k = 0; k < S.HISTORY_HOURS; k++) A.history.push(S.step(st, 0, -S.HISTORY_HOURS + k, { levers: S.defaultLevers(), actions: [], feeds: feeds(), rand: A.rand }));
+  A.state = st;
+  updateNowcast();
+  addLog('Forecast started from the last 48 h of ward, ED, lab and staffing data.');
+  recompute(true);
+}
+
+function updateNowcast() {
+  const last = A.history.slice(-24);
+  const r = last.reduce((a, x) => a + x.arrivals, 0) / Math.max(1, last.reduce((a, x) => a + x.expected, 0));
+  A.nowcast = Math.max(0.85, Math.min(1.25, 1 + (r - 1) * 0.6));
+}
+
+/* ---------------- forecasting ---------------- */
+const H = () => A.horizonDays * 24;
+function unitSummary(events) {
+  const out = {};
+  for (const u of U) {
+    const ev = events.filter(e => e.unit === u.id);
+    if (!ev.length) continue;
+    const worst = ev.reduce((a, e) => e.peak > a.peak ? e : a, ev[0]);
+    const firstSerious = ev.find(e => e.sev === 'critical') || ev[0];
+    out[u.id] = { unit: u.id, first: ev[0], worst, firstSerious, sev: worst.sev, episodes: ev.length, hours: ev.reduce((a, e) => a + e.hours, 0) };
+  }
+  return out;
+}
+function recompute(initial) {
+  const h = H(), run = baseRun();
+  const mid = S.simulate(A.state, A.now, h, run);
+  const lo = S.simulate(A.state, A.now, h, baseRun({ band: 0.9, seasonBand: 0.85 }));
+  const hi = S.simulate(A.state, A.now, h, baseRun({ band: 1.1, seasonBand: 1.15 }));
+  let compare = null, compareLabel = '';
+  if (leversChanged()) { compare = S.simulate(A.state, A.now, h, baseRun({ levers: S.defaultLevers() })); compareLabel = 'Without scenario'; }
+  else if (A.approved.length) { compare = S.simulate(A.state, A.now, h, baseRun({ actions: [] })); compareLabel = 'Without approved actions'; }
+  const events = S.detectEvents(mid), sum = unitSummary(events);
+  const sumLo = unitSummary(S.detectEvents(lo)), sumHi = unitSummary(S.detectEvents(hi));
+  for (const id in sum) {
+    const s = sum[id], sevLo = sumLo[id] && sumLo[id].sev;
+    s.conf = sevLo === s.sev ? 'High' : sevLo ? 'Medium' : 'Low';
+    s.confWhy = sevLo === s.sev ? 'also predicted with 10% lower demand' : sevLo ? 'lower-demand run gives a smaller breach' : 'only predicted at expected or higher demand';
+  }
+  const typical = S.simulate(A.state, A.now, h, baseRun({ levers: S.defaultLevers(), off: Object.fromEntries(S.SEASONS.map(s => [s.id, true])), nowcast: 1 }));
+  A.F = { mid, lo, hi, compare, compareLabel, events, sum, sumHi, typical };
+  if (!A.selUnit) A.selUnit = pickDefaultUnit();
+  if (!leversChanged()) { diffAndLog(initial); evaluateAlerts(); }
+  render();
+}
+function ranked() {
+  const order = { critical: 0, warning: 1 };
+  return Object.values(A.F.sum).sort((a, b) => order[a.sev] - order[b.sev] || a.firstSerious.start - b.firstSerious.start);
+}
+function pickDefaultUnit() { const r = ranked(); return r.length ? r[0].unit : 'ED'; }
+
+function diffAndLog(initial) {
+  const cur = {};
+  for (const s of Object.values(A.F.sum)) cur[s.unit] = { sev: s.sev, start: A.now + s.firstSerious.start, peak: s.worst.peak };
+  const prev = A.prevSummary;
+  if (prev && !initial) {
+    const why = driftNote();
+    for (const id in cur) {
+      const c = cur[id], p = prev[id], name = UID[id].long;
+      if (!p) addLog(`New ${c.sev} bottleneck forecast: ${name} from ${fmtT(c.start)} (peak ${pct(c.peak)}).${why}`, c.sev);
+      else if (p.sev !== c.sev) addLog(`${name} changed from ${p.sev} to ${c.sev}; peak now ${pct(c.peak)}.${why}`, c.sev);
+      else if (Math.abs(p.start - c.start) >= 3) addLog(`${name}: onset moved ${Math.abs(p.start - c.start)} h ${c.start < p.start ? 'earlier' : 'later'} to ${fmtT(c.start)}.${why}`);
+    }
+    for (const id in prev) if (!cur[id] && prev[id].start >= A.now) addLog(`${UID[id].long} no longer forecast to breach 95%.`, 'ok');
+  }
+  A.prevSummary = cur;
+}
+function driftNote() {
+  const d = Math.round((A.nowcast - 1) * 100);
+  return Math.abs(d) >= 3 ? ` Arrivals over the last 24 h are running ${Math.abs(d)}% ${d > 0 ? 'above' : 'below'} forecast.` : '';
+}
+function addLog(text, sev) { A.log.unshift({ at: A.now, text, sev }); A.log = A.log.slice(0, 80); }
+
+/* ---------------- explanation ---------------- */
+function explain(unitId) {
+  const F = A.F, s = F.sum[unitId], h = H();
+  const win = s ? [s.worst.start, s.worst.end] : [0, h - 1];
+  const peakOf = ser => { let m = 0, at = win[0]; for (let i = win[0]; i <= win[1]; i++) if (ser[i].p[unitId] > m) { m = ser[i].p[unitId]; at = i; } return [m, at]; };
+  const [full, fullAt] = peakOf(F.mid);
+  const sims = [];
+  const feedNow = feeds();
+  for (const se of S.SEASONS) {
+    let mx = 0; for (let i = win[0]; i <= win[1]; i += 6) mx = Math.max(mx, S.seasonRaw(se, F.mid[i].t) * (feedNow[se.id] || 1));
+    if (mx > 0.04) sims.push({ id: se.id, name: se.name, run: baseRun({ off: { [se.id]: true } }), text: seasonText(se, feedNow) });
+  }
+  sims.push({ id: 'dow', name: 'Monday arrival peak', run: baseRun({ flags: { flatDow: true } }), text: 'ED arrivals run about 15% above average on Mondays and dip at weekends.' });
+  if (['MED', 'SURG', 'PEDS', 'ED', 'ICU', 'NUR'].includes(unitId) && !A.approved.some(a => a.id === 'weekenddc'))
+    sims.push({ id: 'wkd', name: 'Weekend discharge slowdown', run: baseRun({ flags: { noWeekendDip: true } }), text: 'Saturday discharges run at about 55% and Sunday at 40% of a weekday, so beds freed on Friday are refilled before Monday.' });
+  if (['LAB', 'ED'].includes(unitId)) sims.push({ id: 'batch', name: 'Morning ward blood-draw batch', run: baseRun({ flags: { noBatch: true } }), text: '60% of routine inpatient samples arrive between 05:00 and 09:00, before day staffing starts.' });
+  if (unitId === 'ED') sims.push({ id: 'labslow', name: 'Slow lab results holding ED patients', run: baseRun({ flags: { noLabSlow: true } }), text: 'Patients waiting on blood results stay longer in ED cubicles.' });
+  if (unitId === 'NUR') sims.push({ id: 'leave', name: 'Staff sickness and festival leave', run: baseRun({ flags: { noLeave: true } }), text: 'Seasonal flu among staff and leave around Diwali reduce nurses on shift.' });
+  const st0 = S.cloneState(A.state);
+  for (const u of S.WARDS) st0.occ[u] = Math.min(st0.occ[u], 0.8 * S.P.beds[u]), st0.bd[u] = 0;
+  st0.labQ = Math.min(st0.labQ, 20); st0.ed = Math.min(st0.ed, 15); st0.icuStep = 0;
+  sims.push({ id: 'start', name: 'Already-high occupancy today', state: st0, run: baseRun(), text: 'Wards are starting the window fuller than usual, so there is little slack to absorb a surge.' });
+  if (Math.abs(A.nowcast - 1) >= 0.02) sims.push({ id: 'nowcast', name: A.nowcast > 1 ? 'Arrivals running above forecast' : 'Arrivals running below forecast', run: baseRun({ nowcast: 1 }), text: `The last 24 h of arrivals were ${Math.abs(Math.round((A.nowcast - 1) / 0.6 * 100))}% ${A.nowcast > 1 ? 'above' : 'below'} what the model expected; the forecast leans toward what is being observed.` });
+  const d = S.defaultLevers();
+  const LV = { arrivalPct: 'Scenario: arrival change', seasonScale: 'Scenario: seasonal surge', outbreak: 'Scenario: outbreak', nurseShortPct: 'Scenario: nurse shortage', docShortPct: 'Scenario: ED doctor shortage', medBedsClosed: 'Scenario: Medicine beds closed', ventsDown: 'Scenario: ventilators out of service', labDownPct: 'Scenario: lab capacity lost', imgDownPct: 'Scenario: imaging capacity lost' };
+  for (const k in LV) if (A.levers[k] !== d[k]) sims.push({ id: 'lv_' + k, name: LV[k], run: baseRun({ levers: Object.assign({}, A.levers, { [k]: d[k] }) }), text: 'Part of the what-if scenario you set.' });
+  for (const a of A.approved) sims.push({ id: 'act_' + a.id, name: 'Approved: ' + S.ACTION_BY_ID[a.id].title, run: baseRun({ actions: activeActions().filter(x => x.id !== a.id) }), text: `Approved by ${a.by}.` });
+  const res = [];
+  for (const x of sims) {
+    const ser = S.simulate(x.state || A.state, A.now, Math.min(h, win[1] + 1), x.run);
+    const [p] = peakOf(ser);
+    const delta = (full - p) * 100;
+    if (Math.abs(delta) >= 0.5) res.push({ ...x, delta });
+  }
+  res.sort((a, b) => b.delta - a.delta);
+  return { full, fullAt, drivers: res, s };
+}
+function seasonText(se, f) {
+  if (se.id === 'dengue') { const r = Math.round((f.dengue - 1) * 100); return `${se.why} District reports are ${Math.abs(r)}% ${r >= 0 ? 'above' : 'below'} the 5-year average for this week.`; }
+  if (se.id === 'aqi') return `${se.why} AQI forecast: ${A.feedVals.aqi}.`;
+  return se.why;
+}
+
+/* ---------------- rendering ---------------- */
+function render() {
+  renderBar(); renderBanner(); renderHeadline(); renderCards(); renderTabs(); renderChart(); renderWhy();
+  renderHeat(); renderCascade(); renderLevers(); renderCompare(); renderActions(); renderSeason(); renderFeeds();
+  renderAlerts(); renderPeople(); renderLog();
+}
+function renderBar() {
+  $('clock').textContent = fmtT(A.now);
+  $('updated').textContent = 'Forecast refreshed ' + hh(tOf(A.now));
+  $('liveLbl').textContent = A.live ? 'Pause live' : 'Run live';
+  $('bar').classList.toggle('is-live', A.live);
+  for (const b of $('horizon').querySelectorAll('button')) b.setAttribute('aria-pressed', String(+b.dataset.h === A.horizonDays));
+}
+function renderBanner() {
+  const el = $('scenarioBanner'), on = leversChanged();
+  el.hidden = !on;
+  if (!on) return;
+  el.className = 'banner';
+  el.innerHTML = `<span><b>What-if scenario on.</b> Forecasts below include: ${esc(leverSummary())}.</span><span style="margin-left:auto;display:flex;gap:8px"><a class="btn small" href="#whatif">Edit</a><button class="btn small" type="button" data-clear>Clear scenario</button></span>`;
+}
+function leverSummary() {
+  const L = A.levers, p = [];
+  if (L.arrivalPct) p.push(`${L.arrivalPct > 0 ? '+' : ''}${L.arrivalPct}% arrivals`);
+  if (L.seasonScale !== 1) p.push(`seasonal illness ×${L.seasonScale}`);
+  if (L.outbreak !== 'none') p.push(S.OUTBREAKS[L.outbreak].label);
+  if (L.nurseShortPct) p.push(`${L.nurseShortPct}% fewer nurses`);
+  if (L.docShortPct) p.push(`${L.docShortPct}% fewer ED doctors`);
+  if (L.medBedsClosed) p.push(`${L.medBedsClosed} Medicine beds closed`);
+  if (L.ventsDown) p.push(`${L.ventsDown} ventilators down`);
+  if (L.labDownPct) p.push(`lab capacity −${L.labDownPct}%`);
+  if (L.imgDownPct) p.push(`imaging capacity −${L.imgDownPct}%`);
+  return p.join(', ') + (L.startHour ? `, starting ${fmtT(A.now + L.startHour)}` : '');
+}
+function renderHeadline() {
+  const r = ranked(), c = r.filter(x => x.sev === 'critical').length, w = r.length - c;
+  let t;
+  if (!r.length) t = `No unit is forecast to pass 95% of safe capacity in the next ${A.horizonDays} days.`;
+  else {
+    const f = r[0];
+    const parts = []; if (c) parts.push(`${c} critical`); if (w) parts.push(`${w} warning`);
+    t = `${parts.join(' and ')} bottleneck${r.length > 1 ? 's' : ''} expected in the next ${A.horizonDays} days. First to act on: ${UID[f.unit].long}, ${rel(f.firstSerious.start)} (${fmtT(A.now + f.firstSerious.start)}).`;
+  }
+  $('headline').textContent = t;
+}
+function renderCards() {
+  const r = ranked();
+  if (!r.length) { $('cards').innerHTML = `<div class="empty">All units stay below 95% across the window. Try a longer window or a what-if scenario to stress-test the plan.</div>`; return; }
+  $('cards').innerHTML = r.map(s => {
+    const e = s.firstSerious;
+    return `<button class="card" type="button" data-unit="${s.unit}" aria-pressed="${A.selUnit === s.unit}">
+      <div class="card-top"><b>${esc(UID[s.unit].long)}</b>${pill(s.sev)}</div>
+      <dl class="kv">
+        <dt>Starts</dt><dd><b>${rel(e.start)}</b> · ${fmtT(A.now + e.start)}</dd>
+        <dt>Peak</dt><dd class="num">${pct(s.worst.peak)} · ${fmtT(A.now + s.worst.peakAt)}</dd>
+        <dt>Above 95%</dt><dd>${s.hours} h${s.episodes > 1 ? ` in ${s.episodes} episodes` : ''}</dd>
+        <dt>Confidence</dt><dd>${s.conf} <span class="muted">· ${s.confWhy}</span></dd>
+      </dl></button>`;
+  }).join('');
+}
+function unitSev(id) { const s = A.F.sum[id]; if (s) return s.sev; const m = Math.max(...A.F.mid.map(x => x.p[id])); return sevOf(m); }
+function renderTabs() {
+  $('unitTabs').innerHTML = U.map(u => `<button class="tab" role="tab" type="button" data-unit="${u.id}" aria-selected="${A.selUnit === u.id}"><span class="dot ${unitSev(u.id)}"></span>${esc(u.name)}</button>`).join('');
+  const u = UID[A.selUnit], last = A.history[A.history.length - 1], m = A.F.mid;
+  const peak = m.reduce((a, x, i) => x.p[u.id] > a[0] ? [x.p[u.id], i] : a, [0, 0]);
+  let detail = '';
+  if (['MED', 'SURG', 'PEDS'].includes(u.id)) detail = `<span>Beds now <b class="num">${Math.round(last.occ[u.id])}/${last.cap[u.id]}</b></span>`;
+  if (u.id === 'ICU') detail = `<span>Beds now <b class="num">${Math.round(last.occ.ICU)}/${last.cap.ICU}</b></span><span>Ventilators <b class="num">${Math.round(last.ventsUsed)}/${last.vents}</b></span>`;
+  if (u.id === 'ED') detail = `<span>Waiting for a ward bed <b class="num">${Math.round(last.boarders)}</b></span><span>Avg stay <b class="num">${last.edLOS.toFixed(1)} h</b></span>`;
+  if (u.id === 'LAB') detail = `<span>Turnaround now <b class="num">${last.labTAT.toFixed(1)} h</b></span>`;
+  if (u.id === 'IMG') detail = `<span>Turnaround now <b class="num">${last.imgTAT.toFixed(1)} h</b></span>`;
+  if (u.id === 'NUR') detail = `<span>Nurses needed / on shift <b class="num">${Math.round(last.nurseReq)}/${Math.round(last.nurseAvail)}</b></span>`;
+  $('unitMeta').innerHTML = `<span><b>${esc(u.long)}</b> — ${esc(u.measure)}</span><span>Now <b class="num">${pct(last.p[u.id])}</b></span>${detail}<span>Forecast peak <b class="num">${pct(peak[0])}</b> ${fmtT(A.now + peak[1])}</span>`;
+}
+
+function renderChart() {
+  const host = $('fcChart'), id = A.selUnit, F = A.F, hist = A.history.slice(-48);
+  const W = Math.max(320, host.clientWidth || 700), Hh = W < 560 ? 230 : 280, m = { l: 40, r: 64, t: 12, b: 26 };
+  const x0 = -hist.length, x1 = F.mid.length;
+  const all = hist.map(x => x.p[id]).concat(F.hi.map(x => x.p[id]), F.mid.map(x => x.p[id]), F.compare ? F.compare.map(x => x.p[id]) : []);
+  let yMax = Math.max(1.15, Math.ceil((Math.max(...all) + 0.05) * 10) / 10), yMin = Math.min(0.4, Math.floor((Math.min(...all) - 0.05) * 10) / 10);
+  yMin = Math.max(0, yMin);
+  const X = k => m.l + (k - x0) / (x1 - x0) * (W - m.l - m.r), Y = v => m.t + (1 - (v - yMin) / (yMax - yMin)) * (Hh - m.t - m.b);
+  const path = (arr, off) => arr.map((x, i) => (i ? 'L' : 'M') + X(i + off).toFixed(1) + ' ' + Y(x.p[id]).toFixed(1)).join('');
+  let g = '';
+  // grid + y ticks
+  const step = yMax - yMin > 1.2 ? 0.5 : 0.25;
+  for (let v = Math.ceil(yMin / step) * step; v <= yMax + 1e-9; v += step) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${m.l - 6}" y="${Y(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
+  // event shading
+  for (const e of F.events.filter(e => e.unit === id)) g += `<rect x="${X(e.start)}" y="${m.t}" width="${Math.max(2, X(e.end + 1) - X(e.start))}" height="${Hh - m.t - m.b}" fill="var(--${e.sev === 'critical' ? 'crit' : 'warn'})" opacity=".09"/>`;
+  // day ticks
+  const dayEvery = (x1 - x0) / 24 > 20 ? 3 : (x1 - x0) / 24 > 10 ? 2 : 1;
+  let di = 0;
+  for (let k = x0; k < x1; k++) { const d = tOf(A.now + k); if (d.getHours() === 0) { if (di++ % dayEvery === 0) g += `<line x1="${X(k)}" x2="${X(k)}" y1="${Hh - m.b}" y2="${Hh - m.b + 4}" stroke="var(--line)"/><text x="${X(k) + 3}" y="${Hh - 8}">${DAYS[d.getDay()]} ${d.getDate()}</text>`; } }
+  // thresholds
+  for (const [v, c, l] of [[S.THRESH.warn, 'warn', 'Warning 95%'], [S.THRESH.crit, 'crit', 'Critical 105%']]) if (v <= yMax) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--${c})" stroke-width="1.2" stroke-dasharray="5 4"/><text x="${W - m.r + 6}" y="${Y(v) + 4}" style="fill:var(--ink-2)">${l.split(' ')[0]}</text>`;
+  // band
+  const band = F.hi.map((x, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(x.p[id]).toFixed(1)}`).join('') + F.lo.slice().reverse().map((x, j) => `L${X(F.lo.length - 1 - j).toFixed(1)} ${Y(x.p[id]).toFixed(1)}`).join('') + 'Z';
+  g += `<path d="${band}" fill="var(--accent)" opacity=".16"/>`;
+  if (F.compare) g += `<path d="${path(F.compare, 0)}" fill="none" stroke="var(--compare)" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+  g += `<path d="${path(hist, x0)}" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linejoin="round"/>`;
+  g += `<path d="${path(F.mid, 0)}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>`;
+  // now
+  g += `<line x1="${X(0)}" x2="${X(0)}" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--ink)" stroke-width="1"/><text x="${X(0) + 4}" y="${m.t + 10}" style="fill:var(--ink)">Now</text>`;
+  // peak marker
+  const pk = F.mid.reduce((a, x, i) => x.p[id] > a[0] ? [x.p[id], i] : a, [0, 0]);
+  g += `<circle cx="${X(pk[1])}" cy="${Y(pk[0])}" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/><text x="${Math.min(X(pk[1]) + 7, W - m.r - 4)}" y="${Y(pk[0]) - 8}" style="fill:var(--ink);font-weight:500">${pct(pk[0])}</text>`;
+  g += `<line id="xh" x1="0" x2="0" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--muted)" stroke-width="1" visibility="hidden"/><circle id="xhd" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
+  g += `<rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${Hh - m.t - m.b}" fill="transparent" id="hit"/>`;
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${esc(UID[id].long)} load forecast, peak ${pct(pk[0])}">${g}</svg><div class="tip" id="tip" hidden></div>`;
+  $('fcLegend').innerHTML = `<span><i style="border-color:var(--ink-2)"></i>Observed</span><span><i style="border-color:var(--accent)"></i>Forecast</span><span><i class="band"></i>Range (±10% demand)</span>${F.compare ? `<span><i style="border-color:var(--compare);border-top-style:dashed"></i>${esc(F.compareLabel)}</span>` : ''}<span><i style="border-color:var(--warn);border-top-style:dashed"></i>Warning 95%</span><span><i style="border-color:var(--crit);border-top-style:dashed"></i>Critical 105%</span>`;
+  const svg = host.querySelector('svg'), tip = $('tip'), xh = svg.querySelector('#xh'), xhd = svg.querySelector('#xhd');
+  const move = ev => {
+    const r = svg.getBoundingClientRect(), sx = (ev.clientX - r.left) * W / r.width;
+    let k = Math.round(x0 + (sx - m.l) / (W - m.l - m.r) * (x1 - x0)); k = Math.max(x0, Math.min(x1 - 1, k));
+    const isF = k >= 0, rec = isF ? F.mid[k] : hist[k - x0], v = rec.p[id];
+    xh.setAttribute('x1', X(k)); xh.setAttribute('x2', X(k)); xh.setAttribute('visibility', 'visible');
+    xhd.setAttribute('cx', X(k)); xhd.setAttribute('cy', Y(v)); xhd.setAttribute('visibility', 'visible');
+    let rows = `<div class="row"><span>${isF ? 'Forecast' : 'Observed'}</span><b class="num">${pct(v)}</b></div>`;
+    if (isF) rows += `<div class="row"><span class="muted">Range</span><span class="num">${pct(F.lo[k].p[id])}–${pct(F.hi[k].p[id])}</span></div>`;
+    if (isF && F.compare) rows += `<div class="row"><span class="muted">${esc(F.compareLabel)}</span><span class="num">${pct(F.compare[k].p[id])}</span></div>`;
+    rows += `<div class="row"><span class="muted">ED arrivals/h</span><span class="num">${rec.arrivals.toFixed(1)}</span></div>`;
+    tip.innerHTML = `<b>${fmtT(A.now + k)}</b>${rows}`; tip.hidden = false;
+    const px = X(k) / W * r.width;
+    tip.style.left = Math.min(px + 12, r.width - 190) + 'px'; tip.style.top = '8px';
+  };
+  svg.addEventListener('pointermove', move);
+  svg.addEventListener('pointerleave', () => { tip.hidden = true; xh.setAttribute('visibility', 'hidden'); xhd.setAttribute('visibility', 'hidden'); });
+}
+
+function renderWhy() {
+  const id = A.selUnit, x = explain(id), u = UID[id];
+  const pos = x.drivers.filter(d => d.delta > 0), neg = x.drivers.filter(d => d.delta < 0 && d.id.startsWith('act_'));
+  const top = pos.slice(0, 3);
+  let n = x.s ? `Load on ${u.long} is forecast to reach ${pct(x.full)} on ${fmtT(A.now + x.fullAt)}.` : `Load on ${u.long} peaks at ${pct(x.full)} on ${fmtT(A.now + x.fullAt)}, below the warning line.`;
+  if (top.length) n += ` The biggest contributor is ${top[0].name} (+${top[0].delta.toFixed(0)} pts)` + (top[1] ? `, followed by ${top.slice(1).map(d => `${d.name} (+${d.delta.toFixed(0)})`).join(' and ')}` : '') + '.';
+  if (neg.length) n += ` Approved actions take ${(-neg.reduce((a, d) => a + d.delta, 0)).toFixed(0)} pts off the peak.`;
+  $('whyNarr').textContent = n;
+  const mx = Math.max(1, ...x.drivers.map(d => Math.abs(d.delta)));
+  $('whyList').innerHTML = x.drivers.slice(0, 7).map(d => `<div class="drv"><div class="drv-top"><span>${esc(d.name)}</span><b class="num">${d.delta > 0 ? '+' : '−'}${Math.abs(d.delta).toFixed(1)} pts${d.delta < 0 ? ' <span class="muted" style="font-weight:400">lowers peak</span>' : ''}</b></div>
+    <div class="drv-bar"><span class="${d.delta < 0 ? (d.id.startsWith('act_') ? 'neg' : 'low') : ''}" style="width:${(Math.abs(d.delta) / mx * 100).toFixed(1)}%"></span></div><p>${esc(d.text)}</p></div>`).join('') || '<p class="muted">No single factor moves the peak by more than half a point.</p>';
+}
+
+function renderHeat() {
+  const F = A.F, days = A.horizonDays;
+  let h = '<thead><tr><th class="rowh"></th>';
+  // one column per calendar day
+  const cal = []; let k = 0;
+  while (k < F.mid.length) { const d = tOf(A.now + k); const rest = 24 - d.getHours(); cal.push([k, Math.min(F.mid.length, k + rest)]); k += rest; }
+  const C = cal.slice(0, days + 1).filter(c => c[1] - c[0] >= 4);
+  for (const [a] of C) { const d = tOf(A.now + a); h += `<th class="${d.getDay() % 6 === 0 ? 'wkend' : ''}">${DAYS[d.getDay()]}<br>${d.getDate()}</th>`; }
+  h += '</tr></thead><tbody>';
+  for (const u of U) {
+    h += `<tr class="${A.selUnit === u.id ? 'sel' : ''}"><th class="rowh">${esc(u.name)}</th>`;
+    for (const [a, b] of C) {
+      let mx = 0; for (let i = a; i < b; i++) mx = Math.max(mx, F.mid[i].p[u.id]);
+      const s = sevOf(mx);
+      h += `<td class="${s === 'ok' ? '' : s}" data-unit="${u.id}" title="${esc(u.long)} · ${fmtD(A.now + a)} · peak ${pct(mx)} (${SEV_LABEL[s]})">${Math.round(mx * 100)}</td>`;
+    }
+    h += '</tr>';
+  }
+  $('heat').innerHTML = h + '</tbody>';
+  $('lgW').innerHTML = pill('warning', '95–105% warning'); $('lgC').innerHTML = pill('critical', '105%+ critical');
+}
+
+function agg(ser) {
+  const n = ser.length, days = n / 24, sum = f => ser.reduce((a, x) => a + f(x), 0), max = f => Math.max(...ser.map(f));
+  return {
+    arr: sum(x => x.arrivals) / days, lab: sum(x => x.labDemand) / days, labTAT: max(x => x.labTAT), imgTAT: max(x => x.imgTAT),
+    edLOS: max(x => x.edLOS), board: sum(x => x.boarders), med: max(x => x.p.MED), peds: max(x => x.p.PEDS), icu: max(x => x.p.ICU), surg: max(x => x.p.SURG),
+    step: sum(x => x.icuStepWait), canc: sum(x => x.cancelled), nur: max(x => x.p.NUR), nurReq: max(x => x.nurseReq),
+    edOver: ser.filter(x => x.p.ED >= 1).length, div: sum(x => x.diverted)
+  };
+}
+function renderCascade() {
+  const c = agg(A.F.mid), t = agg(A.F.typical), ac = admPerDay(A.F.mid), at = admPerDay(A.F.typical);
+  const d = (a, b, kind) => {
+    if (kind === 'pct') { const v = Math.round((a - b) * 100); return v === 0 ? 'same as typical' : `${v > 0 ? '+' : '−'}${Math.abs(v)} pts vs typical`; }
+    if (kind === 'rel') { const v = Math.round((a / Math.max(1e-6, b) - 1) * 100); return v === 0 ? 'same as typical' : `${v > 0 ? '+' : '−'}${Math.abs(v)}% vs typical`; }
+    const v = a - b; return Math.abs(v) < 0.05 ? 'same as typical' : `${v > 0 ? '+' : '−'}${Math.abs(v).toFixed(kind === 'h' ? 1 : 0)}${kind === 'h' ? ' h' : ''} vs typical`;
+  };
+  const heat = (v, w, cr) => v >= cr ? 'hot' : v >= w ? 'warm' : '';
+  const node = (lbl, val, delta, cls) => `<div class="node ${cls || ''}"><span class="lbl">${lbl}</span><span class="val">${val}</span><span class="delta">${delta}</span></div>`;
+  const stages = [
+    ['Demand', [
+      node('ED arrivals per day', Math.round(c.arr), d(c.arr, t.arr, 'rel'), heat(c.arr / t.arr, 1.12, 1.25)),
+      node('Admissions needing a bed', Math.round(ac) + '/day', d(ac, at, 'rel'), heat(ac / at, 1.12, 1.25))]],
+    ['Diagnostics', [
+      node('Lab tests per day', Math.round(c.lab).toLocaleString('en-IN'), d(c.lab, t.lab, 'rel'), heat(c.lab / t.lab, 1.1, 1.2)),
+      node('Worst lab turnaround', c.labTAT.toFixed(1) + ' h', d(c.labTAT, t.labTAT, 'h'), heat(c.labTAT / 2.5, .95, 1.05)),
+      node('Worst imaging turnaround', c.imgTAT.toFixed(1) + ' h', d(c.imgTAT, t.imgTAT, 'h'), heat(c.imgTAT / 3, .95, 1.05))]],
+    ['Emergency', [
+      node('Longest ED stay', c.edLOS.toFixed(1) + ' h', d(c.edLOS, t.edLOS, 'h'), heat(c.edLOS / 2.6, 1.15, 1.35)),
+      node('Patient-hours waiting in ED for a bed', Math.round(c.board).toLocaleString('en-IN'), d(c.board, t.board, 'n'), heat(c.board, 50, 200)),
+      node('Hours ED over 100% (diversion risk)', c.edOver, d(c.edOver, t.edOver, 'n'), heat(c.edOver, 1, 6)),
+      node('Patients diverted to other hospitals', Math.round(c.div), d(c.div, t.div, 'n'), heat(c.div, 1, 10))]],
+    ['Wards & ICU', [
+      node('Peak Medicine load', pct(c.med), d(c.med, t.med, 'pct'), heat(c.med, .95, 1.05)),
+      node('Peak Paediatrics load', pct(c.peds), d(c.peds, t.peds, 'pct'), heat(c.peds, .95, 1.05)),
+      node('Peak ICU load', pct(c.icu), d(c.icu, t.icu, 'pct'), heat(c.icu, .95, 1.05)),
+      node('ICU patients stuck waiting for step-down (pt-h)', Math.round(c.step), d(c.step, t.step, 'n'), heat(c.step, 10, 60))]],
+    ['Staff & planned care', [
+      node('Peak nurse cover needed', pct(c.nur), d(c.nur, t.nur, 'pct'), heat(c.nur, .95, 1.05)),
+      node('Elective operations at risk', Math.round(c.canc), d(c.canc, t.canc, 'n'), heat(c.canc, 1, 5)),
+      node('Peak Surgery load', pct(c.surg), d(c.surg, t.surg, 'pct'), heat(c.surg, .95, 1.05))]]
+  ];
+  $('cascade').innerHTML = stages.map(([h, nodes], i) => `<div class="stage"><div class="stage-h"><span class="eyebrow">${h}</span>${i < stages.length - 1 ? '<span class="arrow" aria-hidden="true">→</span>' : ''}</div>${nodes.join('')}</div>`).join('');
+}
+function admPerDay(ser) {
+  // admissions inferred from bed demand: base routing plus seasonal routing
+  let a = 0;
+  for (const x of ser) { const b = x.arrivals - x.seasonArr; a += b * (S.P.route.MED + S.P.route.SURG + S.P.route.ICU + S.P.route.PEDS) + S.P.directMED; for (const se of S.SEASONS) { const v = x.seasonBy[se.id] || 0; for (const u in se.route) a += v * se.route[u]; } }
+  return a / (ser.length / 24);
+}
+
+/* what-if */
+const LEVERS = [
+  { k: 'arrivalPct', label: 'Patient arrivals', min: -20, max: 60, step: 5, fmt: v => (v > 0 ? '+' : '') + v + '%', hint: 'All ED arrivals, any cause' },
+  { k: 'seasonScale', label: 'Seasonal illness intensity', min: 0.5, max: 3, step: 0.1, fmt: v => '×' + (+v).toFixed(1), hint: 'Dengue, flu, water-borne, pollution and festival curves' },
+  { k: 'nurseShortPct', label: 'Nurse shortage', min: 0, max: 40, step: 5, fmt: v => v + '%', hint: 'Sickness, strike or vacancies' },
+  { k: 'docShortPct', label: 'ED doctor shortage', min: 0, max: 50, step: 5, fmt: v => v + '%', hint: 'Fewer doctors on each ED shift' },
+  { k: 'medBedsClosed', label: 'Medicine beds closed', min: 0, max: 40, step: 2, fmt: v => v + ' beds', hint: 'Infection control, maintenance' },
+  { k: 'ventsDown', label: 'Ventilators unavailable', min: 0, max: 10, step: 1, fmt: v => v + ' of 18', hint: 'Servicing or oxygen supply issue' },
+  { k: 'labDownPct', label: 'Lab capacity lost', min: 0, max: 60, step: 10, fmt: v => v + '%', hint: 'Analyser failure, reagent shortage' },
+  { k: 'imgDownPct', label: 'Imaging capacity lost', min: 0, max: 100, step: 10, fmt: v => v + '%', hint: 'CT or USG out of service' },
+  { k: 'startHour', label: 'Scenario starts', min: 0, max: 168, step: 6, fmt: v => v ? rel(+v) : 'now', hint: 'Delay the scenario to test a future event' }
+];
+const PRESETS = [
+  { label: 'Severe dengue outbreak', set: { outbreak: 'dengue' } },
+  { label: 'Early flu wave + staff sickness', set: { outbreak: 'flu', nurseShortPct: 15, docShortPct: 10 } },
+  { label: 'Diwali night', set: { startHour: 0, seasonScale: 1, outbreak: 'mci', arrivalPct: 20 } },
+  { label: 'Lab analyser failure', set: { labDownPct: 50 } },
+  { label: 'Ward closed for infection control', set: { medBedsClosed: 24 } },
+  { label: 'Nursing strike', set: { nurseShortPct: 30 } }
+];
+let leversBuilt = false;
+function renderLevers() {
+  if (!leversBuilt) {
+    $('presets').innerHTML = '<span class="muted" style="font-size:.85rem;align-self:center">Start from:</span>' + PRESETS.map((p, i) => `<button class="btn small" type="button" data-preset="${i}">${esc(p.label)}</button>`).join('');
+    $('levers').innerHTML = LEVERS.map(l => `<div class="lever"><label for="lv-${l.k}"><span>${l.label}</span><span class="num" id="lvv-${l.k}"></span></label><input type="range" id="lv-${l.k}" data-k="${l.k}" min="${l.min}" max="${l.max}" step="${l.step}"><small>${l.hint}</small></div>`).join('') +
+      `<div class="lever"><label for="lv-outbreak"><span>Outbreak or incident</span></label><select class="in" id="lv-outbreak">${Object.entries(S.OUTBREAKS).map(([k, o]) => `<option value="${k}">${esc(o.label)}</option>`).join('')}</select><small>Injected on top of the seasonal pattern</small></div>`;
+    leversBuilt = true;
+  }
+  for (const l of LEVERS) { const el = $('lv-' + l.k); if (document.activeElement !== el) el.value = A.levers[l.k]; $('lvv-' + l.k).textContent = l.fmt(A.levers[l.k]); }
+  $('lv-outbreak').value = A.levers.outbreak;
+}
+function renderCompare() {
+  const on = leversChanged();
+  const base = on ? A.F.compare : A.F.mid, scen = A.F.mid;
+  const ev0 = on ? unitSummary(S.detectEvents(base)) : A.F.sum;
+  let h = `<thead><tr><th>Unit</th><th>Peak, current plan</th><th>Peak, scenario</th><th>Change</th><th>Hours ≥ 105%</th><th>Status</th></tr></thead><tbody>`;
+  for (const u of U) {
+    const a = Math.max(...base.map(x => x.p[u.id])), b = Math.max(...scen.map(x => x.p[u.id]));
+    const ca = base.filter(x => x.p[u.id] >= 1.05).length, cb = scen.filter(x => x.p[u.id] >= 1.05).length;
+    const dv = Math.round((b - a) * 100);
+    const s1 = ev0[u.id] ? ev0[u.id].sev : sevOf(a), s2 = A.F.sum[u.id] ? A.F.sum[u.id].sev : sevOf(b);
+    h += `<tr><td>${esc(u.long)}</td><td class="num">${pct(a)}</td><td class="num">${on ? pct(b) : '—'}</td><td class="num ${dv > 0 ? 'up' : dv < 0 ? 'down' : ''}">${on ? (dv > 0 ? '+' : dv < 0 ? '−' : '') + Math.abs(dv) + ' pts' : '—'}</td><td class="num">${on ? `${ca} → ${cb}` : ca}</td><td>${on && s1 !== s2 ? pill(s1) + ' → ' + pill(s2) : pill(s2)}</td></tr>`;
+  }
+  $('cmp').innerHTML = h + '</tbody>' + (on ? '' : `<caption style="caption-side:bottom;text-align:left;padding-top:8px" class="muted">Move a slider or pick a starting point above to compare a scenario with the current plan.</caption>`);
+}
+
+/* actions */
+function critHours(ser) { let n = 0; for (const x of ser) for (const u of U) if (x.p[u.id] >= 1.05) n++; return n; }
+function renderActions() {
+  const F = A.F, units = Object.keys(F.sum), h = H();
+  const baseCrit = critHours(F.mid);
+  const cands = S.ACTIONS.filter(a => !A.approved.some(x => x.id === a.id) && !A.dismissed[a.id] && a.units.some(u => units.includes(u)));
+  const scored = cands.map(a => {
+    const run = baseRun({ actions: activeActions().concat([{ id: a.id, lead: a.lead }]) });
+    const ser = S.simulate(A.state, A.now, h, run);
+    const target = a.units.filter(u => units.includes(u));
+    const deltas = target.map(u => ({ u, before: Math.max(...F.mid.map(x => x.p[u])), after: Math.max(...ser.map(x => x.p[u])) }));
+    const gain = baseCrit - critHours(ser) + deltas.reduce((s, d) => s + (d.before - d.after) * 100, 0) * 0.5;
+    return { a, deltas, critSaved: baseCrit - critHours(ser), gain };
+  }).filter(x => x.gain > 0.3).sort((x, y) => y.gain - x.gain);
+  let html = '';
+  for (const ap of A.approved) {
+    const a = S.ACTION_BY_ID[ap.id], startsAt = ap.at + a.lead;
+    html += `<div class="act approved"><div style="display:grid;gap:4px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><h3>${esc(a.title)}</h3>${pill('info', 'Approved')}</div>
+      <p>Approved by <b>${esc(ap.by)}</b> at ${fmtT(ap.at)} · ${startsAt > A.now ? 'takes effect ' + fmtT(startsAt) : 'in effect'} · owner: ${esc(a.owner)}</p></div>
+      <div class="btns"><button class="btn small" type="button" data-revoke="${a.id}">Withdraw</button></div></div>`;
+  }
+  if (!scored.length && !A.approved.length) html += `<div class="empty">No preventive action is suggested: no unit is forecast to pass 95% in this window.</div>`;
+  for (const x of scored.slice(0, 6)) {
+    const a = x.a, conf = A.confirming === a.id;
+    const imp = x.deltas.filter(d => d.before - d.after > 0.005).map(d => `${UID[d.u].name} ${pct(d.before)} → ${pct(d.after)}`).join(' · ');
+    html += `<div class="act"><div style="display:grid;gap:6px"><h3>${esc(a.title)}</h3><p>${esc(a.detail)}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center"><span class="impact">${imp || 'Small effect on peaks'}${x.critSaved > 0 ? ` · ${x.critSaved} fewer unit-hours at critical` : ''}</span><span class="muted" style="font-size:.8rem">Owner: ${esc(a.owner)} · lead time ${a.lead ? a.lead + ' h' : 'none'}</span></div></div>
+      <div class="btns"><button class="btn small primary" type="button" data-approve="${a.id}">Approve…</button><button class="btn small" type="button" data-try="${a.id}">Preview</button><button class="btn small ghost" type="button" data-dismiss="${a.id}">Dismiss</button></div>
+      ${conf ? `<form class="confirm" data-confirm="${a.id}"><label for="by-${a.id}">Approved by</label><input class="in" id="by-${a.id}" placeholder="Name and role" required value="${esc(store.get('approver', ''))}"><button class="btn small primary" type="submit">Confirm approval</button><button class="btn small ghost" type="button" data-cancel>Cancel</button><span class="muted" style="font-size:.8rem">Adds this action to the hospital plan from ${fmtT(A.now + a.lead)}.</span></form>` : ''}</div>`;
+  }
+  const nd = Object.keys(A.dismissed).length;
+  if (nd) html += `<p class="muted" style="font-size:.85rem">${nd} suggestion${nd > 1 ? 's' : ''} dismissed. <button class="btn small ghost" type="button" data-undismiss>Show again</button></p>`;
+  $('acts').innerHTML = html;
+}
+
+/* seasonal */
+function renderSeason() {
+  const host = $('seasonChart'), W = Math.max(300, host.clientWidth || 600), Hh = 150, m = { l: 36, r: 10, t: 14, b: 22 };
+  const d0 = -30, d1 = 90, f = feeds();
+  const nowT = S.START + A.now * S.HOUR;
+  const pts = [];
+  for (let d = d0; d <= d1; d++) {
+    const t = nowT + d * 864e5; let up = 0;
+    for (const se of S.SEASONS) up += se.amp * S.seasonRaw(se, t) * (f[se.id] || 1) * A.levers.seasonScale;
+    pts.push([d, up * 100]);
+  }
+  const yMax = Math.max(40, Math.ceil(Math.max(...pts.map(p => p[1])) / 10) * 10);
+  const X = d => m.l + (d - d0) / (d1 - d0) * (W - m.l - m.r), Y = v => m.t + (1 - v / yMax) * (Hh - m.t - m.b);
+  let g = '';
+  for (let v = 0; v <= yMax; v += yMax > 60 ? 20 : 10) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${m.l - 5}" y="${Y(v) + 4}" text-anchor="end">+${v}%</text>`;
+  for (let d = d0; d <= d1; d++) { const dt = new Date(nowT + d * 864e5); if (dt.getDate() === 1) g += `<text x="${X(d) + 2}" y="${Hh - 6}">${MON[dt.getMonth()]}</text><line x1="${X(d)}" x2="${X(d)}" y1="${Hh - m.b}" y2="${Hh - m.b + 4}" stroke="var(--line)"/>`; }
+  const area = `M${X(d0)} ${Y(0)}` + pts.map(p => `L${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join('') + `L${X(d1)} ${Y(0)}Z`;
+  g += `<path d="${area}" fill="var(--accent)" opacity=".15"/><path d="${pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  g += `<rect x="${X(0)}" y="${m.t}" width="${X(A.horizonDays) - X(0)}" height="${Hh - m.t - m.b}" fill="var(--ink)" opacity=".05"/>`;
+  g += `<line x1="${X(0)}" x2="${X(0)}" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--ink)"/><text x="${X(0) + 4}" y="${m.t + 8}" style="fill:var(--ink)">Today</text>`;
+  const dw = (new Date(2026, 10, 8).getTime() - nowT) / 864e5;
+  if (dw > d0 && dw < d1) g += `<line x1="${X(dw)}" x2="${X(dw)}" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--muted)" stroke-dasharray="3 3"/><text x="${X(dw) + 4}" y="${m.t + 8}">Diwali</text>`;
+  host.innerHTML = `<p class="ink2" style="font-size:.85rem;margin-bottom:4px">Expected extra ED demand from seasonal illness, % above a non-seasonal day (shaded: forecast window)</p><svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Seasonal uplift on ED demand over 120 days">${g}</svg>`;
+  // strips
+  const n = d1 - d0 + 1;
+  $('strips').innerHTML = S.SEASONS.map(se => {
+    let r = '';
+    for (let d = d0; d <= d1; d++) { const v = Math.min(1, S.seasonRaw(se, nowT + d * 864e5) * (f[se.id] || 1)); if (v > 0.03) r += `<rect x="${(d - d0) / n * 100}%" y="2" width="${100 / n + 0.05}%" height="18" fill="var(--accent)" opacity="${(0.12 + v * 0.85).toFixed(2)}"/>`; }
+    r += `<line x1="${(0 - d0) / n * 100}%" x2="${(0 - d0) / n * 100}%" y1="0" y2="22" stroke="var(--ink)" stroke-width="1.5"/>`;
+    const nowV = S.seasonRaw(se, nowT) * (f[se.id] || 1);
+    return `<div class="strip"><div class="nm">${esc(se.name)}<small>${esc(se.window)} · now ${nowV < 0.05 ? 'inactive' : Math.round(Math.min(1, nowV) * 100) + '% of peak'}</small></div><svg role="img" aria-label="${esc(se.name)} intensity"><rect x="0" y="2" width="100%" height="18" fill="var(--surface-2)"/>${r}</svg></div>`;
+  }).join('');
+}
+function renderFeeds() {
+  const v = A.feedVals, f = feeds();
+  const dr = Math.round((f.dengue - 1) * 100);
+  const aqiBand = v.aqi <= 100 ? 'Satisfactory' : v.aqi <= 200 ? 'Moderate' : v.aqi <= 300 ? 'Poor' : v.aqi <= 400 ? 'Very poor' : 'Severe';
+  const html = [
+    `<div class="feed"><span class="eyebrow">Dengue cases, district (week)</span><span class="v">${v.dengueCases}</span><span class="ink2" style="font-size:.85rem">${dr >= 0 ? '+' : '−'}${Math.abs(dr)}% vs 5-year average (${v.dengueAvg})</span><div class="row"><input class="in num" id="fd-dengue" type="number" min="0" max="5000" value="${v.dengueCases}" aria-label="New dengue weekly cases"><button class="btn small" type="button" data-feed="dengue">Record</button></div><span class="src">IDSP weekly surveillance report (simulated)</span></div>`,
+    `<div class="feed"><span class="eyebrow">AQI forecast, next 3 days</span><span class="v">${v.aqi}</span><span class="ink2" style="font-size:.85rem">${aqiBand}</span><div class="row"><input class="in num" id="fd-aqi" type="number" min="0" max="500" value="${v.aqi}" aria-label="New AQI forecast"><button class="btn small" type="button" data-feed="aqi">Record</button></div><span class="src">Pollution control board forecast (simulated)</span></div>`,
+    `<div class="feed"><span class="eyebrow">Influenza-like illness index</span><span class="v">${v.ili.toFixed(2)}×</span><span class="ink2" style="font-size:.85rem">Sentinel clinics vs seasonal norm</span><div class="row"><input class="in num" id="fd-ili" type="number" min="0.2" max="4" step="0.05" value="${v.ili}" aria-label="New ILI index"><button class="btn small" type="button" data-feed="ili">Record</button></div><span class="src">Sentinel surveillance (simulated)</span></div>`,
+    `<div class="feed"><span class="eyebrow">Rainfall, last 7 days</span><span class="v">${v.rain} mm</span><span class="ink2" style="font-size:.85rem">Monsoon has withdrawn; standing water still drives mosquito breeding for 2–3 weeks.</span><span class="src">Meteorological department (simulated)</span></div>`
+  ];
+  $('feeds').innerHTML = html.join('');
+}
+
+/* alerts */
+function evaluateAlerts() {
+  const order = { warning: 1, critical: 2 }, min = order[A.rule.minSev];
+  for (const s of ranked()) {
+    const e = s.sev === 'critical' ? s.firstSerious : s.first;
+    if (order[s.sev] < min || e.start > A.rule.leadH) continue;
+    const existing = A.alerts.find(a => a.unit === s.unit && a.status !== 'dismissed' && a.startAbs > A.now - 24);
+    if (existing && order[existing.sev] >= order[s.sev]) continue;
+    A.alerts.unshift(makeAlert(s, e));
+    addLog(`Alert drafted for ${UID[s.unit].long} (${s.sev}). Waiting for review.`, s.sev);
+  }
+}
+function makeAlert(s, e) {
+  const u = UID[s.unit], x = explain(s.unit);
+  const recips = A.people.filter(p => (p.units === 'ALL' || p.units.split(',').includes(s.unit)) && (p.minSev === 'warning' || s.sev === 'critical'));
+  const drivers = x.drivers.filter(d => d.delta > 0).slice(0, 3).map(d => `  • ${d.name} (+${d.delta.toFixed(0)} pts)`).join('\n');
+  const knock = Object.values(A.F.sum).filter(o => o.unit !== s.unit).map(o => `  • ${UID[o.unit].long}: ${o.sev}, from ${fmtT(A.now + o.firstSerious.start)}`).join('\n') || '  • No other unit forecast above 95%.';
+  const acts = S.ACTIONS.filter(a => a.units.includes(s.unit) && !A.approved.some(p => p.id === a.id)).slice(0, 3).map(a => `  • ${a.title} (owner: ${a.owner})`).join('\n');
+  const subject = `[Surge Watch] ${SEV_LABEL[s.sev]}: ${u.long} forecast ${pct(s.worst.peak)} from ${fmtT(A.now + e.start)}`;
+  const body = `Early warning from Surge Watch, Meridian District Hospital
+Issued ${fmtT(A.now)} for review by the recipients below.
+
+${u.long} is forecast to pass the ${s.sev === 'critical' ? 'critical (105%)' : 'warning (95%)'} level ${rel(e.start)}, at ${fmtT(A.now + e.start)}.
+Peak: ${pct(s.worst.peak)} on ${fmtT(A.now + s.worst.peakAt)}. Above 95% for ${s.hours} h in the next ${A.horizonDays} days. Confidence: ${s.conf} (${s.confWhy}).
+Measure: ${u.measure}.
+
+Main contributing factors
+${drivers || '  • No single dominant factor.'}
+
+Other units affected in the same window
+${knock}
+
+Preventive actions for consideration (not yet approved)
+${acts || '  • See Surge Watch for options.'}
+
+${leversChanged() ? 'NOTE: this forecast includes a what-if scenario (' + leverSummary() + ').\n\n' : ''}This is a decision-support forecast. No action has been taken automatically; please record decisions in Surge Watch.`;
+  return { id: 'a' + Date.now() + Math.random().toString(36).slice(2, 6), unit: s.unit, sev: s.sev, created: A.now, startAbs: A.now + e.start, subject, body, to: recips.map(p => p.email), status: 'review' };
+}
+function renderAlerts() {
+  $('ruleSev').value = A.rule.minSev; $('ruleLead').value = String(A.rule.leadH);
+  const paused = leversChanged() ? `<div class="empty">New alerts are paused while a what-if scenario is on, so hypothetical numbers are never sent to stakeholders. Clear the scenario to resume.</div>` : '';
+  const list = A.alerts.filter(a => a.status !== 'dismissed');
+  if (!list.length) { $('alerts').innerHTML = paused + `<div class="empty">No alert drafts. A draft appears here when a ${A.rule.minSev === 'critical' ? 'critical' : 'warning or critical'} bottleneck is forecast to start within ${A.rule.leadH} h.</div>`; return; }
+  $('alerts').innerHTML = paused + list.slice(0, 6).map(a => `<div class="alert"><div class="alert-head"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${pill(a.sev)}<b>${esc(UID[a.unit].long)}</b><span class="muted" style="font-size:.82rem">drafted ${fmtT(a.created)}</span></div>
+    ${a.status === 'sent' ? pill('info', 'Marked sent by ' + a.sentBy) : pill('watch', 'Needs review')}</div>
+    <div><span class="eyebrow">To</span> <span class="recips">${esc(a.to.join(', ') || 'No matching stakeholders')}</span></div>
+    <div><span class="eyebrow">Subject</span> <span style="font-size:.9rem">${esc(a.subject)}</span></div>
+    <details><summary style="cursor:pointer;font-size:.88rem">Email text</summary><div class="email" tabindex="0">${esc(a.body)}</div></details>
+    <div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn small primary" type="button" data-copy="${a.id}">Copy email</button><a class="btn small" href="mailto:${encodeURIComponent(a.to.join(','))}?subject=${encodeURIComponent(a.subject)}&body=${encodeURIComponent(a.body)}" target="_blank" rel="noopener">Open in mail app</a>${a.status !== 'sent' ? `<button class="btn small" type="button" data-sent="${a.id}">Mark as sent</button>` : ''}<button class="btn small ghost" type="button" data-dismiss-alert="${a.id}">Dismiss</button></div></div>`).join('');
+}
+function renderPeople() {
+  $('people').innerHTML = `<thead><tr><th>Role</th><th>Email</th><th>Units</th><th>Notify on</th><th></th></tr></thead><tbody>` + A.people.map((p, i) => `<tr><td>${esc(p.role)}</td><td class="mono" style="font-size:.8rem;overflow-wrap:anywhere">${esc(p.email)}</td><td>${p.units === 'ALL' ? 'All' : esc(p.units.split(',').map(u => UID[u] ? UID[u].name : u).join(', '))}</td><td><select class="in" data-psev="${i}" aria-label="Severity for ${esc(p.role)}"><option value="warning"${p.minSev === 'warning' ? ' selected' : ''}>Warning+</option><option value="critical"${p.minSev === 'critical' ? ' selected' : ''}>Critical</option></select></td><td><button class="btn small ghost" type="button" data-pdel="${i}" aria-label="Remove ${esc(p.role)}">Remove</button></td></tr>`).join('') + '</tbody>';
+  const sel = $('pUnits'); if (sel.options.length === 1) sel.innerHTML += U.map(u => `<option value="${u.id}">${esc(u.long)}</option>`).join('');
+}
+function renderLog() {
+  $('log').innerHTML = A.log.map(l => `<div><span class="num">${fmtT(l.at).replace(',', '')}</span><span>${l.sev && l.sev !== 'ok' ? pill(l.sev) + ' ' : ''}${esc(l.text)}</span></div>`).join('');
+}
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2600); }
+
+/* ---------------- live updates ---------------- */
+function advance(hours) {
+  for (let i = 0; i < hours; i++) {
+    const rec = S.step(A.state, 0, A.now, { levers: S.defaultLevers(), actions: activeActions(), feeds: feeds(), rand: A.rand });
+    A.history.push(rec); A.now++;
+    if (A.history.length > 24 * 40) A.history.shift();
+    if (tOf(A.now).getHours() === 8) dailyFeeds();
+  }
+  updateNowcast();
+  recompute(false);
+}
+function dailyFeeds() {
+  const v = A.feedVals, r = A.rand, t = S.START + A.now * S.HOUR;
+  const prevD = v.dengueCases, prevA = v.aqi;
+  const trend = S.seasonRaw(S.SEASONS[0], t) / Math.max(0.05, S.seasonRaw(S.SEASONS[0], t - 7 * 864e5));
+  v.dengueCases = Math.max(20, Math.round(v.dengueCases * Math.pow(trend, 1 / 7) * (1 + (r() - 0.45) * 0.12)));
+  v.dengueAvg = Math.round(v.dengueAvg * Math.pow(trend, 1 / 7));
+  const dDiwali = (new Date(2026, 10, 8).getTime() - t) / 864e5;
+  v.aqi = Math.max(60, Math.min(480, Math.round(v.aqi + (dDiwali > -4 && dDiwali < 25 ? 9 : -4) + (r() - 0.5) * 30)));
+  v.ili = Math.max(0.5, Math.round((v.ili + (r() - 0.5) * 0.08) * 100) / 100);
+  addLog(`External signals updated: dengue ${prevD} → ${v.dengueCases} cases/week, AQI forecast ${prevA} → ${v.aqi}.`);
+}
+function setLive(on) {
+  A.live = on; clearInterval(A.timer);
+  if (on) A.timer = setInterval(() => advance(1), 2500);
+  renderBar();
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, a, td[data-unit]');
+  if (!t) return;
+  const d = t.dataset;
+  if (d.unit) { A.selUnit = d.unit; renderCards(); renderTabs(); renderChart(); renderWhy(); renderHeat(); if (t.classList.contains('card') || t.tagName === 'TD') document.getElementById('h-fc').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (t.id === 'liveBtn') return setLive(!A.live);
+  if (t.id === 'stepBtn') return advance(1);
+  if (t.id === 'dayBtn') return advance(24);
+  if (t.id === 'resetBtn') { setLive(false); boot(); toast('Simulation reset to Thu 15 Oct, 08:00'); return; }
+  if (d.h) { A.horizonDays = +d.h; store.set('horizon', A.horizonDays); recompute(true); return; }
+  if (d.clear !== undefined) { A.levers = S.defaultLevers(); recompute(true); toast('Scenario cleared'); return; }
+  if (d.preset) { A.levers = Object.assign(S.defaultLevers(), PRESETS[+d.preset].set); recompute(true); toast('Scenario: ' + PRESETS[+d.preset].label); return; }
+  if (d.approve) { A.confirming = d.approve; renderActions(); setTimeout(() => { const el = $('by-' + d.approve); if (el) el.focus(); }, 0); return; }
+  if (d.cancel !== undefined) { A.confirming = null; renderActions(); return; }
+  if (d.try) { previewAction(d.try); return; }
+  if (d.dismiss) { A.dismissed[d.dismiss] = true; renderActions(); return; }
+  if (d.undismiss !== undefined) { A.dismissed = {}; renderActions(); return; }
+  if (d.revoke) { const a = A.approved.find(x => x.id === d.revoke); A.approved = A.approved.filter(x => x.id !== d.revoke); addLog(`Action withdrawn: ${S.ACTION_BY_ID[d.revoke].title} (approved earlier by ${a.by}).`); recompute(false); return; }
+  if (d.feed) { recordFeed(d.feed); return; }
+  if (d.copy) { const a = A.alerts.find(x => x.id === d.copy); const text = `To: ${a.to.join(', ')}\nSubject: ${a.subject}\n\n${a.body}`;
+    const p = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : Promise.reject();
+    p.then(() => toast('Email copied'), () => { const el = t.closest('.alert').querySelector('.email'); t.closest('.alert').querySelector('details').open = true; const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Text selected — press Ctrl+C to copy'); }); return; }
+  if (d.sent) { const a = A.alerts.find(x => x.id === d.sent); a.status = 'sent'; a.sentBy = store.get('approver', '') || 'reviewer'; addLog(`Alert for ${UID[a.unit].long} marked as sent by ${a.sentBy}.`); renderAlerts(); renderLog(); return; }
+  if (d.dismissAlert) { const a = A.alerts.find(x => x.id === d.dismissAlert); a.status = 'dismissed'; addLog(`Alert for ${UID[a.unit].long} dismissed.`); renderAlerts(); renderLog(); return; }
+  if (d.pdel) { A.people.splice(+d.pdel, 1); store.set('people', A.people); renderPeople(); return; }
+});
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  if (f.dataset.confirm) {
+    const id = f.dataset.confirm, by = $('by-' + id).value.trim();
+    if (!by) return;
+    store.set('approver', by);
+    A.approved.push({ id, by, at: A.now }); A.confirming = null;
+    addLog(`Approved: ${S.ACTION_BY_ID[id].title}, by ${by}.`);
+    recompute(false); toast('Approved and added to the plan'); return;
+  }
+  if (f.id === 'addPerson') {
+    A.people.push({ role: $('pRole').value.trim(), email: $('pEmail').value.trim(), units: $('pUnits').value, minSev: 'warning' });
+    store.set('people', A.people); f.reset(); renderPeople(); toast('Stakeholder added');
+  }
+});
+document.addEventListener('input', e => {
+  const k = e.target.dataset && e.target.dataset.k;
+  if (k) { A.levers[k] = +e.target.value; $('lvv-' + k).textContent = LEVERS.find(l => l.k === k).fmt(A.levers[k]); scheduleRecompute(); }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.id === 'lv-outbreak') { A.levers.outbreak = el.value; recompute(true); }
+  if (el.id === 'ruleSev') { A.rule.minSev = el.value; evaluateAlerts(); renderAlerts(); renderLog(); }
+  if (el.id === 'ruleLead') { A.rule.leadH = +el.value; evaluateAlerts(); renderAlerts(); renderLog(); }
+  if (el.dataset.psev) { A.people[+el.dataset.psev].minSev = el.value; store.set('people', A.people); }
+});
+let rcT; function scheduleRecompute() { clearTimeout(rcT); rcT = setTimeout(() => recompute(true), 120); }
+function recordFeed(kind) {
+  const v = A.feedVals, el = $('fd-' + kind), n = parseFloat(el.value);
+  if (!isFinite(n) || n < 0) { toast('Enter a number'); return; }
+  const before = kind === 'dengue' ? v.dengueCases : v[kind];
+  if (kind === 'dengue') v.dengueCases = Math.round(n); else if (kind === 'aqi') v.aqi = Math.round(n); else v.ili = n;
+  addLog(`New reading recorded: ${kind === 'dengue' ? 'dengue cases' : kind === 'aqi' ? 'AQI forecast' : 'ILI index'} ${before} → ${n}. Forecast recalculated.`);
+  recompute(false); toast('Reading recorded, forecast updated');
+}
+function previewAction(id) {
+  const a = S.ACTION_BY_ID[id];
+  const ser = S.simulate(A.state, A.now, H(), baseRun({ actions: activeActions().concat([{ id, lead: a.lead }]) }));
+  const keep = A.F.compare, lbl = A.F.compareLabel;
+  A.F.compare = A.F.mid; A.F.compareLabel = 'Current plan';
+  const mid = A.F.mid; A.F.mid = ser;
+  A.selUnit = a.units.find(u => A.F.sum[u]) || a.units[0];
+  renderTabs(); renderChart();
+  $('fcLegend').insertAdjacentHTML('afterbegin', `<span class="pill info">Previewing: ${esc(a.title)}</span>`);
+  A.F.mid = mid; A.F.compare = keep; A.F.compareLabel = lbl;
+  document.getElementById('h-fc').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { renderChart(); renderSeason(); }, 150); });
+
+boot();
+})();
+</script>
+</body>
+</html>
