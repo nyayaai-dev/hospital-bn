@@ -599,17 +599,21 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(500, {'error': 'Server error'})
 
     def api(self, method, path):
+        body = {}
+        n = int(self.headers.get('Content-Length') or 0)
+        if n > 25_000_000:
+            self.close_connection = True
+            raise ApiError(413, 'Request too large')
+        # Read the body before any refusal, so the client gets the error instead of a reset connection.
+        raw = self.rfile.read(n) if n else b''
         if method != 'GET':
             # Mutating requests must carry this header; browsers cannot add it cross-site without a CORS preflight, which this server never grants.
             need(self.headers.get('X-Surge-Watch') == '1', 403, 'Missing request header')
             origin = self.headers.get('Origin')
             need(not origin or origin.split('://', 1)[-1] == self.headers.get('Host'), 403, 'Cross-site request refused')
-        body = {}
-        n = int(self.headers.get('Content-Length') or 0)
-        need(n <= 25_000_000, 413, 'Request too large')
-        if n:
+        if raw:
             try:
-                body = json.loads(self.rfile.read(n) or b'{}')
+                body = json.loads(raw)
             except ValueError:
                 raise ApiError(400, 'Body must be JSON')
             need(isinstance(body, dict), 400, 'Body must be a JSON object')
@@ -661,6 +665,7 @@ def main():
     ap.add_argument('--key', default=env('SURGEWATCH_KEY'), help='TLS private key file (PEM)')
     a = ap.parse_args()
     srv = make_server(a.host, a.port, cert=a.cert, key=a.key)
+    enc_done = core.encrypt_existing(srv.db)
     core.apply_retention(srv.db)
     collector.start_scheduler(srv.db)
 
@@ -673,6 +678,8 @@ def main():
     scheme = 'https' if srv.https else 'http'
     print(f'Surge Watch server {VERSION} on {scheme}://{a.host}:{a.port}/  (data: {srv.db.path})')
     print(f"Encryption at rest: {'on (AES-256-GCM)' if core.encryption_available() else 'OFF - install the cryptography package to enable'}")
+    if enc_done:
+        print(f'Encrypted census data stored before encryption was on: {enc_done} hospital(s)')
     print('Channels:', ', '.join(f"{k} {'ready' if v else 'not configured'}" for k, v in notify.channels().items()))
     if a.host not in ('127.0.0.1', 'localhost') and not srv.https:
         print('WARNING: serving on the network without HTTPS. Put a TLS proxy in front or pass --cert/--key.')

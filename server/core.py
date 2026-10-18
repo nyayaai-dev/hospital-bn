@@ -332,6 +332,20 @@ def check_census(rows):
     return clean, None
 
 
+def encrypt_existing(db):
+    """Once encryption is available, re-store census data that was saved before it was switched on."""
+    if AESGCM is None:
+        return 0
+    done = 0
+    for r in db.q('SELECT hospital, blob FROM census WHERE encrypted=0'):
+        blob, enc = seal(unseal(r['blob'], False))
+        db.x('UPDATE census SET blob=?, encrypted=? WHERE hospital=? AND encrypted=0', (blob, int(enc), r['hospital']))
+        done += 1
+    if done:
+        audit(db, None, 'encryption.existing_census_encrypted', None, {'hospitals': done})
+    return done
+
+
 def apply_retention(db):
     """Delete expired sessions, old login failures and census rows older than the retention period."""
     now = time.time()

@@ -288,6 +288,38 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(staff.call('PUT', '/api/setup/sion', {'rev': 0, 'data': {'changed': ['ICU']}})[1]['rev'], 1)
         self.assertEqual(staff.call('PUT', '/api/setup/sion', {'rev': 0, 'data': {'changed': []}})[0], 409)
 
+    @unittest.skipUnless(core.encryption_available(), 'cryptography package not installed')
+    def test_14_encryption_at_rest(self):
+        self.assertTrue(Client(self.base).call('GET', '/api/health')[1]['encryption'])
+        data = {'rows': [{'t': 1.0, 'timestamp': 'x', 'icu_occupied': 87}]}
+        blob, enc = core.seal(data)
+        self.assertTrue(enc)
+        self.assertTrue(blob.startswith(b'SW1'))
+        self.assertNotIn(b'icu_occupied', blob)
+        self.assertEqual(core.unseal(blob, True), data)
+        self.assertNotEqual(core.seal(data)[0], blob)  # fresh nonce every time
+        self.assertTrue((Path(TMP) / 'data.key').exists())
+        tampered = blob[:-1] + bytes([blob[-1] ^ 1])
+        with self.assertRaises(Exception):
+            core.unseal(tampered, True)
+        import base64, secrets
+        os.environ['SURGEWATCH_DATA_KEY'] = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode()
+        try:
+            with self.assertRaises(Exception):
+                core.unseal(blob, True)  # a different key cannot read it
+        finally:
+            os.environ.pop('SURGEWATCH_DATA_KEY')
+        old = json.dumps(data).encode()  # data stored before encryption was switched on still loads
+        self.assertEqual(core.unseal(old, False), data)
+        db = self.srv.db  # and is encrypted in place by encrypt_existing()
+        db.x('INSERT OR REPLACE INTO census (hospital, blob, encrypted, rows, first_ms, last_ms, rev, uploaded_by, uploaded_at) VALUES (?,?,?,?,?,?,?,?,?)',
+             ('cooper', old, 0, 1, 1.0, 1.0, 1, 't', time.time()))
+        self.assertGreaterEqual(core.encrypt_existing(db), 1)
+        row = db.one('SELECT blob, encrypted FROM census WHERE hospital=?', ('cooper',))
+        self.assertEqual(row['encrypted'], 1)
+        self.assertNotIn(b'icu_occupied', bytes(row['blob']))
+        self.assertEqual(core.unseal(row['blob'], True), data)
+
     def test_13_extract_ignores_percentages_and_years(self):
         self.assertEqual(collector.extract('Dengue cases up 27.8 per cent in 2026'), {})
         self.assertEqual(collector.extract('Mumbai records 938 dengue cases and 157 leptospirosis cases'), {'dengue': 938, 'lepto': 157})

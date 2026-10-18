@@ -82,14 +82,14 @@ What the server adds:
 
 Privacy and security:
 - Only aggregate counts are accepted. Files with columns such as name, patient ID, UHID, MRD number, phone, address, Aadhaar, ABHA, date of birth, age or sex are refused in the browser and on the server. The server also accepts only the known census columns, and only numbers.
-- **Encryption at rest:** run `py -m pip install cryptography` to store census data with AES-256-GCM. The key comes from `SURGEWATCH_DATA_KEY` (32 bytes, base64) or is generated in `server/data/data.key`; in production keep it in a secret store, not next to the database. Without the package, the admin panel shows encryption as off.
+- **Encryption at rest:** run `py -m pip install -r server/requirements-optional.txt` (the `cryptography` package) to store census data with AES-256-GCM, with a fresh nonce per save and tamper detection. Data saved before encryption was switched on is encrypted automatically at the next start-up. The key comes from `SURGEWATCH_DATA_KEY` (32 bytes, base64) or is generated in `server/data/data.key`. **Back the key up:** without it, encrypted census data cannot be read. In production, keep the key in a secret store, not next to the database. Without the package, the admin panel shows encryption as off.
 - **Retention:** census rows older than `SURGEWATCH_RETENTION_DAYS` (default 180) are deleted daily, along with expired sessions.
 - **Accounts:** passwords are stored as salted PBKDF2-SHA256 hashes (310,000 iterations) and must be 10+ characters, not common. Sessions use an HttpOnly, SameSite=Strict cookie and expire after `SURGEWATCH_SESSION_HOURS` (12). An account is locked for 15 minutes after 5 failed sign-ins.
 - **Requests:** changes need a custom header and a same-site origin (CSRF protection). Every response carries a strict Content-Security-Policy, `X-Frame-Options: DENY`, `nosniff` and `no-referrer`. Only the four site files are served.
 - **Network use:** the server listens on 127.0.0.1 by default. To share it on the hospital network use `--host 0.0.0.0` behind an HTTPS reverse proxy, or pass `--cert`/`--key` to serve HTTPS directly; the cookie is then marked Secure.
 - This follows the data-minimisation and security principles of India's Digital Personal Data Protection Act, 2023. Each hospital remains responsible for its own compliance and approvals.
 
-Tests: `py -m unittest discover -s server/tests -v` (13 end-to-end tests). They cover accounts, lockout, CSRF, roles, the audit tamper check, privacy checks, encryption round trip, alert sending through stand-in SMTP and Twilio servers, the collector, retention and setup conflicts.
+Tests: `py -m unittest discover -s server/tests -v` (14 end-to-end tests; the encryption test runs when `cryptography` is installed). They cover accounts, lockout, CSRF, roles, the audit tamper check, privacy checks, encryption round trip, alert sending through stand-in SMTP and Twilio servers, the collector, retention and setup conflicts.
 
 ## Features
 
