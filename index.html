@@ -285,6 +285,36 @@ table.cmp td.mc.k-M { color: var(--accent); font-style: italic; font-weight: 700
 @media (prefers-reduced-motion: reduce) { .calc::before { animation: none; } }
 .stat-row { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: .9rem; }
 .stat-row b { font-family: var(--f-data); }
+.chk { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.4fr) auto; gap: 10px 16px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.chk-q { display: grid; gap: 2px; }
+.chk-in { display: flex; flex-wrap: wrap; gap: 8px; }
+.chk-in .field { min-width: 90px; flex: 1; }
+.chk-st { display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: .85rem; }
+.progress { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--good); border-radius: 4px; }
+textarea.drop { outline: 2px dashed var(--accent); outline-offset: 2px; }
+.brief { display: grid; gap: 18px; }
+.brief-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.brief-head h2 { margin: 2px 0; }
+.brief-note { padding: 10px 12px; border-radius: 8px; background: var(--warn-soft); font-size: .9rem; }
+.brief h3 { margin: 0 0 8px; }
+.brief .sign { display: flex; gap: 32px; flex-wrap: wrap; font-size: .9rem; color: var(--ink-2); padding-top: 8px; }
+.print-only { display: none; }
+@media (max-width: 760px) { .chk { grid-template-columns: 1fr; } }
+@media print {
+  :root { --bg: #fff !important; --surface: #fff !important; --surface-2: #f1f3f2 !important; --ink: #000 !important; --ink-2: #222 !important; --muted: #555 !important; --line: #bbb !important;
+    --accent: #0b6b66 !important; --accent-soft: #e3f1ef !important; --crit: #b42318 !important; --crit-soft: #fde8e7 !important; --warn-soft: #fdf0d5 !important; --watch-soft: #f6efe0 !important; --good: #0c7a0c !important; color-scheme: light; }
+  body { background: #fff !important; color: #000 !important; }
+  #side, #bar, #toast, .toast, .foot, #epiBanner, #scenarioBanner, .viewhead, .no-print { display: none !important; }
+  .shell { display: block !important; max-width: none !important; }
+  main.wrap { padding: 0 !important; gap: 14px !important; }
+  .panel { box-shadow: none !important; border: 1px solid #bbb !important; break-inside: avoid; }
+  table.cmp { font-size: 11px; }
+  .print-only { display: inline !important; }
+  body.print-chk main > *:not(#checklistBox) { display: none !important; }
+  body.print-chk .chk { break-inside: avoid; }
+  @page { margin: 14mm; }
+}
 table.cmp td.mc { text-align: right; font-family: var(--f-data); font-size: .76rem; padding: 4px 6px; }
 table.cmp td.mc.k-X { color: var(--muted); font-style: italic; }
 table.cmp td.mc.k-D { color: var(--ink-2); }
@@ -351,6 +381,7 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
 <nav class="side" id="side" aria-label="Sections">
   <span class="grp">Monitor</span>
   <a href="#overview" data-nav="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview<span class="nb" id="nb-overview"></span></a>
+  <a href="#briefing" data-nav="briefing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h4"/></svg>Morning briefing<span class="nb" id="nb-briefing"></span></a>
   <a href="#forecast" data-nav="forecast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 20h18M5 16l4-5 4 3 6-8"/></svg>Forecast<span class="nb" id="nb-forecast"></span></a>
   <a href="#city" data-nav="city"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>City network<span class="nb" id="nb-city"></span></a>
   <a href="#diseases" data-nav="diseases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Seasonal diseases<span class="nb" id="nb-diseases"></span></a>
@@ -439,6 +470,26 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
     <div class="panel sec" style="background:var(--surface-2)">
       <div class="sec-head"><h3>Dengue forecast from rainfall</h3><span class="small muted" id="dengueStatus"></span></div>
       <div id="dengueModel" class="sec"></div>
+    </div>
+    <div class="panel sec" style="background:var(--surface-2)" id="bulletin">
+      <div class="sec-head"><h3>BMC disease reports</h3><span class="small muted" id="bulStatus"></span></div>
+      <p class="ink2 small" style="max-width:80ch">When BMC releases monsoon illness figures (a press note, ward report or IDSP weekly report), enter the period and the counts. A report that ended in the last 21 days and covers up to 5 weeks rescales each disease's current rate to match it. Longer or older reports are kept as a record. Reports are shared by every hospital on this device.</p>
+      <form id="bulForm" class="sec" autocomplete="off">
+        <div class="form">
+          <label class="field"><span>First day</span><input class="in" id="b-from" type="date" required></label>
+          <label class="field"><span>Last day</span><input class="in" id="b-to" type="date" required></label>
+          <label class="field"><span>Dengue</span><input class="in" id="b-dengue" type="number" min="0" max="200000" inputmode="numeric"></label>
+          <label class="field"><span>Malaria</span><input class="in" id="b-malaria" type="number" min="0" max="200000" inputmode="numeric"></label>
+          <label class="field"><span>Leptospirosis</span><input class="in" id="b-lepto" type="number" min="0" max="200000" inputmode="numeric"></label>
+          <label class="field"><span>Gastroenteritis</span><input class="in" id="b-gastro" type="number" min="0" max="200000" inputmode="numeric"></label>
+          <label class="field"><span>Hepatitis</span><input class="in" id="b-hep" type="number" min="0" max="200000" inputmode="numeric"></label>
+          <label class="field"><span>H1N1 influenza</span><input class="in" id="b-flu" type="number" min="0" max="200000" inputmode="numeric"></label>
+          <label class="field"><span>Chikungunya</span><input class="in" id="b-chik" type="number" min="0" max="200000" inputmode="numeric"></label>
+          <label class="field" style="grid-column:1/-1"><span>Source (link or title)</span><input class="in" id="b-src" placeholder="BMC press note, 14 Oct 2026"></label>
+        </div>
+        <div><button class="btn primary" type="submit">Add report</button></div>
+      </form>
+      <div class="scroll-x"><table class="cmp" id="bulTable"></table></div>
     </div>
   </section>
 
@@ -547,6 +598,23 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
     <ol class="srcs" id="srcList"></ol>
   </section>
 
+  <section class="sec brief" id="briefing" data-view="briefing" aria-label="Morning briefing"><div id="briefBody" class="brief"></div></section>
+
+  <section class="panel sec" id="checklistBox" data-view="setup" aria-labelledby="h-chk">
+    <div class="sec-head"><h2 id="h-chk">Figures only the hospital can give</h2><span class="small muted" id="chkProgress"></span></div>
+    <div class="progress" aria-hidden="true"><span id="chkBar" style="width:0"></span></div>
+    <p class="ink2 small" style="max-width:80ch">These inputs are not published anywhere, so the forecast uses placeholders <span class="kb k-U">U</span> or another hospital's figures <span class="kb k-R">R</span>. Ask the person listed, enter the number, and tick Confirmed if the value shown is already right. Saved answers are marked <span class="kb k-H">H</span> and drive every forecast.</p>
+    <div id="checklist"></div>
+    <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="chkSave">Save answers</button><button class="btn" type="button" id="chkPrint">Print checklist</button></div>
+  </section>
+
+  <section class="panel sec" id="requestBox" data-view="setup" aria-labelledby="h-req">
+    <div class="sec-head"><h2 id="h-req">Ask the hospital for its data</h2></div>
+    <p class="ink2 small" style="max-width:80ch">Real census data can only come from the hospital's own records; it is not published. This letter asks the Medical Superintendent and Medical Records for an anonymised export and the figures above. It is written in English for official correspondence.</p>
+    <div class="email" id="reqLetter" tabindex="0"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="reqCopy">Copy letter</button><a class="btn" id="reqMail" href="#" target="_blank" rel="noopener">Open in mail app</a><a class="btn" id="reqTemplate" href="#" download="surge-watch-census-template.csv">Download blank CSV template</a></div>
+  </section>
+
   <details class="panel setup" id="setupBox" open data-view="setup">
     <summary><h2>Hospital setup and data</h2><span class="muted small">Capacities, staffing, oxygen, ambulances, and your own census data</span></summary>
     <div class="sec" style="margin-top:14px">
@@ -554,41 +622,41 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
       <form id="setupForm" class="sec" autocomplete="off">
         <div class="form">
           <label class="field"><span>Display name</span><input class="in" id="s-name"></label>
-          <label class="field"><span>Casualty attendances / day</span><input class="in" id="s-arr" type="number" min="5" max="5000"></label>
-          <label class="field"><span>Admissions / day</span><input class="in" id="s-adm" type="number" min="1" max="5000" step="0.1"></label>
-          <label class="field"><span>Average length of stay (days)</span><input class="in" id="s-alos" type="number" min="0.5" max="60" step="0.1"></label>
-          <label class="field"><span>Bed occupancy now (%)</span><input class="in" id="s-bor" type="number" min="5" max="150" step="0.1"></label>
-          <label class="field"><span>Casualty stay per patient (hours)</span><input class="in" id="s-edlos" type="number" min="0.2" max="48" step="0.1"></label>
-          <label class="field"><span>ED treatment spaces</span><input class="in" id="s-ed" type="number" min="4" max="1000"></label>
-          <label class="field"><span>Ambulances (own + linked 108)</span><input class="in" id="s-amb" type="number" min="1" max="500"></label>
+          <label class="field"><span>Casualty attendances / day</span><input class="in" id="s-arr" type="number" min="5" max="5000" step="any"></label>
+          <label class="field"><span>Admissions / day</span><input class="in" id="s-adm" type="number" min="1" max="5000" step="any"></label>
+          <label class="field"><span>Average length of stay (days)</span><input class="in" id="s-alos" type="number" min="0.5" max="60" step="any"></label>
+          <label class="field"><span>Bed occupancy now (%)</span><input class="in" id="s-bor" type="number" min="5" max="150" step="any"></label>
+          <label class="field"><span>Casualty stay per patient (hours)</span><input class="in" id="s-edlos" type="number" min="0.2" max="48" step="any"></label>
+          <label class="field"><span>ED treatment spaces</span><input class="in" id="s-ed" type="number" min="4" max="1000" step="any"></label>
+          <label class="field"><span>Ambulances (own + linked 108)</span><input class="in" id="s-amb" type="number" min="1" max="500" step="any"></label>
         </div>
         <fieldset><legend>Beds</legend><div class="form">
-          <label class="field"><span>Medicine</span><input class="in" id="s-MED" type="number" min="5" max="5000"></label>
-          <label class="field"><span>Surgery</span><input class="in" id="s-SURG" type="number" min="5" max="5000"></label>
-          <label class="field"><span>ICU</span><input class="in" id="s-ICU" type="number" min="2" max="1000"></label>
-          <label class="field"><span>Paediatrics</span><input class="in" id="s-PEDS" type="number" min="2" max="2000"></label>
-          <label class="field"><span>Isolation</span><input class="in" id="s-ISO" type="number" min="1" max="1000"></label>
-          <label class="field"><span>Ventilators</span><input class="in" id="s-vents" type="number" min="0" max="1000"></label>
+          <label class="field"><span>Medicine</span><input class="in" id="s-MED" type="number" min="5" max="5000" step="any"></label>
+          <label class="field"><span>Surgery</span><input class="in" id="s-SURG" type="number" min="5" max="5000" step="any"></label>
+          <label class="field"><span>ICU</span><input class="in" id="s-ICU" type="number" min="2" max="1000" step="any"></label>
+          <label class="field"><span>Paediatrics</span><input class="in" id="s-PEDS" type="number" min="2" max="2000" step="any"></label>
+          <label class="field"><span>Isolation</span><input class="in" id="s-ISO" type="number" min="1" max="1000" step="any"></label>
+          <label class="field"><span>Ventilators</span><input class="in" id="s-vents" type="number" min="0" max="1000" step="any"></label>
         </div></fieldset>
         <fieldset><legend>Staff per shift (night / day / evening)</legend><div class="form">
-          <label class="field"><span>Nurses, night</span><input class="in" id="s-n0" type="number" min="1" max="5000"></label>
-          <label class="field"><span>Nurses, day</span><input class="in" id="s-n1" type="number" min="1" max="5000"></label>
-          <label class="field"><span>Nurses, evening</span><input class="in" id="s-n2" type="number" min="1" max="5000"></label>
-          <label class="field"><span>ED doctors, night</span><input class="in" id="s-d0" type="number" min="1" max="500"></label>
-          <label class="field"><span>ED doctors, day</span><input class="in" id="s-d1" type="number" min="1" max="500"></label>
-          <label class="field"><span>ED doctors, evening</span><input class="in" id="s-d2" type="number" min="1" max="500"></label>
+          <label class="field"><span>Nurses, night</span><input class="in" id="s-n0" type="number" min="1" max="5000" step="any"></label>
+          <label class="field"><span>Nurses, day</span><input class="in" id="s-n1" type="number" min="1" max="5000" step="any"></label>
+          <label class="field"><span>Nurses, evening</span><input class="in" id="s-n2" type="number" min="1" max="5000" step="any"></label>
+          <label class="field"><span>ED doctors, night</span><input class="in" id="s-d0" type="number" min="1" max="500" step="any"></label>
+          <label class="field"><span>ED doctors, day</span><input class="in" id="s-d1" type="number" min="1" max="500" step="any"></label>
+          <label class="field"><span>ED doctors, evening</span><input class="in" id="s-d2" type="number" min="1" max="500" step="any"></label>
         </div></fieldset>
         <fieldset><legend>Diagnostics, oxygen and blood</legend><div class="form">
-          <label class="field"><span>Lab tests / hour, day</span><input class="in" id="s-labd" type="number" min="5" max="20000"></label>
-          <label class="field"><span>Lab tests / hour, night</span><input class="in" id="s-labn" type="number" min="5" max="20000"></label>
-          <label class="field"><span>X-rays / hour, day</span><input class="in" id="s-xrd" type="number" min="1" max="2000"></label>
-          <label class="field"><span>X-rays / hour, night</span><input class="in" id="s-xrn" type="number" min="0" max="2000"></label>
-          <label class="field"><span>CT + USG / hour, day</span><input class="in" id="s-imgd" type="number" min="1" max="1000"></label>
-          <label class="field"><span>CT + USG / hour, night</span><input class="in" id="s-imgn" type="number" min="0" max="1000"></label>
-          <label class="field"><span>Oxygen storage (cylinder-equivalents)</span><input class="in" id="s-o2c" type="number" min="10" max="100000"></label>
-          <label class="field"><span>Oxygen refills / day (cylinder-eq.)</span><input class="in" id="s-o2d" type="number" min="0" max="50000"></label>
-          <label class="field"><span>Platelet units prepared / day</span><input class="in" id="s-pltS" type="number" min="0" max="5000"></label>
-          <label class="field"><span>Platelet units in stock now</span><input class="in" id="s-pltN" type="number" min="0" max="20000"></label>
+          <label class="field"><span>Lab tests / hour, day</span><input class="in" id="s-labd" type="number" min="5" max="20000" step="any"></label>
+          <label class="field"><span>Lab tests / hour, night</span><input class="in" id="s-labn" type="number" min="5" max="20000" step="any"></label>
+          <label class="field"><span>X-rays / hour, day</span><input class="in" id="s-xrd" type="number" min="1" max="2000" step="any"></label>
+          <label class="field"><span>X-rays / hour, night</span><input class="in" id="s-xrn" type="number" min="0" max="2000" step="any"></label>
+          <label class="field"><span>CT + USG / hour, day</span><input class="in" id="s-imgd" type="number" min="1" max="1000" step="any"></label>
+          <label class="field"><span>CT + USG / hour, night</span><input class="in" id="s-imgn" type="number" min="0" max="1000" step="any"></label>
+          <label class="field"><span>Oxygen storage (cylinder-equivalents)</span><input class="in" id="s-o2c" type="number" min="10" max="100000" step="any"></label>
+          <label class="field"><span>Oxygen refills / day (cylinder-eq.)</span><input class="in" id="s-o2d" type="number" min="0" max="50000" step="any"></label>
+          <label class="field"><span>Platelet units prepared / day</span><input class="in" id="s-pltS" type="number" min="0" max="5000" step="any"></label>
+          <label class="field"><span>Platelet units in stock now</span><input class="in" id="s-pltN" type="number" min="0" max="20000" step="any"></label>
         </div></fieldset>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save and restart forecast</button><button class="btn" type="button" id="setupDefaults">Reset to estimates for this hospital</button></div>
       </form>
@@ -596,13 +664,13 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
         <h3>Learned from your data</h3>
         <div id="learnedBox" class="small ink2"></div>
         <h3>Import census data</h3>
-        <p class="ink2 small" style="max-width:80ch">Paste or upload a CSV exported from your HIS, one row per hour or per day. Only <span class="mono">timestamp</span> is required. The last row becomes the forecast's starting point, ED arrivals calibrate demand, and earlier rows feed the accuracy check.</p>
+        <p class="ink2 small" style="max-width:80ch">Paste, upload or drag in a CSV exported from your HIS or Excel, one row per hour or per day. Only a date column is required. Commas, semicolons and tabs all work, and common headings are recognised (for example <span class="mono">Date</span>, <span class="mono">Casualty attendance</span>, <span class="mono">ICU census</span>, <span class="mono">IPD admissions</span>). Dates can be <span class="mono">14/10/2026 08:00</span>, <span class="mono">2026-10-14 08:00</span>, <span class="mono">14-Oct-2026</span> or a date column plus an hour column. Days come before months. The last row becomes the forecast's starting point, ED arrivals calibrate demand, and earlier rows feed the accuracy check.</p>
         <p class="mono small" style="overflow-wrap:anywhere">timestamp, ed_arrivals, ed_census, ed_waiting_for_bed, med_occupied, surg_occupied, icu_occupied, peds_occupied, iso_occupied, lab_backlog, platelet_stock, oxygen_stock, ambulances_busy, admissions, discharges</p>
         <p class="ink2 small" style="max-width:80ch">With 7+ days of rows the app learns casualty attendances and admissions per day, average stay (occupied beds ÷ admissions) and occupancy. Hourly rows also teach the hour-of-day arrival pattern, and 14+ days the weekday arrival and discharge patterns. Learned values replace placeholders and are marked <span class="kb k-I">I</span>.</p>
         <textarea class="in" id="csvText" spellcheck="false" placeholder="timestamp,ed_arrivals,med_occupied&#10;2026-10-14 08:00,40,880&#10;…"></textarea>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button class="btn primary" type="button" id="csvImport">Import</button>
-          <label class="btn" for="csvFile">Choose file…</label><input id="csvFile" type="file" accept=".csv,text/csv" hidden>
+          <label class="btn" for="csvFile">Choose file…</label><input id="csvFile" type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>
           <button class="btn" type="button" id="csvSample">Fill with example data</button>
           <button class="btn ghost" type="button" id="csvClear">Back to simulated data</button>
           <button class="btn ghost" type="button" id="forgetBtn">Forget saved data on this device</button>
@@ -612,15 +680,15 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
     </div>
   </details>
 
-  <p class="foot" id="langNote" hidden>Detailed explanations, emails and data sources stay in English.</p>
+  <p class="foot" id="langNote" hidden>Data source notes and hospital names stay in English. Each alert email also keeps an English version for official records.</p>
   <p class="foot" id="foot"></p>
   <p class="foot" id="sources"></p>
 </main>
 </div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="data.js"></script>
-<script src="model.js"></script>
+<script src="data.js?v=7"></script>
+<script src="model.js?v=7"></script>
 <script>
 (function () {
 'use strict';
@@ -692,7 +760,8 @@ function freshApp(keep) {
     learned: null, ensPending: false, savedAt: null, saveFailed: false
   };
 }
-const feeds = () => S.feedFactors(Object.assign({}, A.feedVals, { now: S.START + A.now * S.HOUR }));
+let REPORTS = [];
+const feeds = () => S.feedFactors(Object.assign({}, A.feedVals, { now: S.START + A.now * S.HOUR, reports: REPORTS }));
 function activeActions() { return A.approved.map(a => ({ id: a.id, lead: Math.max(0, a.at + S.ACTION_BY_ID[a.id].lead - A.now) })); }
 function baseRun(extra) { return Object.assign({ levers: A.levers, actions: activeActions(), feeds: feeds(), nowcast: A.nowcast, flags: {}, epi: A.epiFit }, extra || {}); }
 function obsRun() { return { levers: S.defaultLevers(), actions: activeActions(), feeds: feeds(), rand: A.rand, epi: A.drill, noShock: true }; }
@@ -797,7 +866,7 @@ function makeEns(res) {
 }
 let worker = null, ensJob = 0;
 function initWorker() {
-  try { worker = new Worker('worker.js'); worker.onmessage = e => onEnsemble(e.data); worker.onerror = ev => { if (ev && ev.preventDefault) ev.preventDefault(); worker = null; requestEnsemble(); }; }
+  try { worker = new Worker('worker.js?v=7'); worker.onmessage = e => onEnsemble(e.data); worker.onerror = ev => { if (ev && ev.preventDefault) ev.preventDefault(); worker = null; requestEnsemble(); }; }
   catch (e) { worker = null; }
 }
 function ensembleSize() { return A.horizonDays > 14 ? 60 : 100; }
@@ -953,14 +1022,67 @@ const LEVER_NAMES = { arrivalPct: 'arrival change', seasonScale: 'seasonal surge
 /* ---------------- languages: English, Hindi, Marathi ---------------- */
 const I18N = {"Monitor": {"hi": "निगरानी", "mr": "देखरेख"}, "Plan": {"hi": "योजना", "mr": "नियोजन"}, "Data": {"hi": "डेटा", "mr": "डेटा"}, "Overview": {"hi": "सारांश", "mr": "आढावा"}, "Forecast": {"hi": "पूर्वानुमान", "mr": "अंदाज"}, "City network": {"hi": "शहर नेटवर्क", "mr": "शहर नेटवर्क"}, "Seasonal diseases": {"hi": "मौसमी बीमारियाँ", "mr": "हंगामी आजार"}, "Outbreak watch": {"hi": "प्रकोप निगरानी", "mr": "उद्रेक देखरेख"}, "What-if scenarios": {"hi": "क्या-अगर परिदृश्य", "mr": "जर-तर परिस्थिती"}, "Preventive actions": {"hi": "निवारक कदम", "mr": "प्रतिबंधात्मक उपाय"}, "Alerts": {"hi": "चेतावनियाँ", "mr": "इशारे"}, "Data sources": {"hi": "डेटा स्रोत", "mr": "डेटा स्रोत"}, "Setup & import": {"hi": "सेटअप और आयात", "mr": "सेटअप व आयात"}, "What is free now, what is about to run short, and why.": {"hi": "अभी क्या उपलब्ध है, क्या कम पड़ने वाला है, और क्यों।", "mr": "आत्ता काय उपलब्ध आहे, काय कमी पडणार आहे, आणि का."}, "Day-by-day load for every unit and how demand moves through the hospital.": {"hi": "हर इकाई का दिन-प्रतिदिन भार और अस्पताल में मांग का प्रवाह।", "mr": "प्रत्येक विभागाचा दररोजचा भार आणि रुग्णालयात मागणी कशी पसरते."}, "Published capacity of Mumbai hospitals and the model's view of where there is room.": {"hi": "मुंबई के अस्पतालों की प्रकाशित क्षमता और मॉडल के अनुसार कहाँ जगह है।", "mr": "मुंबईतील रुग्णालयांची प्रकाशित क्षमता आणि मॉडेलनुसार कुठे जागा आहे."}, "Mumbai notified cases by month (BMC) and live weather and air-quality signals.": {"hi": "मुंबई में माह-वार अधिसूचित मामले (बीएमसी) और लाइव मौसम व वायु-गुणवत्ता संकेत।", "mr": "मुंबईतील महिन्यानुसार अधिसूचित रुग्ण (बीएमसी) आणि थेट हवामान व हवा-गुणवत्ता संकेत."}, "Syndromic detection, the reasonable worst case and the preparedness checklist.": {"hi": "लक्षण-आधारित पहचान, संभावित सबसे बुरी स्थिति और तैयारी सूची।", "mr": "लक्षण-आधारित शोध, संभाव्य सर्वात वाईट स्थिती आणि तयारी यादी."}, "Test floods, outbreaks, staff shortages and supply failures before they happen.": {"hi": "बाढ़, प्रकोप, स्टाफ की कमी और आपूर्ति विफलता को पहले से परखें।", "mr": "पूर, साथ, कर्मचारी तुटवडा आणि पुरवठा अडचणी आधीच तपासा."}, "Options ranked by simulated effect. Each needs a named approver.": {"hi": "सिमुलेटेड प्रभाव के अनुसार क्रमबद्ध विकल्प। हर एक के लिए नामित अनुमोदक चाहिए।", "mr": "अनुकरणित परिणामानुसार क्रमवार पर्याय. प्रत्येकासाठी नाव असलेला मंजूरकर्ता हवा."}, "Early-warning drafts for review, stakeholders and the forecast log.": {"hi": "समीक्षा के लिए पूर्व-चेतावनी मसौदे, हितधारक और पूर्वानुमान लॉग।", "mr": "पुनरावलोकनासाठी पूर्वसूचना मसुदे, संबंधित अधिकारी आणि अंदाज नोंदवही."}, "Where every input comes from, what is missing, and how accurate the forecast has been.": {"hi": "हर इनपुट कहाँ से आता है, क्या कमी है, और पूर्वानुमान कितना सटीक रहा।", "mr": "प्रत्येक माहिती कुठून येते, काय उणे आहे, आणि अंदाज किती अचूक ठरला."}, "Replace placeholders with your hospital's figures or import census data.": {"hi": "प्लेसहोल्डर को अपने अस्पताल के आँकड़ों से बदलें या रोगी-संख्या डेटा आयात करें।", "mr": "तात्पुरती मूल्ये तुमच्या रुग्णालयाच्या आकड्यांनी बदला किंवा रुग्णसंख्या डेटा आयात करा."}, "Mumbai · IST": {"hi": "मुंबई · IST", "mr": "मुंबई · IST"}, "Real time": {"hi": "रियल टाइम", "mr": "प्रत्यक्ष वेळ"}, "Fast-forward demo": {"hi": "तेज़ डेमो", "mr": "जलद डेमो"}, "Live · pause": {"hi": "लाइव · रोकें", "mr": "थेट · थांबवा"}, "Follow real time": {"hi": "रियल टाइम चलाएँ", "mr": "प्रत्यक्ष वेळ सुरू करा"}, "Run": {"hi": "चलाएँ", "mr": "चालवा"}, "Pause": {"hi": "रोकें", "mr": "थांबवा"}, "Reset": {"hi": "रीसेट", "mr": "रीसेट"}, "Today in Mumbai": {"hi": "आज मुंबई में", "mr": "आज मुंबईत"}, "Next re-forecast": {"hi": "अगला पूर्वानुमान", "mr": "पुढील अंदाज"}, "Live weather & AQI refresh": {"hi": "लाइव मौसम और AQI अपडेट", "mr": "थेट हवामान व AQI अद्यतन"}, "Next public holiday": {"hi": "अगली सार्वजनिक छुट्टी", "mr": "पुढील सार्वजनिक सुट्टी"}, "Paused": {"hi": "रुका हुआ", "mr": "थांबलेले"}, "Running": {"hi": "चालू", "mr": "सुरू"}, "Right now": {"hi": "अभी", "mr": "आत्ता"}, "Availability": {"hi": "उपलब्धता", "mr": "उपलब्धता"}, "Bottleneck outlook": {"hi": "अड़चन पूर्वानुमान", "mr": "अडथळा अंदाज"}, "Forecast window": {"hi": "पूर्वानुमान अवधि", "mr": "अंदाज कालावधी"}, "7 days": {"hi": "7 दिन", "mr": "7 दिवस"}, "14 days": {"hi": "14 दिन", "mr": "14 दिवस"}, "30 days": {"hi": "30 दिन", "mr": "30 दिवस"}, "Forecast by unit": {"hi": "इकाई-वार पूर्वानुमान", "mr": "विभागनिहाय अंदाज"}, "Why this is predicted": {"hi": "यह पूर्वानुमान क्यों", "mr": "हा अंदाज का"}, "Load as % of safe capacity · observed, then forecast": {"hi": "सुरक्षित क्षमता के % में भार · दर्ज, फिर पूर्वानुमान", "mr": "सुरक्षित क्षमतेच्या % मध्ये भार · नोंदवलेले, नंतर अंदाज"}, "General beds free": {"hi": "सामान्य बिस्तर खाली", "mr": "सामान्य खाटा रिकाम्या"}, "ICU beds free": {"hi": "आईसीयू बिस्तर खाली", "mr": "आयसीयू खाटा रिकाम्या"}, "Ventilators free": {"hi": "वेंटिलेटर खाली", "mr": "व्हेंटिलेटर उपलब्ध"}, "Isolation beds free": {"hi": "आइसोलेशन बिस्तर खाली", "mr": "विलगीकरण खाटा रिकाम्या"}, "Oxygen on site": {"hi": "उपलब्ध ऑक्सीजन", "mr": "उपलब्ध ऑक्सिजन"}, "Ambulances available": {"hi": "उपलब्ध एम्बुलेंस", "mr": "उपलब्ध रुग्णवाहिका"}, "Lab turnaround": {"hi": "लैब रिपोर्ट समय", "mr": "प्रयोगशाळा अहवाल वेळ"}, "X-ray wait": {"hi": "एक्स-रे प्रतीक्षा", "mr": "एक्स-रे प्रतीक्षा"}, "CT / ultrasound wait": {"hi": "सीटी / अल्ट्रासाउंड प्रतीक्षा", "mr": "सीटी / सोनोग्राफी प्रतीक्षा"}, "Platelets in stock": {"hi": "प्लेटलेट्स स्टॉक में", "mr": "साठ्यातील प्लेटलेट्स"}, "Starts": {"hi": "शुरुआत", "mr": "सुरुवात"}, "Peak": {"hi": "चरम", "mr": "शिखर"}, "Above 95%": {"hi": "95% से ऊपर", "mr": "95% पेक्षा जास्त"}, "Chance of passing 105% in 7 days": {"hi": "7 दिनों में 105% पार करने की संभावना", "mr": "7 दिवसांत 105% ओलांडण्याची शक्यता"}, "Chance of passing 105% in 14 days": {"hi": "14 दिनों में 105% पार करने की संभावना", "mr": "14 दिवसांत 105% ओलांडण्याची शक्यता"}, "Chance of passing 105% in 30 days": {"hi": "30 दिनों में 105% पार करने की संभावना", "mr": "30 दिवसांत 105% ओलांडण्याची शक्यता"}, "At risk": {"hi": "जोखिम में", "mr": "धोक्यात"}, "Chance of passing 95%": {"hi": "95% पार करने की संभावना", "mr": "95% ओलांडण्याची शक्यता"}, "Critical": {"hi": "गंभीर", "mr": "गंभीर"}, "Warning": {"hi": "चेतावनी", "mr": "इशारा"}, "Watch": {"hi": "निगरानी", "mr": "लक्ष ठेवा"}, "Normal": {"hi": "सामान्य", "mr": "सामान्य"}, "Approved": {"hi": "स्वीकृत", "mr": "मंजूर"}, "Needs review": {"hi": "समीक्षा आवश्यक", "mr": "पुनरावलोकन आवश्यक"}, "Epidemic": {"hi": "महामारी", "mr": "साथ"}, "Outbreak": {"hi": "प्रकोप", "mr": "उद्रेक"}, "Severe epidemic": {"hi": "गंभीर महामारी", "mr": "गंभीर साथ"}, "Emergency": {"hi": "आपातकाल", "mr": "आपत्कालीन"}, "Medicine": {"hi": "मेडिसिन", "mr": "मेडिसिन"}, "Surgery": {"hi": "सर्जरी", "mr": "शस्त्रक्रिया"}, "Paediatrics": {"hi": "बाल रोग", "mr": "बालरोग"}, "Isolation": {"hi": "आइसोलेशन", "mr": "विलगीकरण"}, "Oxygen": {"hi": "ऑक्सीजन", "mr": "ऑक्सिजन"}, "Ambulances": {"hi": "एम्बुलेंस", "mr": "रुग्णवाहिका"}, "Laboratory": {"hi": "प्रयोगशाला", "mr": "प्रयोगशाळा"}, "X-ray": {"hi": "एक्स-रे", "mr": "एक्स-रे"}, "CT & USG": {"hi": "सीटी और यूएसजी", "mr": "सीटी व यूएसजी"}, "Nursing": {"hi": "नर्सिंग", "mr": "परिचारिका"}, "Blood bank": {"hi": "ब्लड बैंक", "mr": "रक्तपेढी"}, "Emergency Department": {"hi": "आपातकालीन विभाग", "mr": "आपत्कालीन विभाग"}, "Medicine wards": {"hi": "मेडिसिन वार्ड", "mr": "मेडिसिन वॉर्ड"}, "Surgical wards": {"hi": "सर्जिकल वार्ड", "mr": "शस्त्रक्रिया वॉर्ड"}, "Intensive care": {"hi": "गहन चिकित्सा", "mr": "अतिदक्षता"}, "Paediatric wards": {"hi": "बाल रोग वार्ड", "mr": "बालरोग वॉर्ड"}, "Isolation beds": {"hi": "आइसोलेशन बिस्तर", "mr": "विलगीकरण खाटा"}, "Medical oxygen": {"hi": "मेडिकल ऑक्सीजन", "mr": "वैद्यकीय ऑक्सिजन"}, "Ambulance fleet": {"hi": "एम्बुलेंस बेड़ा", "mr": "रुग्णवाहिका ताफा"}, "Diagnostic laboratory": {"hi": "नैदानिक प्रयोगशाला", "mr": "निदान प्रयोगशाळा"}, "X-ray section": {"hi": "एक्स-रे विभाग", "mr": "एक्स-रे विभाग"}, "CT and ultrasound": {"hi": "सीटी और अल्ट्रासाउंड", "mr": "सीटी व सोनोग्राफी"}, "Nurse staffing cover": {"hi": "नर्स स्टाफिंग", "mr": "परिचारिका उपलब्धता"}, "Blood bank: platelets": {"hi": "ब्लड बैंक: प्लेटलेट्स", "mr": "रक्तपेढी: प्लेटलेट्स"}, "Day by day": {"hi": "दिन-प्रतिदिन", "mr": "दिवसागणिक"}, "Peak load": {"hi": "चरम भार", "mr": "कमाल भार"}, "Chance of critical": {"hi": "गंभीर होने की संभावना", "mr": "गंभीर होण्याची शक्यता"}, "Knock-on effects": {"hi": "आगे के प्रभाव", "mr": "पुढील परिणाम"}, "City view": {"hi": "शहर का दृश्य", "mr": "शहराचे चित्र"}, "Mumbai hospital network": {"hi": "मुंबई अस्पताल नेटवर्क", "mr": "मुंबई रुग्णालय नेटवर्क"}, "Seasonal infections and diseases that fill beds": {"hi": "मौसमी संक्रमण और बीमारियाँ जो बिस्तर भरती हैं", "mr": "खाटा भरणारे हंगामी संसर्ग व आजार"}, "Mumbai": {"hi": "मुंबई", "mr": "मुंबई"}, "Epidemic and pandemic readiness": {"hi": "महामारी और विश्वमारी की तैयारी", "mr": "साथ व महासाथ तयारी"}, "Reasonable worst case": {"hi": "संभावित सबसे बुरी स्थिति", "mr": "संभाव्य सर्वात वाईट स्थिती"}, "Preparedness checklist": {"hi": "तैयारी सूची", "mr": "तयारी यादी"}, "Outbreak drill": {"hi": "प्रकोप अभ्यास", "mr": "उद्रेक सराव"}, "Start drill": {"hi": "अभ्यास शुरू करें", "mr": "सराव सुरू करा"}, "Stop drill": {"hi": "अभ्यास रोकें", "mr": "सराव थांबवा"}, "Start from:": {"hi": "यहाँ से शुरू करें:", "mr": "येथून सुरू करा:"}, "For staff to decide": {"hi": "स्टाफ के निर्णय हेतु", "mr": "कर्मचाऱ्यांच्या निर्णयासाठी"}, "Seasonal calendar": {"hi": "मौसमी कैलेंडर", "mr": "हंगामी दिनदर्शिका"}, "External signals": {"hi": "बाहरी संकेत", "mr": "बाह्य संकेत"}, "Refresh live data": {"hi": "लाइव डेटा अपडेट करें", "mr": "थेट डेटा अद्यतनित करा"}, "Early warning": {"hi": "पूर्व चेतावनी", "mr": "पूर्वसूचना"}, "Notifications": {"hi": "सूचनाएँ", "mr": "सूचना"}, "Stakeholders": {"hi": "हितधारक", "mr": "संबंधित अधिकारी"}, "Forecast log": {"hi": "पूर्वानुमान लॉग", "mr": "अंदाज नोंदवही"}, "Add stakeholder": {"hi": "हितधारक जोड़ें", "mr": "अधिकारी जोडा"}, "Turn on desktop notifications": {"hi": "डेस्कटॉप सूचनाएँ चालू करें", "mr": "डेस्कटॉप सूचना सुरू करा"}, "Forecast accuracy": {"hi": "पूर्वानुमान सटीकता", "mr": "अंदाजाची अचूकता"}, "Where every number comes from": {"hi": "हर संख्या कहाँ से आती है", "mr": "प्रत्येक आकडा कुठून येतो"}, "Data sources and completeness": {"hi": "डेटा स्रोत और पूर्णता", "mr": "डेटा स्रोत व पूर्णता"}, "Sources": {"hi": "स्रोत", "mr": "स्रोत"}, "Needed from the hospital (not published anywhere)": {"hi": "अस्पताल से आवश्यक (कहीं प्रकाशित नहीं)", "mr": "रुग्णालयाकडून आवश्यक (कुठेही प्रकाशित नाही)"}, "Hospital setup and data": {"hi": "अस्पताल सेटअप और डेटा", "mr": "रुग्णालय सेटअप व डेटा"}, "Import census data": {"hi": "रोगी-संख्या डेटा आयात करें", "mr": "रुग्णसंख्या डेटा आयात करा"}, "Import": {"hi": "आयात करें", "mr": "आयात करा"}, "Choose file…": {"hi": "फ़ाइल चुनें…", "mr": "फाइल निवडा…"}, "Fill with example data": {"hi": "उदाहरण डेटा भरें", "mr": "उदाहरण डेटा भरा"}, "Back to simulated data": {"hi": "सिमुलेटेड डेटा पर लौटें", "mr": "अनुकरणित डेटावर परत जा"}, "Save and restart forecast": {"hi": "सहेजें और पूर्वानुमान फिर शुरू करें", "mr": "जतन करा व अंदाज पुन्हा सुरू करा"}, "Reset to estimates for this hospital": {"hi": "इस अस्पताल के मूल मानों पर लौटें", "mr": "या रुग्णालयाची मूळ मूल्ये परत आणा"}, "Approve…": {"hi": "स्वीकृत करें…", "mr": "मंजूर करा…"}, "Preview": {"hi": "पूर्वावलोकन", "mr": "पूर्वावलोकन"}, "Dismiss": {"hi": "खारिज करें", "mr": "नाकारा"}, "Withdraw": {"hi": "वापस लें", "mr": "मागे घ्या"}, "Copy email": {"hi": "ईमेल कॉपी करें", "mr": "ईमेल कॉपी करा"}, "Open in mail app": {"hi": "मेल ऐप में खोलें", "mr": "मेल ॲपमध्ये उघडा"}, "Mark as sent": {"hi": "भेजा गया चिह्नित करें", "mr": "पाठवले म्हणून नोंदवा"}, "Record": {"hi": "दर्ज करें", "mr": "नोंदवा"}, "Clear scenario": {"hi": "परिदृश्य हटाएँ", "mr": "परिस्थिती काढा"}, "Edit": {"hi": "संपादित करें", "mr": "संपादित करा"}, "Confirm approval": {"hi": "स्वीकृति की पुष्टि करें", "mr": "मंजुरीची खात्री करा"}, "Cancel": {"hi": "रद्द करें", "mr": "रद्द करा"}, "Dengue": {"hi": "डेंगू", "mr": "डेंग्यू"}, "Malaria": {"hi": "मलेरिया", "mr": "हिवताप (मलेरिया)"}, "Leptospirosis": {"hi": "लेप्टोस्पायरोसिस", "mr": "लेप्टोस्पायरोसिस"}, "Gastroenteritis": {"hi": "गैस्ट्रोएंटेराइटिस", "mr": "जठरांत्रदाह (गॅस्ट्रो)"}, "Hepatitis": {"hi": "हेपेटाइटिस", "mr": "कावीळ (हिपॅटायटिस)"}, "H1N1 influenza": {"hi": "एच1एन1 इन्फ्लुएंज़ा", "mr": "एच1एन1 फ्लू"}, "Chikungunya": {"hi": "चिकनगुनिया", "mr": "चिकनगुनिया"}, "Fever (malaria, dengue, leptospirosis…)": {"hi": "बुखार (मलेरिया, डेंगू, लेप्टोस्पायरोसिस…)", "mr": "ताप (हिवताप, डेंग्यू, लेप्टोस्पायरोसिस…)"}, "Respiratory (influenza, pneumonia…)": {"hi": "श्वसन (इन्फ्लुएंज़ा, निमोनिया…)", "mr": "श्वसन (फ्लू, न्यूमोनिया…)"}, "Diarrhoea & jaundice": {"hi": "दस्त और पीलिया", "mr": "जुलाब व कावीळ"}, "Injuries & heat": {"hi": "चोटें और गर्मी", "mr": "जखमा व उष्माघात"}, "Observed": {"hi": "दर्ज", "mr": "नोंदवलेले"}, "Expected": {"hi": "अपेक्षित", "mr": "अपेक्षित"}, "Warning 95%": {"hi": "चेतावनी 95%", "mr": "इशारा 95%"}, "Critical 105%": {"hi": "गंभीर 105%", "mr": "गंभीर 105%"}, "* public holiday": {"hi": "* सार्वजनिक छुट्टी", "mr": "* सार्वजनिक सुट्टी"}, "Dengue forecast from rainfall": {"hi": "वर्षा से डेंगू पूर्वानुमान", "mr": "पावसावरून डेंग्यू अंदाज"}, "Learned from your data": {"hi": "आपके डेटा से सीखा गया", "mr": "तुमच्या डेटामधून शिकलेले"}, "Forget saved data on this device": {"hi": "इस डिवाइस से सहेजा डेटा हटाएँ", "mr": "या उपकरणावरील जतन डेटा काढा"}, "Updating probabilities": {"hi": "संभावनाएँ अपडेट हो रही हैं", "mr": "शक्यता अद्यतनित होत आहेत"}, "Detailed explanations, emails and data sources stay in English.": {"hi": "विस्तृत विवरण, ईमेल और डेटा स्रोत अंग्रेज़ी में रहते हैं।", "mr": "तपशीलवार स्पष्टीकरण, ईमेल व डेटा स्रोत इंग्रजीत राहतात."}};
 let LANG = store.get('lang', 'en'), translatedOnce = false;
+Object.assign(I18N, {"Monday arrival peak": {"hi": "सोमवार को अधिक मरीज़", "mr": "सोमवारी जास्त रुग्ण"}, "ED arrivals run about 15% above average on Mondays and dip at weekends.": {"hi": "सोमवार को आपातकालीन विभाग में मरीज़ औसत से लगभग 15% अधिक आते हैं और सप्ताहांत पर कम।", "mr": "सोमवारी आपत्कालीन विभागात सरासरीपेक्षा सुमारे 15% जास्त रुग्ण येतात आणि आठवड्याच्या शेवटी कमी."}, "Public holiday": {"hi": "सार्वजनिक छुट्टी", "mr": "सार्वजनिक सुट्टी"}, "Discharges, elective lists and staffing drop on public holidays, and the backlog carries into the next days.": {"hi": "सार्वजनिक छुट्टियों पर डिस्चार्ज, नियोजित ऑपरेशन और स्टाफ कम होते हैं, और बचा काम अगले दिनों तक जाता है।", "mr": "सार्वजनिक सुट्ट्यांना डिस्चार्ज, नियोजित शस्त्रक्रिया आणि कर्मचारी कमी असतात, आणि राहिलेले काम पुढील दिवसांवर जाते."}, "Weekend discharge slowdown": {"hi": "सप्ताहांत पर धीमे डिस्चार्ज", "mr": "आठवड्याच्या शेवटी मंद डिस्चार्ज"}, "Saturday discharges run at about 60% and Sunday at 45% of a weekday, so beds freed on Friday are refilled before Monday.": {"hi": "शनिवार को डिस्चार्ज कार्यदिवस का लगभग 60% और रविवार को 45% होते हैं, इसलिए शुक्रवार को खाली हुए बिस्तर सोमवार से पहले फिर भर जाते हैं।", "mr": "शनिवारी डिस्चार्ज कामाच्या दिवसाच्या सुमारे 60% आणि रविवारी 45% होतात, त्यामुळे शुक्रवारी रिकाम्या झालेल्या खाटा सोमवारपूर्वी पुन्हा भरतात."}, "Bed cleaning turnaround": {"hi": "बिस्तर सफ़ाई में लगने वाला समय", "mr": "खाट स्वच्छतेला लागणारा वेळ"}, "A discharged bed takes 2–4 h to clean and make up, longer at night, before the next patient can use it.": {"hi": "डिस्चार्ज के बाद बिस्तर को साफ़ करके तैयार करने में 2–4 घंटे लगते हैं, रात में और अधिक, तब जाकर अगला मरीज़ उसे इस्तेमाल कर सकता है।", "mr": "डिस्चार्जनंतर खाट स्वच्छ करून तयार करायला 2–4 तास लागतात, रात्री अधिक, त्यानंतरच पुढचा रुग्ण ती वापरू शकतो."}, "Morning ward blood-draw batch": {"hi": "सुबह वार्डों के रक्त नमूनों का समूह", "mr": "सकाळी वॉर्डमधील रक्त नमुन्यांचा गठ्ठा"}, "60% of routine inpatient samples arrive between 05:00 and 09:00, before day staffing starts.": {"hi": "भर्ती मरीज़ों के 60% नियमित नमूने सुबह 05:00 से 09:00 के बीच आते हैं, दिन का स्टाफ आने से पहले।", "mr": "दाखल रुग्णांचे 60% नियमित नमुने सकाळी 05:00 ते 09:00 दरम्यान येतात, दिवसाचे कर्मचारी येण्यापूर्वी."}, "Slow lab and X-ray results holding ED patients": {"hi": "लैब और एक्स-रे रिपोर्ट में देरी से आपातकालीन मरीज़ रुके रहते हैं", "mr": "प्रयोगशाळा व एक्स-रे अहवालांच्या विलंबामुळे आपत्कालीन रुग्ण अडकतात"}, "Patients waiting on results stay longer in ED cubicles.": {"hi": "रिपोर्ट का इंतज़ार कर रहे मरीज़ आपातकालीन विभाग में अधिक समय रुकते हैं।", "mr": "अहवालाची वाट पाहणारे रुग्ण आपत्कालीन विभागात जास्त वेळ थांबतात."}, "Staff sickness and festival leave": {"hi": "स्टाफ की बीमारी और त्योहार की छुट्टियाँ", "mr": "कर्मचाऱ्यांचे आजारपण व सणांच्या रजा"}, "Seasonal flu among staff and leave around festivals reduce nurses on shift.": {"hi": "स्टाफ में मौसमी फ़्लू और त्योहारों के आसपास छुट्टियों से शिफ़्ट में नर्सें कम हो जाती हैं।", "mr": "कर्मचाऱ्यांमधील हंगामी फ्लू आणि सणांदरम्यानच्या रजांमुळे शिफ्टमधील परिचारिका कमी होतात."}, "Starting level today": {"hi": "आज का शुरुआती स्तर", "mr": "आजची सुरुवातीची पातळी"}, "The unit is starting the window fuller (or its stock lower) than usual, leaving little slack to absorb a surge.": {"hi": "इकाई सामान्य से अधिक भरी हुई (या स्टॉक कम) स्थिति में शुरू हो रही है, इसलिए अचानक बढ़ोतरी झेलने की गुंजाइश कम है।", "mr": "विभाग नेहमीपेक्षा जास्त भरलेला (किंवा साठा कमी) असताना सुरू होत आहे, त्यामुळे अचानक वाढ सहन करण्यास फारसा वाव नाही."}, "Arrivals running above forecast": {"hi": "मरीज़ पूर्वानुमान से अधिक आ रहे हैं", "mr": "रुग्ण अंदाजापेक्षा जास्त येत आहेत"}, "Arrivals running below forecast": {"hi": "मरीज़ पूर्वानुमान से कम आ रहे हैं", "mr": "रुग्ण अंदाजापेक्षा कमी येत आहेत"}, "Scenario": {"hi": "परिदृश्य", "mr": "परिस्थिती"}, "Part of the what-if scenario you set.": {"hi": "आपके द्वारा तय किए गए क्या-अगर परिदृश्य का हिस्सा।", "mr": "तुम्ही ठरवलेल्या जर-तर परिस्थितीचा भाग."}, "Detected outbreak": {"hi": "पहचाना गया प्रकोप", "mr": "आढळलेला उद्रेक"}, "arrival change": {"hi": "आगमन में बदलाव", "mr": "आगमनातील बदल"}, "seasonal surge": {"hi": "मौसमी उछाल", "mr": "हंगामी वाढ"}, "outbreak": {"hi": "प्रकोप", "mr": "उद्रेक"}, "Mumbai flood": {"hi": "मुंबई बाढ़", "mr": "मुंबई पूर"}, "nurse shortage": {"hi": "नर्सों की कमी", "mr": "परिचारिकांची कमतरता"}, "ED doctor shortage": {"hi": "आपातकालीन डॉक्टरों की कमी", "mr": "आपत्कालीन डॉक्टरांची कमतरता"}, "Medicine beds closed": {"hi": "मेडिसिन बिस्तर बंद", "mr": "मेडिसिन खाटा बंद"}, "ventilators out of service": {"hi": "वेंटिलेटर सेवा से बाहर", "mr": "व्हेंटिलेटर बंद"}, "lab capacity lost": {"hi": "लैब क्षमता घटी", "mr": "प्रयोगशाळा क्षमता घटली"}, "X-ray capacity lost": {"hi": "एक्स-रे क्षमता घटी", "mr": "एक्स-रे क्षमता घटली"}, "CT/USG capacity lost": {"hi": "सीटी/यूएसजी क्षमता घटी", "mr": "सीटी/यूएसजी क्षमता घटली"}, "platelet supply cut": {"hi": "प्लेटलेट आपूर्ति कटी", "mr": "प्लेटलेट पुरवठा घटला"}, "oxygen supply cut": {"hi": "ऑक्सीजन आपूर्ति कटी", "mr": "ऑक्सिजन पुरवठा घटला"}, "ambulances off road": {"hi": "एम्बुलेंस बंद", "mr": "रुग्णवाहिका बंद"}, "None": {"hi": "कोई नहीं", "mr": "काही नाही"}, "Dengue outbreak (cases ×1.5)": {"hi": "डेंगू प्रकोप (मामले ×1.5)", "mr": "डेंग्यू उद्रेक (रुग्ण ×1.5)"}, "Early influenza wave": {"hi": "इन्फ्लुएंज़ा की जल्दी लहर", "mr": "फ्लूची लवकर आलेली लाट"}, "Cholera / gastro cluster": {"hi": "हैज़ा / गैस्ट्रो समूह", "mr": "कॉलरा / गॅस्ट्रो समूह"}, "Mass-casualty incident (building collapse)": {"hi": "सामूहिक हताहत घटना (इमारत ढहना)", "mr": "मोठी दुर्घटना (इमारत कोसळणे)"}, "Novel respiratory virus (COVID-like)": {"hi": "नया श्वसन वायरस (कोविड जैसा)", "mr": "नवा श्वसन विषाणू (कोविडसारखा)"}, "Pandemic influenza (H1N1-like)": {"hi": "महामारी इन्फ्लुएंज़ा (H1N1 जैसा)", "mr": "महासाथ फ्लू (H1N1 सारखा)"}, "Cholera / acute diarrhoeal outbreak": {"hi": "हैज़ा / तीव्र दस्त प्रकोप", "mr": "कॉलरा / तीव्र जुलाब उद्रेक"}, "Dengue epidemic": {"hi": "डेंगू महामारी", "mr": "डेंग्यूची साथ"}, "Leptospirosis after flooding": {"hi": "बाढ़ के बाद लेप्टोस्पायरोसिस", "mr": "पुरानंतर लेप्टोस्पायरोसिस"}, "Aedes mosquitoes breed in stored and stagnant water; in IDSP Mumbai data for 2009-18, cases peak in September and October, about 2 months after peak rain.": {"hi": "एडीज़ मच्छर जमा और रुके हुए पानी में पनपते हैं; 2009-18 के IDSP मुंबई आँकड़ों में मामले सितंबर और अक्टूबर में चरम पर होते हैं, यानी सबसे अधिक बारिश के लगभग 2 महीने बाद।", "mr": "एडिस डास साठवलेल्या व साचलेल्या पाण्यात वाढतात; 2009-18 च्या IDSP मुंबई आकडेवारीनुसार रुग्ण सप्टेंबर व ऑक्टोबरमध्ये शिखरावर असतात, म्हणजे सर्वाधिक पावसानंतर सुमारे 2 महिन्यांनी."}, "Anopheles breed in construction sites, tanks and waterlogged areas; Mumbai reports malaria all year with a monsoon rise.": {"hi": "एनोफ़िलीज़ मच्छर निर्माण स्थलों, टंकियों और जलभराव वाले इलाकों में पनपते हैं; मुंबई में मलेरिया पूरे साल आता है और मानसून में बढ़ता है।", "mr": "ॲनोफिलिस डास बांधकाम स्थळे, टाक्या आणि पाणी साचलेल्या भागात वाढतात; मुंबईत हिवताप वर्षभर आढळतो आणि पावसाळ्यात वाढतो."}, "Contact with flood water contaminated by rat urine; in a published ICU series, 26 of 60 patients needed ventilation.": {"hi": "चूहों के मूत्र से दूषित बाढ़ के पानी के संपर्क से; एक प्रकाशित आईसीयू अध्ययन में 60 में से 26 मरीज़ों को वेंटिलेटर की ज़रूरत पड़ी।", "mr": "उंदरांच्या मूत्राने दूषित पुराच्या पाण्याशी संपर्क आल्याने; एका प्रकाशित आयसीयू अभ्यासात 60 पैकी 26 रुग्णांना व्हेंटिलेटर लागला."}, "Contaminated water and food, worse in heavy rain.": {"hi": "दूषित पानी और भोजन से, भारी बारिश में अधिक।", "mr": "दूषित पाणी व अन्नामुळे, मुसळधार पावसात जास्त."}, "Mostly water-borne hepatitis A and E.": {"hi": "अधिकतर पानी से फैलने वाला हेपेटाइटिस ए और ई।", "mr": "बहुतेक पाण्यातून पसरणारा हिपॅटायटिस ए व ई."}, "H1N1 rose sharply in the 2026 monsoon (441 cases Jun-Aug against 62 in 2025).": {"hi": "2026 के मानसून में H1N1 तेज़ी से बढ़ा (जून-अगस्त में 441 मामले, 2025 में 62)।", "mr": "2026 च्या पावसाळ्यात H1N1 झपाट्याने वाढला (जून-ऑगस्टमध्ये 441 रुग्ण, 2025 मध्ये 62)."}, "Same Aedes mosquito as dengue; rarely needs admission.": {"hi": "डेंगू वाला ही एडीज़ मच्छर; भर्ती की ज़रूरत कम ही पड़ती है।", "mr": "डेंग्यूचाच एडिस डास; दाखल करण्याची गरज क्वचितच पडते."}, "Open surge beds in Medicine (+7%)": {"hi": "मेडिसिन में अतिरिक्त सर्ज बिस्तर खोलें (+7%)", "mr": "मेडिसिनमध्ये अतिरिक्त खाटा सुरू करा (+7%)"}, "Convert day-care and step-down space into extra Medicine beds. Needs 24 h to staff and equip.": {"hi": "डे-केयर और स्टेप-डाउन जगह को अतिरिक्त मेडिसिन बिस्तरों में बदलें। स्टाफ और उपकरण के लिए 24 घंटे चाहिए।", "mr": "डे-केअर व स्टेप-डाउन जागा अतिरिक्त मेडिसिन खाटांमध्ये रूपांतरित करा. कर्मचारी व साधनसामग्रीसाठी 24 तास लागतात."}, "Run a weekend and holiday discharge team": {"hi": "सप्ताहांत और छुट्टियों के लिए डिस्चार्ज टीम चलाएँ", "mr": "आठवड्याच्या शेवटी व सुट्ट्यांसाठी डिस्चार्ज पथक चालवा"}, "A consultant, pharmacist and discharge nurse on Sat/Sun and public holidays lift discharges to about 70% of a weekday.": {"hi": "शनिवार/रविवार और सार्वजनिक छुट्टियों पर एक कंसल्टेंट, फ़ार्मासिस्ट और डिस्चार्ज नर्स रहने से डिस्चार्ज कार्यदिवस के लगभग 70% तक पहुँचते हैं।", "mr": "शनिवार/रविवार व सार्वजनिक सुट्ट्यांना एक कन्सल्टंट, फार्मासिस्ट व डिस्चार्ज परिचारिका असल्यास डिस्चार्ज कामाच्या दिवसाच्या सुमारे 70% पर्यंत वाढतात."}, "Discharge-before-noon drive": {"hi": "दोपहर से पहले डिस्चार्ज अभियान", "mr": "दुपारपूर्वी डिस्चार्ज मोहीम"}, "Board rounds at 08:30; discharge summaries and take-home medicines prepared the evening before.": {"hi": "08:30 पर बोर्ड राउंड; डिस्चार्ज सारांश और घर ले जाने की दवाइयाँ एक शाम पहले तैयार।", "mr": "08:30 वाजता बोर्ड राउंड; डिस्चार्ज सारांश व घरी न्यायची औषधे आदल्या संध्याकाळी तयार."}, "Add housekeeping on evenings and nights": {"hi": "शाम और रात में सफ़ाई कर्मचारी बढ़ाएँ", "mr": "संध्याकाळी व रात्री स्वच्छता कर्मचारी वाढवा"}, "Turn discharged beds round in about 1.5 h at any hour.": {"hi": "किसी भी समय डिस्चार्ज हुए बिस्तर लगभग 1.5 घंटे में तैयार करें।", "mr": "कोणत्याही वेळी डिस्चार्ज झालेली खाट सुमारे 1.5 तासांत तयार करा."}, "Call in float nurses (+8% per shift)": {"hi": "फ़्लोट नर्सों को बुलाएँ (+8% प्रति शिफ़्ट)", "mr": "फ्लोट परिचारिका बोलवा (+8% प्रति शिफ्ट)"}, "Use the float pool and agency roster.": {"hi": "फ़्लोट पूल और एजेंसी रोस्टर का उपयोग करें।", "mr": "फ्लोट पूल व एजन्सी रोस्टर वापरा."}, "Extend lab staffing and run a 2nd haematology analyser": {"hi": "लैब स्टाफ बढ़ाएँ और दूसरा हीमेटोलॉजी एनालाइज़र चलाएँ", "mr": "प्रयोगशाळेतील कर्मचारी वाढवा व दुसरा हिमॅटोलॉजी ॲनालायझर चालवा"}, "Adds about 30% lab throughput; prioritise CBC, NS1, malaria and leptospirosis tests.": {"hi": "लैब क्षमता लगभग 30% बढ़ती है; CBC, NS1, मलेरिया और लेप्टोस्पायरोसिस जाँच को प्राथमिकता दें।", "mr": "प्रयोगशाळेची क्षमता सुमारे 30% वाढते; CBC, NS1, हिवताप व लेप्टोस्पायरोसिस चाचण्यांना प्राधान्य द्या."}, "Stagger morning ward blood draws": {"hi": "सुबह वार्डों के रक्त नमूने अलग-अलग समय पर लें", "mr": "सकाळचे वॉर्डमधील रक्त नमुने वेगवेगळ्या वेळी घ्या"}, "Spread routine inpatient samples across 05:00–14:00.": {"hi": "भर्ती मरीज़ों के नियमित नमूने 05:00–14:00 में फैलाएँ।", "mr": "दाखल रुग्णांचे नियमित नमुने 05:00–14:00 दरम्यान विभागा."}, "Add a night X-ray technician and a portable unit": {"hi": "रात में एक एक्स-रे तकनीशियन और एक पोर्टेबल यूनिट जोड़ें", "mr": "रात्री एक एक्स-रे तंत्रज्ञ व एक पोर्टेबल युनिट जोडा"}, "Adds about 35% X-ray capacity, mostly at night, and bedside films for isolation and ICU.": {"hi": "एक्स-रे क्षमता लगभग 35% बढ़ती है, ज़्यादातर रात में, और आइसोलेशन व आईसीयू के लिए बिस्तर पर एक्स-रे।", "mr": "एक्स-रे क्षमता सुमारे 35% वाढते, मुख्यतः रात्री, आणि विलगीकरण व आयसीयूसाठी खाटेजवळ एक्स-रे."}, "Add an evening CT and ultrasound session": {"hi": "शाम को सीटी और अल्ट्रासाउंड सत्र जोड़ें", "mr": "संध्याकाळी सीटी व सोनोग्राफी सत्र जोडा"}, "Keep CT and ultrasound staffed until 22:00.": {"hi": "सीटी और अल्ट्रासाउंड में 22:00 तक स्टाफ रखें।", "mr": "सीटी व सोनोग्राफीमध्ये 22:00 पर्यंत कर्मचारी ठेवा."}, "Open a fever fast-track clinic beside the ED": {"hi": "आपातकालीन विभाग के पास बुखार फ़ास्ट-ट्रैक क्लिनिक खोलें", "mr": "आपत्कालीन विभागाशेजारी ताप फास्ट-ट्रॅक क्लिनिक सुरू करा"}, "Triage stable fever patients (malaria, dengue suspects) to an OPD-style clinic; diverts about 30% of seasonal ED load.": {"hi": "स्थिर बुखार वाले मरीज़ों (मलेरिया, डेंगू संदिग्ध) को ओपीडी जैसे क्लिनिक में भेजें; मौसमी आपातकालीन भार का लगभग 30% कम होता है।", "mr": "स्थिर तापाचे रुग्ण (हिवताप, डेंग्यू संशयित) ओपीडीसारख्या क्लिनिकमध्ये पाठवा; हंगामी आपत्कालीन भार सुमारे 30% कमी होतो."}, "Defer non-urgent elective surgery": {"hi": "गैर-ज़रूरी नियोजित सर्जरी टालें", "mr": "तातडीच्या नसलेल्या नियोजित शस्त्रक्रिया पुढे ढकला"}, "Postpone half of planned non-urgent cases.": {"hi": "नियोजित गैर-ज़रूरी मामलों में से आधे टालें।", "mr": "नियोजित तातडीच्या नसलेल्या प्रकरणांपैकी अर्धी पुढे ढकला."}, "Convert step-down beds to ICU (+15%)": {"hi": "स्टेप-डाउन बिस्तरों को आईसीयू में बदलें (+15%)", "mr": "स्टेप-डाउन खाटा आयसीयूमध्ये रूपांतरित करा (+15%)"}, "Upgrade HDU beds with monitors and transport ventilators.": {"hi": "HDU बिस्तरों को मॉनिटर और ट्रांसपोर्ट वेंटिलेटर से उन्नत करें।", "mr": "HDU खाटांना मॉनिटर व ट्रान्सपोर्ट व्हेंटिलेटर जोडून सुसज्ज करा."}, "Hold platelet donation camps": {"hi": "प्लेटलेट दान शिविर लगाएँ", "mr": "प्लेटलेट दान शिबिरे घ्या"}, "Apheresis and whole-blood camps with colleges and housing societies; adds about 60% to daily platelet supply after 48 h.": {"hi": "कॉलेजों और हाउसिंग सोसायटियों के साथ एफ़ेरेसिस और रक्तदान शिविर; 48 घंटे बाद रोज़ की प्लेटलेट आपूर्ति लगभग 60% बढ़ती है।", "mr": "महाविद्यालये व गृहनिर्माण संस्थांसोबत ॲफेरेसिस व रक्तदान शिबिरे; 48 तासांनंतर दररोजचा प्लेटलेट पुरवठा सुमारे 60% वाढतो."}, "Request platelets from the regional blood bank": {"hi": "क्षेत्रीय ब्लड बैंक से प्लेटलेट्स मँगवाएँ", "mr": "प्रादेशिक रक्तपेढीकडून प्लेटलेट्स मागवा"}, "One-off transfer through the state blood transfusion council network.": {"hi": "राज्य रक्त आधान परिषद नेटवर्क के माध्यम से एक बार का हस्तांतरण।", "mr": "राज्य रक्त संक्रमण परिषदेच्या नेटवर्कमार्फत एकवेळचे हस्तांतरण."}, "Stock up oxygen cylinders": {"hi": "ऑक्सीजन सिलेंडर का भंडार बढ़ाएँ", "mr": "ऑक्सिजन सिलेंडरचा साठा वाढवा"}, "Order filled D-type cylinders equal to about 3 days of current use as a buffer against tanker delays.": {"hi": "टैंकर में देरी से बचाव के लिए लगभग 3 दिन की मौजूदा खपत के बराबर भरे D-टाइप सिलेंडर मँगवाएँ।", "mr": "टँकर उशिरा आल्यास आधार म्हणून सध्याच्या सुमारे 3 दिवसांच्या वापराइतके भरलेले D-प्रकारचे सिलेंडर मागवा."}, "Request a higher oxygen allocation and tanker priority": {"hi": "अधिक ऑक्सीजन आवंटन और टैंकर प्राथमिकता का अनुरोध करें", "mr": "जास्त ऑक्सिजन वाटप व टँकर प्राधान्याची विनंती करा"}, "Through the BMC / FDA oxygen coordination desk; raises refills by about 60%.": {"hi": "बीएमसी / एफ़डीए ऑक्सीजन समन्वय डेस्क के माध्यम से; रीफ़िल लगभग 60% बढ़ते हैं।", "mr": "बीएमसी / एफडीए ऑक्सिजन समन्वय कक्षामार्फत; रिफिल सुमारे 60% वाढतात."}, "Open an isolation cohort ward": {"hi": "आइसोलेशन कोहोर्ट वार्ड खोलें", "mr": "विलगीकरण समूह वॉर्ड सुरू करा"}, "Convert one Medicine ward into a well-ventilated cohort ward for infectious patients.": {"hi": "एक मेडिसिन वार्ड को संक्रामक मरीज़ों के लिए हवादार कोहोर्ट वार्ड में बदलें।", "mr": "एक मेडिसिन वॉर्ड संसर्गजन्य रुग्णांसाठी हवेशीर समूह वॉर्डमध्ये रूपांतरित करा."}, "Add ambulances (+50%)": {"hi": "एम्बुलेंस बढ़ाएँ (+50%)", "mr": "रुग्णवाहिका वाढवा (+50%)"}, "Contract private ambulances and request extra 108 vehicles for the catchment.": {"hi": "निजी एम्बुलेंस अनुबंधित करें और क्षेत्र के लिए अतिरिक्त 108 वाहन माँगें।", "mr": "खाजगी रुग्णवाहिका करारावर घ्या आणि परिसरासाठी अतिरिक्त 108 वाहने मागवा."}, "Refer stable epidemic patients to a city field hospital": {"hi": "स्थिर महामारी मरीज़ों को शहर के फ़ील्ड अस्पताल भेजें", "mr": "स्थिर साथीचे रुग्ण शहरातील तात्पुरत्या रुग्णालयात पाठवा"}, "As Mumbai did with its jumbo COVID centres: send about 35% of moderate epidemic cases to a city-run field facility.": {"hi": "जैसे मुंबई ने जंबो कोविड केंद्रों के साथ किया: मध्यम महामारी मामलों में से लगभग 35% को शहर द्वारा चलाए जा रहे फ़ील्ड केंद्र में भेजें।", "mr": "मुंबईने जंबो कोविड केंद्रांसोबत केले तसे: मध्यम साथीच्या रुग्णांपैकी सुमारे 35% महापालिकेच्या तात्पुरत्या केंद्रात पाठवा."}, "Stop all planned surgery": {"hi": "सभी नियोजित सर्जरी रोकें", "mr": "सर्व नियोजित शस्त्रक्रिया थांबवा"}, "Frees surgical beds, post-op ICU beds, theatre oxygen and staff for the surge.": {"hi": "सर्ज के लिए सर्जिकल बिस्तर, ऑपरेशन के बाद के आईसीयू बिस्तर, थिएटर ऑक्सीजन और स्टाफ खाली होते हैं।", "mr": "वाढीव रुग्णांसाठी शस्त्रक्रिया खाटा, शस्त्रक्रियेनंतरच्या आयसीयू खाटा, शस्त्रक्रियागृहातील ऑक्सिजन व कर्मचारी मोकळे होतात."}, "Nursing Superintendent": {"hi": "नर्सिंग अधीक्षक", "mr": "परिचर्या अधीक्षक"}, "Medical Superintendent": {"hi": "चिकित्सा अधीक्षक", "mr": "वैद्यकीय अधीक्षक"}, "Ward consultants": {"hi": "वार्ड कंसल्टेंट", "mr": "वॉर्ड कन्सल्टंट"}, "Facilities Manager": {"hi": "सुविधा प्रबंधक", "mr": "सुविधा व्यवस्थापक"}, "Lab Director": {"hi": "लैब निदेशक", "mr": "प्रयोगशाळा संचालक"}, "Head of Radiology": {"hi": "रेडियोलॉजी प्रमुख", "mr": "रेडिओलॉजी प्रमुख"}, "Head of Emergency": {"hi": "आपातकालीन विभाग प्रमुख", "mr": "आपत्कालीन विभाग प्रमुख"}, "Head of Surgery": {"hi": "सर्जरी प्रमुख", "mr": "शस्त्रक्रिया विभाग प्रमुख"}, "Head of Critical Care": {"hi": "क्रिटिकल केयर प्रमुख", "mr": "अतिदक्षता विभाग प्रमुख"}, "Blood Bank Officer": {"hi": "ब्लड बैंक अधिकारी", "mr": "रक्तपेढी अधिकारी"}, "Biomedical Engineer": {"hi": "बायोमेडिकल इंजीनियर", "mr": "बायोमेडिकल अभियंता"}, "Infection Control Officer": {"hi": "संक्रमण नियंत्रण अधिकारी", "mr": "संसर्ग नियंत्रण अधिकारी"}, "Transport Officer": {"hi": "परिवहन अधिकारी", "mr": "वाहतूक अधिकारी"}, "BMC Ward War Room": {"hi": "बीएमसी वार्ड वॉर रूम", "mr": "बीएमसी वॉर्ड वॉर रूम"}, "General ward beds": {"hi": "सामान्य वार्ड बिस्तर", "mr": "सामान्य वॉर्ड खाटा"}, "ICU beds": {"hi": "आईसीयू बिस्तर", "mr": "आयसीयू खाटा"}, "Ventilators": {"hi": "वेंटिलेटर", "mr": "व्हेंटिलेटर"}, "Nurses per shift": {"hi": "प्रति शिफ़्ट नर्सें", "mr": "प्रति शिफ्ट परिचारिका"}, "Platelets": {"hi": "प्लेटलेट्स", "mr": "प्लेटलेट्स"}, "beds": {"hi": "बिस्तर", "mr": "खाटा"}, "ventilators": {"hi": "वेंटिलेटर", "mr": "व्हेंटिलेटर"}, "cylinder-eq./day": {"hi": "सिलेंडर-समतुल्य/दिन", "mr": "सिलेंडर-समतुल्य/दिवस"}, "ambulances": {"hi": "एम्बुलेंस", "mr": "रुग्णवाहिका"}, "nurses": {"hi": "नर्सें", "mr": "परिचारिका"}, "units short": {"hi": "यूनिट कम", "mr": "युनिट कमी"}, "ED spaces in use, incl. admitted patients waiting for a bed": {"hi": "उपयोग में आपातकालीन जगहें, बिस्तर की प्रतीक्षा कर रहे भर्ती मरीज़ों सहित", "mr": "वापरात असलेल्या आपत्कालीन जागा, खाटेची वाट पाहणाऱ्या दाखल रुग्णांसह"}, "Beds occupied or being cleaned, plus patients waiting for a bed": {"hi": "भरे हुए या सफ़ाई में बिस्तर, और बिस्तर की प्रतीक्षा कर रहे मरीज़", "mr": "भरलेल्या किंवा स्वच्छ होत असलेल्या खाटा, आणि खाटेची वाट पाहणारे रुग्ण"}, "Higher of ICU bed load and ventilator load": {"hi": "आईसीयू बिस्तर भार और वेंटिलेटर भार में से जो अधिक हो", "mr": "आयसीयू खाट भार व व्हेंटिलेटर भार यांपैकी जास्त"}, "Isolation beds occupied, plus infectious patients waiting for one": {"hi": "भरे हुए आइसोलेशन बिस्तर, और प्रतीक्षा कर रहे संक्रामक मरीज़", "mr": "भरलेल्या विलगीकरण खाटा, आणि वाट पाहणारे संसर्गजन्य रुग्ण"}, "3 days of expected oxygen use vs stock on site (liquid tank + cylinders)": {"hi": "अपेक्षित 3 दिन की ऑक्सीजन खपत बनाम उपलब्ध स्टॉक (लिक्विड टैंक + सिलेंडर)", "mr": "अपेक्षित 3 दिवसांचा ऑक्सिजन वापर विरुद्ध उपलब्ध साठा (लिक्विड टाकी + सिलेंडर)"}, "Ambulances out on trips vs fleet size": {"hi": "फेरों पर गई एम्बुलेंस बनाम कुल बेड़ा", "mr": "फेरीवर गेलेल्या रुग्णवाहिका विरुद्ध एकूण ताफा"}, "Expected result turnaround vs 2.5 h target": {"hi": "अपेक्षित रिपोर्ट समय बनाम 2.5 घंटे का लक्ष्य", "mr": "अपेक्षित अहवाल वेळ विरुद्ध 2.5 तासांचे लक्ष्य"}, "Expected X-ray wait vs 1.5 h target": {"hi": "अपेक्षित एक्स-रे प्रतीक्षा बनाम 1.5 घंटे का लक्ष्य", "mr": "अपेक्षित एक्स-रे प्रतीक्षा विरुद्ध 1.5 तासांचे लक्ष्य"}, "Expected CT/ultrasound wait vs 3 h target": {"hi": "अपेक्षित सीटी/अल्ट्रासाउंड प्रतीक्षा बनाम 3 घंटे का लक्ष्य", "mr": "अपेक्षित सीटी/सोनोग्राफी प्रतीक्षा विरुद्ध 3 तासांचे लक्ष्य"}, "Nurses required vs nurses on shift": {"hi": "आवश्यक नर्सें बनाम शिफ़्ट में मौजूद नर्सें", "mr": "आवश्यक परिचारिका विरुद्ध शिफ्टमधील परिचारिका"}, "1.5 days of expected platelet use vs units in stock": {"hi": "अपेक्षित 1.5 दिन की प्लेटलेट खपत बनाम स्टॉक में यूनिट", "mr": "अपेक्षित 1.5 दिवसांचा प्लेटलेट वापर विरुद्ध साठ्यातील युनिट"}, "ICU": {"hi": "आईसीयू", "mr": "आयसीयू"}, "Data source notes and hospital names stay in English. Each alert email also keeps an English version for official records.": {"hi": "डेटा स्रोत टिप्पणियाँ और अस्पतालों के नाम अंग्रेज़ी में रहते हैं। हर चेतावनी ईमेल का आधिकारिक रिकॉर्ड के लिए अंग्रेज़ी संस्करण भी रहता है।", "mr": "डेटा स्रोत टिपा व रुग्णालयांची नावे इंग्रजीत राहतात. प्रत्येक इशारा ईमेलची अधिकृत नोंदीसाठी इंग्रजी आवृत्तीही राहते."}, "See preparedness plan": {"hi": "तैयारी योजना देखें", "mr": "तयारी योजना पहा"}, "Review alerts": {"hi": "चेतावनियाँ देखें", "mr": "इशारे पहा"}, "To": {"hi": "प्रति", "mr": "प्रति"}, "Subject": {"hi": "विषय", "mr": "विषय"}, "Email text": {"hi": "ईमेल पाठ", "mr": "ईमेल मजकूर"}, "English version": {"hi": "अंग्रेज़ी संस्करण", "mr": "इंग्रजी आवृत्ती"}, "Show again": {"hi": "फिर दिखाएँ", "mr": "पुन्हा दाखवा"}, "Approved by": {"hi": "स्वीकृतकर्ता", "mr": "मंजूर करणारे"}});
+Object.assign(I18N, {"BMC disease reports": {"hi": "बीएमसी बीमारी रिपोर्ट", "mr": "बीएमसी आजार अहवाल"}, "When BMC releases monsoon illness figures (a press note, ward report or IDSP weekly report), enter the period and the counts. A report that ended in the last 21 days and covers up to 5 weeks rescales each disease's current rate to match it. Longer or older reports are kept as a record. Reports are shared by every hospital on this device.": {"hi": "जब बीएमसी मानसून बीमारियों के आँकड़े जारी करे (प्रेस नोट, वार्ड रिपोर्ट या IDSP साप्ताहिक रिपोर्ट), तो अवधि और संख्याएँ दर्ज करें। पिछले 21 दिनों में समाप्त हुई और 5 सप्ताह तक की रिपोर्ट हर बीमारी की मौजूदा दर को उसके अनुसार समायोजित करती है। लंबी या पुरानी रिपोर्टें रिकॉर्ड के रूप में रखी जाती हैं। ये रिपोर्टें इस डिवाइस के सभी अस्पतालों में साझा होती हैं।", "mr": "बीएमसीने पावसाळी आजारांचे आकडे जाहीर केल्यावर (प्रसिद्धीपत्रक, वॉर्ड अहवाल किंवा IDSP साप्ताहिक अहवाल) कालावधी व संख्या नोंदवा. गेल्या 21 दिवसांत संपलेला व 5 आठवड्यांपर्यंतचा अहवाल प्रत्येक आजाराचा सध्याचा दर त्यानुसार समायोजित करतो. मोठे किंवा जुने अहवाल नोंद म्हणून ठेवले जातात. हे अहवाल या उपकरणावरील सर्व रुग्णालयांसाठी सामायिक आहेत."}, "First day": {"hi": "पहला दिन", "mr": "पहिला दिवस"}, "Last day": {"hi": "अंतिम दिन", "mr": "शेवटचा दिवस"}, "Source (link or title)": {"hi": "स्रोत (लिंक या शीर्षक)", "mr": "स्रोत (लिंक किंवा शीर्षक)"}, "Add report": {"hi": "रिपोर्ट जोड़ें", "mr": "अहवाल जोडा"}});
+Object.assign(I18N, {"Morning briefing": {"hi": "सुबह की ब्रीफ़िंग", "mr": "सकाळची माहिती"}, "One page for the morning meeting: what is tight, what is coming and what needs a decision.": {"hi": "सुबह की बैठक के लिए एक पेज: क्या कम है, क्या आने वाला है और किस पर निर्णय चाहिए।", "mr": "सकाळच्या बैठकीसाठी एक पान: काय कमी आहे, काय येणार आहे आणि कशावर निर्णय हवा."}, "Figures only the hospital can give": {"hi": "आँकड़े जो केवल अस्पताल दे सकता है", "mr": "फक्त रुग्णालयच देऊ शकेल असे आकडे"}, "Save answers": {"hi": "उत्तर सहेजें", "mr": "उत्तरे जतन करा"}, "Print checklist": {"hi": "सूची प्रिंट करें", "mr": "यादी प्रिंट करा"}, "Ask the hospital for its data": {"hi": "अस्पताल से उसका डेटा माँगें", "mr": "रुग्णालयाकडे त्याचा डेटा मागा"}, "Copy letter": {"hi": "पत्र कॉपी करें", "mr": "पत्र कॉपी करा"}, "Download blank CSV template": {"hi": "खाली CSV टेम्पलेट डाउनलोड करें", "mr": "रिकामा CSV नमुना डाउनलोड करा"}, "Real census data can only come from the hospital's own records; it is not published. This letter asks the Medical Superintendent and Medical Records for an anonymised export and the figures above. It is written in English for official correspondence.": {"hi": "असली रोगी-संख्या डेटा केवल अस्पताल के अपने रिकॉर्ड से आ सकता है; यह प्रकाशित नहीं होता। यह पत्र चिकित्सा अधीक्षक और मेडिकल रिकॉर्ड्स से गुमनाम निर्यात और ऊपर के आँकड़े माँगता है। आधिकारिक पत्राचार के लिए यह अंग्रेज़ी में है।", "mr": "खरा रुग्णसंख्या डेटा फक्त रुग्णालयाच्या स्वतःच्या नोंदींमधूनच मिळू शकतो; तो प्रकाशित होत नाही. हे पत्र वैद्यकीय अधीक्षक व वैद्यकीय नोंदी विभागाकडे निनावी डेटा व वरील आकडे मागते. अधिकृत पत्रव्यवहारासाठी ते इंग्रजीत आहे."}});
 const ORIG = new WeakMap();
+const tl = (en, hi, mr, lg) => { lg = lg || LANG; return lg === 'hi' ? hi : lg === 'mr' ? mr : en; };
+function tx(str, lg) {
+  lg = lg || LANG; if (lg === 'en' || str == null) return str;
+  const d = I18N[str]; if (d && d[lg]) return d[lg];
+  const i = str.indexOf(': '); if (i > 0 && I18N[str.slice(0, i)]) return I18N[str.slice(0, i)][lg] + ': ' + tx(str.slice(i + 2), lg);
+  return str;
+}
+const DAYS_L = { hi: ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'], mr: ['रवि', 'सोम', 'मंगळ', 'बुध', 'गुरु', 'शुक्र', 'शनि'] };
+const MON_L = { hi: ['जन', 'फ़र', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अग', 'सित', 'अक्टू', 'नव', 'दिस'], mr: ['जाने', 'फेब्रु', 'मार्च', 'एप्रि', 'मे', 'जून', 'जुलै', 'ऑग', 'सप्टें', 'ऑक्टो', 'नोव्हें', 'डिसें'] };
+// Localise English date and "in 2 d 5 h" tokens inside a string.
+function locDates(str, lg) {
+  lg = lg || LANG; if (lg === 'en' || !str) return str;
+  return str.replace(/\b(Sun|Mon|Tue|Wed|Thu|Fri|Sat) (\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/g, (m, d, n, mo) => `${DAYS_L[lg][DAYS.indexOf(d)]} ${n} ${MON_L[lg][MON.indexOf(mo)]}`)
+    .replace(/(?<!(?:lowest|worst|highest) )\bin (\d+) d (\d+) h\b/g, (m, d, h) => lg === 'hi' ? `${d} दिन ${h} घंटे में` : `${d} दिवस ${h} तासांत`)
+    .replace(/(?<!(?:lowest|worst|highest) )\bin (\d+) d\b/g, (m, d) => lg === 'hi' ? `${d} दिन में` : `${d} दिवसांत`)
+    .replace(/(?<!(?:lowest|worst|highest) )\bin (\d+) h\b/g, (m, h) => lg === 'hi' ? `${h} घंटे में` : `${h} तासांत`);
+}
+const fmtL = (abs, lg) => locDates(fmtT(abs), lg);
+const relL = (h, lg) => h <= 0 ? tl('now', 'अभी', 'आत्ता', lg) : locDates(rel(h), lg);
+const uL = (id, lg) => tx(UID[id].long, lg);
+const sevL = (sev, lg) => tx(SEV_LABEL[sev], lg);
+const KIND_L = { hi: { P: 'प्रकाशित', D: 'प्रकाशित आँकड़ों से निकाला गया', R: 'दूसरे मुंबई अस्पताल का प्रकाशित आँकड़ा', U: 'अप्रकाशित: बदलने हेतु अस्थायी मान', X: 'अंतिम प्रकाशित माह के बाद का अनुमान', H: 'अस्पताल स्टाफ द्वारा दर्ज', L: 'लाइव डेटा', I: 'आपके आयातित डेटा से सीखा गया', M: 'प्रकाशित डेटा पर फ़िट मॉडल पूर्वानुमान' },
+  mr: { P: 'प्रकाशित', D: 'प्रकाशित आकड्यांवरून काढलेले', R: 'दुसऱ्या मुंबई रुग्णालयाचा प्रकाशित आकडा', U: 'अप्रकाशित: बदलण्यासाठी तात्पुरते मूल्य', X: 'शेवटच्या प्रकाशित महिन्यानंतरचा अंदाज', H: 'रुग्णालय कर्मचाऱ्यांनी नोंदवलेले', L: 'थेट डेटा', I: 'तुमच्या आयात डेटामधून शिकलेले', M: 'प्रकाशित डेटावर बसवलेला मॉडेल अंदाज' } };
+const kindL = (k, lg) => { lg = lg || LANG; return lg === 'en' ? KIND[k] : KIND_L[lg][k]; };
+function drvName(d, lg) {
+  lg = lg || LANG; if (lg === 'en') return d.name;
+  if (d.id === 'epi' && A.epiFit) return tx('Detected outbreak', lg) + ': ' + tx(S.PATHOGENS[A.epiFit.pathogen].name, lg);
+  if (d.id.startsWith('act_') && S.ACTION_BY_ID[d.id.slice(4)]) return tx('Approved', lg) + ': ' + tx(S.ACTION_BY_ID[d.id.slice(4)].title, lg);
+  if (d.id.startsWith('lv_')) return tx('Scenario', lg) + ': ' + tx(LEVER_NAMES[d.id.slice(3)] || d.id.slice(3), lg);
+  return tx(d.name, lg);
+}
+function drvText(d, lg) {
+  lg = lg || LANG; if (lg === 'en') return d.text;
+  const se = S.DISEASES.find(x => x.id === d.id);
+  if (se) { const mo = tOf(A.now).getMonth(), c = S.SER[se.id].ms[mo];
+    return tx(se.why, lg) + ' ' + tl('', `मुंबई: ${MON_L.hi[mo]} ${S.DATA.YEAR} में ${loc(c.c)} अधिसूचित मामले (${kindL(c.kind, lg)})।`, `मुंबई: ${MON_L.mr[mo]} ${S.DATA.YEAR} मध्ये ${loc(c.c)} अधिसूचित रुग्ण (${kindL(c.kind, lg)}).`, lg); }
+  if (d.id === 'epi' && A.epiFit) { const f = A.epiFit, r = A.det[f.syn].ratio.toFixed(2), syn = tx(S.SYNDROMES[f.syn], lg);
+    return tl('', `${syn} वाले मरीज़ मौसमी अपेक्षा के ${r}× हैं और अभी भी बढ़ रहे हैं।`, `${syn} असलेले रुग्ण हंगामी अपेक्षेच्या ${r}× आहेत आणि अजूनही वाढत आहेत.`, lg); }
+  if (d.id === 'nowcast') { const pc = Math.abs(Math.round((A.nowcast - 1) / 0.6 * 100)), up = A.nowcast > 1;
+    return tl('', `पिछले 24 घंटों में मरीज़ मॉडल की अपेक्षा से ${pc}% ${up ? 'अधिक' : 'कम'} आए।`, `गेल्या 24 तासांत रुग्ण मॉडेलच्या अपेक्षेपेक्षा ${pc}% ${up ? 'जास्त' : 'कमी'} आले.`, lg); }
+  if (d.id.startsWith('act_')) { const a = A.approved.find(x => 'act_' + x.id === d.id); return tl('', `${a ? a.by : ''} द्वारा स्वीकृत।`, `${a ? a.by : ''} यांनी मंजूर केले.`, lg); }
+  return tx(d.text, lg);
+}
+function worstTitle(lg) {
+  if (A.epiFit) { const syn = tx(S.SYNDROMES[A.epiFit.syn], lg).split(' (')[0];
+    return tl(A.worst.title, `संभावित सबसे बुरी स्थिति: पहचाना गया ${syn} प्रकोप 40% तेज़ी से बढ़े`, `संभाव्य सर्वात वाईट स्थिती: आढळलेला ${syn} उद्रेक 40% वेगाने वाढला तर`, lg); }
+  return tl(A.worst.title, 'तनाव परीक्षण: अगर आज कोविड जैसी श्वसन महामारी शुरू हो', 'ताण चाचणी: आज कोविडसारखी श्वसन साथ सुरू झाली तर', lg);
+}
 function translateDom(root) {
   if (LANG === 'en' && !translatedOnce) return;
   const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode(n) { const p = n.parentElement; if (!p || p.closest('script,style,textarea,.email,.recips,#csvText')) return NodeFilter.FILTER_REJECT; return n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; } });
   const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
   for (const n of nodes) {
-    const orig = ORIG.has(n) ? ORIG.get(n) : n.nodeValue, key = orig.trim(), tr = LANG !== 'en' && I18N[key] && I18N[key][LANG];
-    if (tr) { if (!ORIG.has(n)) ORIG.set(n, orig); n.nodeValue = orig.replace(key, tr); translatedOnce = true; }
+    const orig = ORIG.has(n) ? ORIG.get(n) : n.nodeValue, key = orig.trim();
+    let out = orig;
+    if (LANG !== 'en') { const tr = I18N[key] && I18N[key][LANG]; out = tr ? orig.replace(key, tr) : locDates(orig); }
+    if (out !== orig) { if (!ORIG.has(n)) ORIG.set(n, orig); n.nodeValue = out; translatedOnce = true; }
     else if (ORIG.has(n)) n.nodeValue = orig;
   }
 }
@@ -993,6 +1115,7 @@ function save() {
   saveT = setTimeout(async () => { const ok = await DB.set('state:' + A.hospitalId, snapshot()); A.savedAt = ok ? Date.now() : null; A.saveFailed = !ok; renderNav(); }, 500);
 }
 async function init(keep) {
+  REPORTS = await loadReports();
   const saved = await DB.get('state:' + store.get('hospital', 'kem'));
   if (saved && saved.v === SAVE_VER) { try { if (restore(saved, keep)) return; } catch (e) { console.warn('Saved session could not be restored', e); } }
   boot(keep);
@@ -1022,6 +1145,7 @@ function restore(sv, keep) {
 /* ---------------- views ---------------- */
 const VIEWS = {
   overview: ['Overview', 'What is free now, what is about to run short, and why.'],
+  briefing: ['Morning briefing', 'One page for the morning meeting: what is tight, what is coming and what needs a decision.'],
   forecast: ['Forecast', 'Day-by-day load for every unit and how demand moves through the hospital.'],
   city: ['City network', 'Published capacity of Mumbai hospitals and the model\'s view of where there is room.'],
   diseases: ['Seasonal diseases', 'Mumbai notified cases by month (BMC) and live weather and air-quality signals.'],
@@ -1100,13 +1224,14 @@ const VIEW_RENDER = {
   overview: () => { renderTiles(); renderHeadline(); renderCards(); renderTabs(); renderChart(); renderWhy(); },
   forecast: () => { renderHeat(); renderCascade(); },
   city: () => renderNetwork(),
-  diseases: () => { renderDiseases(); renderSeason(); renderFeeds(); renderDengueModel(); },
+  diseases: () => { renderDiseases(); renderSeason(); renderFeeds(); renderDengueModel(); renderBulletins(); },
   outbreak: () => renderEpidemic(),
   scenarios: () => { renderLevers(); renderCompare(); },
   actions: () => renderActions(),
   alerts: () => { renderAlerts(); renderPeople(); renderLog(); },
   data: () => { renderData(); renderAcc(); },
-  setup: () => { markSetup(); renderLearned(); }
+  setup: () => { markSetup(); renderLearned(); renderChecklist(); renderRequest(); },
+  briefing: () => renderBriefing()
 };
 function render() {
   renderBar(); renderEpiBanner(); renderBanner(); renderFoot(); renderNav();
@@ -1132,8 +1257,12 @@ function renderEpiBanner() {
   const f = A.epiFit, d = A.det[f.syn], w = A.worst;
   const o2 = w.rows.find(r => r.id === 'O2'), iso = w.rows.find(r => r.id === 'ISO');
   el.className = 'epi-banner';
-  el.innerHTML = `<div class="top">${pill('critical', S.LEVELS[lv].toUpperCase())}<b class="big">${esc(S.SYNDROMES[f.syn])} patients are ${d.ratio.toFixed(2)}× the seasonal expectation${d.doubling ? `, doubling about every ${d.doubling.toFixed(1)} days` : ''}.</b></div>
-    <span>Forecasts now include this outbreak (modelled as ${esc(S.PATHOGENS[f.pathogen].name.toLowerCase())}). Worst case: isolation ${iso.full != null ? 'full ' + rel(iso.full) : 'holds'}; oxygen ${o2.full != null ? 'runs short ' + rel(o2.full) : 'holds'}. Alert drafts are waiting for review.</span>
+  const syn = tx(S.SYNDROMES[f.syn]), r = d.ratio.toFixed(2), dbl = d.doubling ? d.doubling.toFixed(1) : null, pth = tx(S.PATHOGENS[f.pathogen].name);
+  const head = tl(`${S.SYNDROMES[f.syn]} patients are ${r}× the seasonal expectation${dbl ? `, doubling about every ${dbl} days` : ''}.`, `${syn} वाले मरीज़ मौसमी अपेक्षा के ${r}× हैं${dbl ? `, लगभग हर ${dbl} दिन में दोगुने` : ''}।`, `${syn} असलेले रुग्ण हंगामी अपेक्षेच्या ${r}× आहेत${dbl ? `, सुमारे दर ${dbl} दिवसांनी दुप्पट` : ''}.`);
+  const isoT = iso.full != null ? tl('full ' + rel(iso.full), relL(iso.full) + ' भर जाएँगे', relL(iso.full) + ' भरतील') : tl('holds', 'पर्याप्त', 'पुरेशा');
+  const o2T = o2.full != null ? tl('runs short ' + rel(o2.full), relL(o2.full) + ' कम पड़ेगी', relL(o2.full) + ' कमी पडेल') : tl('holds', 'पर्याप्त', 'पुरेसा');
+  el.innerHTML = `<div class="top">${pill('critical', tx(S.LEVELS[lv]).toUpperCase())}<b class="big">${esc(head)}</b></div>
+    <span>${esc(tl(`Forecasts now include this outbreak (modelled as ${pth.toLowerCase()}). Worst case: isolation ${isoT}; oxygen ${o2T}. Alert drafts are waiting for review.`, `पूर्वानुमान में अब यह प्रकोप शामिल है (${pth} के रूप में)। सबसे बुरी स्थिति: आइसोलेशन बिस्तर ${isoT}; ऑक्सीजन ${o2T}। चेतावनी मसौदे समीक्षा की प्रतीक्षा में हैं।`, `अंदाजात आता हा उद्रेक समाविष्ट आहे (${pth} म्हणून). सर्वात वाईट स्थिती: विलगीकरण खाटा ${isoT}; ऑक्सिजन ${o2T}. इशारा मसुदे पुनरावलोकनाच्या प्रतीक्षेत आहेत.`))}</span>
     <span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn small danger" href="#epidemic">See preparedness plan</a><a class="btn small" href="#h-alerts">Review alerts</a></span>`;
 }
 function renderBanner() {
@@ -1141,21 +1270,23 @@ function renderBanner() {
   el.hidden = !on;
   if (!on) return;
   el.className = 'banner';
-  el.innerHTML = `<span><b>What-if scenario on.</b> Forecasts below include: ${esc(leverSummary())}.</span><span style="margin-left:auto;display:flex;gap:8px"><a class="btn small" href="#whatif">Edit</a><button class="btn small" type="button" data-clear>Clear scenario</button></span>`;
+  el.innerHTML = `<span><b>${tl('What-if scenario on.', 'क्या-अगर परिदृश्य चालू।', 'जर-तर परिस्थिती सुरू.')}</b> ${tl('Forecasts below include:', 'नीचे के पूर्वानुमान में शामिल:', 'खालील अंदाजात समाविष्ट:')} ${esc(leverSummary(LANG))}.</span><span style="margin-left:auto;display:flex;gap:8px"><a class="btn small" href="#whatif">Edit</a><button class="btn small" type="button" data-clear>Clear scenario</button></span>`;
 }
-function leverSummary() {
-  const L = A.levers, p = [];
-  if (L.arrivalPct) p.push(`${L.arrivalPct > 0 ? '+' : ''}${L.arrivalPct}% arrivals`);
-  if (L.seasonScale !== 1) p.push(`seasonal illness ×${(+L.seasonScale).toFixed(1)}`);
-  if (L.outbreak !== 'none') p.push(S.OUTBREAKS[L.outbreak].label);
-  if (L.flood) p.push('Mumbai flood (extremely heavy rain)');
-  for (const [k, lbl] of [['nurseShortPct', '% fewer nurses'], ['docShortPct', '% fewer ED doctors'], ['labDownPct', '% lab capacity lost'], ['xrayDownPct', '% X-ray capacity lost'], ['imgDownPct', '% CT/USG capacity lost'], ['plateletCutPct', '% platelet supply cut'], ['o2CutPct', '% oxygen supply cut'], ['ambDownPct', '% ambulances off road']]) if (L[k]) p.push(L[k] + lbl);
-  if (L.medBedsClosed) p.push(`${L.medBedsClosed} Medicine beds closed`);
-  if (L.ventsDown) p.push(`${L.ventsDown} ventilators down`);
-  return p.join(', ') + (L.startHour ? `, starting ${fmtT(A.now + L.startHour)}` : '');
+function leverSummary(lg) {
+  lg = lg || 'en'; const L = A.levers, p = [], T = (e, h, m) => tl(e, h, m, lg);
+  if (L.arrivalPct) p.push(`${L.arrivalPct > 0 ? '+' : ''}${L.arrivalPct}% ${T('arrivals', 'मरीज़ आगमन', 'रुग्ण आगमन')}`);
+  if (L.seasonScale !== 1) p.push(`${T('seasonal illness', 'मौसमी बीमारी', 'हंगामी आजार')} ×${(+L.seasonScale).toFixed(1)}`);
+  if (L.outbreak !== 'none') p.push(tx(S.OUTBREAKS[L.outbreak].label, lg));
+  if (L.flood) p.push(T('Mumbai flood (extremely heavy rain)', 'मुंबई बाढ़ (अत्यधिक भारी बारिश)', 'मुंबई पूर (अतिमुसळधार पाऊस)'));
+  for (const [k, e, h, m] of [['nurseShortPct', '% fewer nurses', '% कम नर्सें', '% कमी परिचारिका'], ['docShortPct', '% fewer ED doctors', '% कम आपातकालीन डॉक्टर', '% कमी आपत्कालीन डॉक्टर'], ['labDownPct', '% lab capacity lost', '% लैब क्षमता घटी', '% प्रयोगशाळा क्षमता घटली'], ['xrayDownPct', '% X-ray capacity lost', '% एक्स-रे क्षमता घटी', '% एक्स-रे क्षमता घटली'], ['imgDownPct', '% CT/USG capacity lost', '% सीटी/यूएसजी क्षमता घटी', '% सीटी/यूएसजी क्षमता घटली'], ['plateletCutPct', '% platelet supply cut', '% प्लेटलेट आपूर्ति कटी', '% प्लेटलेट पुरवठा घटला'], ['o2CutPct', '% oxygen supply cut', '% ऑक्सीजन आपूर्ति कटी', '% ऑक्सिजन पुरवठा घटला'], ['ambDownPct', '% ambulances off road', '% एम्बुलेंस बंद', '% रुग्णवाहिका बंद']]) if (L[k]) p.push(L[k] + T(e, h, m));
+  if (L.medBedsClosed) p.push(T(`${L.medBedsClosed} Medicine beds closed`, `${L.medBedsClosed} मेडिसिन बिस्तर बंद`, `${L.medBedsClosed} मेडिसिन खाटा बंद`));
+  if (L.ventsDown) p.push(T(`${L.ventsDown} ventilators down`, `${L.ventsDown} वेंटिलेटर खराब`, `${L.ventsDown} व्हेंटिलेटर बंद`));
+  return p.join(', ') + (L.startHour ? T(`, starting ${fmtT(A.now + L.startHour)}`, `, ${fmtL(A.now + L.startHour, lg)} से`, `, ${fmtL(A.now + L.startHour, lg)} पासून`) : '');
 }
-function renderTiles() {
+function tileData() {
   const m = A.F.mid, now = m[0], win = m.slice(0, 72);
+  const L72 = tl('lowest in 72 h:', '72 घंटे में न्यूनतम:', '72 तासांत किमान:'), W72 = tl('worst in 72 h:', '72 घंटे में सबसे खराब:', '72 तासांत सर्वात वाईट:');
+  const of = n => tl(`of ${n}`, `${n} में से`, `${n} पैकी`), hrs = tl('h', 'घंटे', 'तास');
   const free = (x, u) => Math.max(0, x.cap[u] - x.occ[u] - x.dirty[u] - x.bd[u]);
   const minOf = f => win.reduce((a, x, i) => { const v = f(x); return v < a[0] ? [v, i] : a; }, [Infinity, 0]);
   const maxOf = f => win.reduce((a, x, i) => { const v = f(x); return v > a[0] ? [v, i] : a; }, [-Infinity, 0]);
@@ -1163,32 +1294,43 @@ function renderTiles() {
   const T = [];
   const tile = (unit, label, val, small, sub, sevP) => T.push({ unit, label, val, small, sub, sev: sevOf(sevP) });
   let mn = minOf(gen);
-  tile('MED', 'General beds free', loc(gen(now)), `of ${loc(now.cap.MED + now.cap.SURG + now.cap.PEDS)}`, `${loc(now.bd.MED + now.bd.SURG + now.bd.PEDS)} waiting in ED · lowest in 72 h: ${loc(mn[0])} ${fmtT(A.now + mn[1])}`, Math.max(now.p.MED, now.p.SURG, now.p.PEDS));
+  tile('MED', 'General beds free', loc(gen(now)), of(loc(now.cap.MED + now.cap.SURG + now.cap.PEDS)), `${loc(now.bd.MED + now.bd.SURG + now.bd.PEDS)} ${tl('waiting in ED', 'आपातकालीन में बिस्तर की प्रतीक्षा में', 'आपत्कालीन विभागात खाटेच्या प्रतीक्षेत')} · ${L72} ${loc(mn[0])} ${fmtL(A.now + mn[1])}`, Math.max(now.p.MED, now.p.SURG, now.p.PEDS));
   mn = minOf(x => free(x, 'ICU'));
-  tile('ICU', 'ICU beds free', loc(free(now, 'ICU')), `of ${loc(now.cap.ICU)}`, `lowest in 72 h: ${loc(mn[0])} ${fmtT(A.now + mn[1])}`, now.p.ICU);
+  tile('ICU', 'ICU beds free', loc(free(now, 'ICU')), of(loc(now.cap.ICU)), `${L72} ${loc(mn[0])} ${fmtL(A.now + mn[1])}`, now.p.ICU);
   mn = minOf(x => x.vents - x.ventsUsed);
-  tile('ICU', 'Ventilators free', loc(Math.max(0, now.vents - now.ventsUsed)), `of ${loc(now.vents)}`, `lowest in 72 h: ${loc(Math.max(0, mn[0]))}`, now.ventsUsed / now.vents);
+  tile('ICU', 'Ventilators free', loc(Math.max(0, now.vents - now.ventsUsed)), of(loc(now.vents)), `${L72} ${loc(Math.max(0, mn[0]))}`, now.ventsUsed / now.vents);
   mn = minOf(x => free(x, 'ISO'));
-  tile('ISO', 'Isolation beds free', loc(free(now, 'ISO')), `of ${loc(now.cap.ISO)}`, `lowest in 72 h: ${loc(mn[0])} ${fmtT(A.now + mn[1])}`, now.p.ISO);
+  tile('ISO', 'Isolation beds free', loc(free(now, 'ISO')), of(loc(now.cap.ISO)), `${L72} ${loc(mn[0])} ${fmtL(A.now + mn[1])}`, now.p.ISO);
   const o2d = now.o2 / Math.max(0.01, now.o2Use * 24); mn = minOf(x => x.o2 / Math.max(0.01, x.o2Use * 24));
-  tile('O2', 'Oxygen on site', o2d >= 30 ? '30+ days' : o2d.toFixed(1) + ' days', '', `${loc(now.o2)} cylinder-eq. · ${loc(now.o2Use * 24)}/day · ${loc(now.o2Pts)} patients on O2`, now.p.O2);
+  tile('O2', 'Oxygen on site', (o2d >= 30 ? '30+' : o2d.toFixed(1)) + ' ' + tl('days', 'दिन', 'दिवस'), '', `${loc(now.o2)} ${tl('cylinder-eq.', 'सिलेंडर-समतुल्य', 'सिलेंडर-समतुल्य')} · ${loc(now.o2Use * 24)}/${tl('day', 'दिन', 'दिवस')} · ${loc(now.o2Pts)} ${tl('patients on O2', 'मरीज़ ऑक्सीजन पर', 'रुग्ण ऑक्सिजनवर')}`, now.p.O2);
   mn = minOf(x => x.fleet - x.ambBusy);
-  tile('AMB', 'Ambulances available', loc(Math.max(0, now.fleet - now.ambBusy)), `of ${loc(now.fleet)}`, `trip ~${(now.tripH * 60).toFixed(0)} min now · lowest in 72 h: ${loc(Math.max(0, mn[0]))} ${fmtT(A.now + mn[1])}`, now.p.AMB);
+  tile('AMB', 'Ambulances available', loc(Math.max(0, now.fleet - now.ambBusy)), of(loc(now.fleet)), `${tl('trip', 'फेरा', 'फेरी')} ~${(now.tripH * 60).toFixed(0)} ${tl('min now', 'मिनट अभी', 'मिनिटे सध्या')} · ${L72} ${loc(Math.max(0, mn[0]))} ${fmtL(A.now + mn[1])}`, now.p.AMB);
   let mx = maxOf(x => x.labTAT);
-  tile('LAB', 'Lab turnaround', now.labTAT.toFixed(1) + ' h', 'target 2.5', `worst in 72 h: ${mx[0].toFixed(1)} h ${fmtT(A.now + mx[1])}`, now.p.LAB);
+  const tgt = v => tl(`target ${v}`, `लक्ष्य ${v}`, `लक्ष्य ${v}`);
+  tile('LAB', 'Lab turnaround', now.labTAT.toFixed(1) + ' ' + hrs, tgt(2.5), `${W72} ${mx[0].toFixed(1)} ${hrs} ${fmtL(A.now + mx[1])}`, now.p.LAB);
   mx = maxOf(x => x.xrayTAT);
-  tile('XRAY', 'X-ray wait', now.xrayTAT.toFixed(1) + ' h', 'target 1.5', `worst in 72 h: ${mx[0].toFixed(1)} h ${fmtT(A.now + mx[1])}`, now.p.XRAY);
+  tile('XRAY', 'X-ray wait', now.xrayTAT.toFixed(1) + ' ' + hrs, tgt(1.5), `${W72} ${mx[0].toFixed(1)} ${hrs} ${fmtL(A.now + mx[1])}`, now.p.XRAY);
   mx = maxOf(x => x.imgTAT);
-  tile('IMG', 'CT / ultrasound wait', now.imgTAT.toFixed(1) + ' h', 'target 3', `worst in 72 h: ${mx[0].toFixed(1)} h`, now.p.IMG);
-  tile('BLOOD', 'Platelets in stock', loc(now.plt), 'units', `${(now.pltDemand * 24).toFixed(0)} used/day`, now.p.BLOOD);
+  tile('IMG', 'CT / ultrasound wait', now.imgTAT.toFixed(1) + ' ' + hrs, tgt(3), `${W72} ${mx[0].toFixed(1)} ${hrs}`, now.p.IMG);
+  tile('BLOOD', 'Platelets in stock', loc(now.plt), tl('units', 'यूनिट', 'युनिट'), `${(now.pltDemand * 24).toFixed(0)} ${tl('used/day', 'प्रति दिन उपयोग', 'दररोज वापर')}`, now.p.BLOOD);
+  return T;
+}
+function renderTiles() {
+  const T = tileData();
   $('tiles').innerHTML = T.map(t => `<button class="tile ${t.sev === 'critical' || t.sev === 'warning' ? t.sev : ''}" type="button" data-unit="${t.unit}"><span class="lbl">${esc(t.label)}${kb(unitQuality(t.unit).worst, 'Weakest input behind this figure')} ${t.sev !== 'ok' ? pill(t.sev) : ''}</span><span class="val">${t.val} <small>${esc(t.small)}</small></span><span class="sub">${esc(t.sub)}</span></button>`).join('');
   $('availNote').innerHTML = `Model output for the next hour at ${esc(A.setup.name)}, from the inputs in <a href="#datasrc">Data sources</a>`;
 }
 function renderHeadline() {
   const r = ranked(), c = r.filter(x => x.sev === 'critical').length, w = r.length - c;
-  let t;
-  if (!r.length) t = `No unit is expected to pass 95% of safe capacity in the next ${A.horizonDays} days.`;
-  else { const f = r[0], parts = []; if (c) parts.push(`${c} critical`); if (w) parts.push(`${w} warning`); t = `${parts.join(' and ')} bottleneck${r.length > 1 ? 's' : ''} expected in the next ${A.horizonDays} days. First to act on: ${UID[f.unit].long}, ${rel(f.firstSerious.start)} (${fmtT(A.now + f.firstSerious.start)}).`; }
+  let t; const N = A.horizonDays;
+  if (!r.length) t = tl(`No unit is expected to pass 95% of safe capacity in the next ${N} days.`, `अगले ${N} दिनों में किसी भी इकाई के सुरक्षित क्षमता के 95% पार करने की संभावना नहीं है।`, `पुढील ${N} दिवसांत कोणताही विभाग सुरक्षित क्षमतेच्या 95% ओलांडेल अशी शक्यता नाही.`);
+  else {
+    const f = r[0], when = `${relL(f.firstSerious.start)} (${fmtL(A.now + f.firstSerious.start)})`;
+    const en = [c && `${c} critical`, w && `${w} warning`].filter(Boolean).join(' and '), hi = [c && `${c} गंभीर`, w && `${w} चेतावनी`].filter(Boolean).join(' और '), mr = [c && `${c} गंभीर`, w && `${w} इशारा`].filter(Boolean).join(' व ');
+    t = tl(`${en} bottleneck${r.length > 1 ? 's' : ''} expected in the next ${N} days. First to act on: ${UID[f.unit].long}, ${when}.`,
+      `अगले ${N} दिनों में ${hi} स्तर की अड़चनें अपेक्षित हैं। सबसे पहले ध्यान दें: ${uL(f.unit)}, ${when}।`,
+      `पुढील ${N} दिवसांत ${mr} पातळीचे अडथळे अपेक्षित आहेत. सर्वात आधी लक्ष द्या: ${uL(f.unit)}, ${when}.`);
+  }
   $('headline').textContent = t;
 }
 const probRow = (label, p) => `<div class="prob"><div style="display:flex;justify-content:space-between;font-size:.84rem"><span class="muted">${label}</span><b class="num">${p == null ? '…' : Math.round(p * 100) + '%'}</b></div><div class="prob-bar"><span style="width:${p == null ? 0 : Math.round(p * 100)}%"></span></div></div>`;
@@ -1197,9 +1339,9 @@ function renderCards() {
   let html = r.map(s => { const e = s.firstSerious; return `<button class="card" type="button" data-unit="${s.unit}" aria-pressed="${A.selUnit === s.unit}">
       <div class="card-top"><b>${esc(UID[s.unit].long)}</b>${pill(s.sev)}</div>
       <dl class="kv"><dt>Starts</dt><dd><b>${rel(e.start)}</b> · ${fmtT(A.now + e.start)}</dd><dt>Peak</dt><dd class="num">${pct(s.worst.peak)} · ${fmtT(A.now + s.worst.peakAt)}</dd><dt>Above 95%</dt><dd>${s.hours} h${s.episodes > 1 ? ` in ${s.episodes} episodes` : ''}</dd></dl>
-      ${probRow(`Chance of passing 105% in ${A.horizonDays} days`, s.pCrit)}<span class="muted" style="font-size:.76rem">Share of ${n} simulated futures.</span>${qualityNote(s.unit)}</button>`; }).join('');
-  for (const id of Object.keys(risk).sort((a, b) => risk[b].pw - risk[a].pw).slice(0, 3)) html += `<button class="card" type="button" data-unit="${id}" aria-pressed="${A.selUnit === id}"><div class="card-top"><b>${esc(UID[id].long)}</b>${pill('watch', 'At risk')}</div><p class="ink2 small">Below 95% in the expected forecast, but passes it in ${Math.round(risk[id].pw * 100)}% of simulated futures.</p>${probRow('Chance of passing 95%', risk[id].pw)}</button>`;
-  $('cards').innerHTML = html || `<div class="empty">All units stay below 95% in every simulated future. Try a longer window or a what-if scenario to stress-test the plan.</div>`;
+      ${probRow(`Chance of passing 105% in ${A.horizonDays} days`, s.pCrit)}<span class="muted" style="font-size:.76rem">${tl(`Share of ${ensembleSize()} simulated futures.`, `${ensembleSize()} सिमुलेटेड भविष्यों में से हिस्सा।`, `${ensembleSize()} अनुकरणित भविष्यांपैकी प्रमाण.`)}</span>${qualityNote(s.unit)}</button>`; }).join('');
+  for (const id of Object.keys(risk).sort((a, b) => risk[b].pw - risk[a].pw).slice(0, 3)) html += `<button class="card" type="button" data-unit="${id}" aria-pressed="${A.selUnit === id}"><div class="card-top"><b>${esc(UID[id].long)}</b>${pill('watch', 'At risk')}</div><p class="ink2 small">${tl(`Below 95% in the expected forecast, but passes it in ${Math.round(risk[id].pw * 100)}% of simulated futures.`, `अपेक्षित पूर्वानुमान में 95% से नीचे, पर ${Math.round(risk[id].pw * 100)}% सिमुलेटेड भविष्यों में इसे पार करता है।`, `अपेक्षित अंदाजात 95% च्या खाली, पण ${Math.round(risk[id].pw * 100)}% अनुकरणित भविष्यांत ती ओलांडतो.`)}</p>${probRow('Chance of passing 95%', risk[id].pw)}</button>`;
+  $('cards').innerHTML = html || `<div class="empty">${tl('All units stay below 95% in every simulated future. Try a longer window or a what-if scenario to stress-test the plan.', 'हर सिमुलेटेड भविष्य में सभी इकाइयाँ 95% से नीचे रहती हैं। योजना परखने के लिए लंबी अवधि या क्या-अगर परिदृश्य आज़माएँ।', 'प्रत्येक अनुकरणित भविष्यात सर्व विभाग 95% च्या खाली राहतात. नियोजन तपासण्यासाठी मोठा कालावधी किंवा जर-तर परिस्थिती वापरून पहा.')}</div>`;
 }
 function unitSev(id) { const s = A.F.sum[id]; if (s) return s.sev; return sevOf(Math.max(...A.F.mid.map(x => x.p[id]))); }
 function renderTabs() {
@@ -1279,13 +1421,18 @@ function renderWhy() {
   const id = A.selUnit, x = explain(id), u = UID[id];
   const pos = x.drivers.filter(d => d.delta > 0), neg = x.drivers.filter(d => d.delta < 0 && d.id.startsWith('act_'));
   const top = pos.slice(0, 3);
-  let n = x.s ? `Load on ${u.long} is expected to reach ${pct(x.full)} on ${fmtT(A.now + x.fullAt)}.` : `Load on ${u.long} is expected to peak at ${pct(x.full)} on ${fmtT(A.now + x.fullAt)}, below the warning line.`;
-  if (top.length) n += ` The biggest contributor is ${top[0].name} (+${top[0].delta.toFixed(0)} pts)` + (top[1] ? `, followed by ${top.slice(1).map(d => `${d.name} (+${d.delta.toFixed(0)})`).join(' and ')}` : '') + '.';
-  if (neg.length) n += ` Approved actions take ${(-neg.reduce((a, d) => a + d.delta, 0)).toFixed(0)} pts off the peak.`;
+  const nm = uL(id), at = fmtL(A.now + x.fullAt), P = pct(x.full);
+  let n = x.s ? tl(`Load on ${u.long} is expected to reach ${P} on ${at}.`, `${nm} पर भार ${at} को ${P} तक पहुँचने की संभावना है।`, `${nm} वरील भार ${at} रोजी ${P} पर्यंत पोहोचण्याची शक्यता आहे.`)
+    : tl(`Load on ${u.long} is expected to peak at ${P} on ${at}, below the warning line.`, `${nm} पर भार ${at} को ${P} के चरम पर पहुँचेगा, जो चेतावनी रेखा से नीचे है।`, `${nm} वरील भार ${at} रोजी ${P} च्या कमाल पातळीवर जाईल, जी इशारा रेषेखाली आहे.`);
+  if (top.length) { const first = `${drvName(top[0])} (+${top[0].delta.toFixed(0)}`, rest = top.slice(1).map(d => `${drvName(d)} (+${d.delta.toFixed(0)})`);
+    n += tl(` The biggest contributor is ${first} pts)` + (rest.length ? `, followed by ${rest.join(' and ')}` : '') + '.',
+      ` सबसे बड़ा कारण ${first} अंक) है` + (rest.length ? `, उसके बाद ${rest.join(' और ')}` : '') + '।',
+      ` सर्वात मोठे कारण ${first} गुण) आहे` + (rest.length ? `, त्यानंतर ${rest.join(' व ')}` : '') + '.'); }
+  if (neg.length) { const v = (-neg.reduce((a, d) => a + d.delta, 0)).toFixed(0); n += tl(` Approved actions take ${v} pts off the peak.`, ` स्वीकृत कदम चरम को ${v} अंक घटाते हैं।`, ` मंजूर उपाय कमाल पातळी ${v} गुणांनी कमी करतात.`); }
   $('whyNarr').textContent = n;
   const mx = Math.max(1, ...x.drivers.map(d => Math.abs(d.delta)));
-  $('whyList').innerHTML = x.drivers.slice(0, 7).map(d => `<div class="drv"><div class="drv-top"><span>${esc(d.name)}</span><b class="num">${d.delta > 0 ? '+' : '−'}${Math.abs(d.delta).toFixed(1)} pts${d.delta < 0 ? ' <span class="muted" style="font-weight:400">lowers peak</span>' : ''}</b></div>
-    <div class="drv-bar"><span class="${d.delta < 0 ? (d.id.startsWith('act_') ? 'neg' : 'low') : ''}" style="width:${(Math.abs(d.delta) / mx * 100).toFixed(1)}%"></span></div><p>${esc(d.text)}</p></div>`).join('') || '<p class="muted">No single factor moves the peak by more than half a point.</p>';
+  $('whyList').innerHTML = x.drivers.slice(0, 7).map(d => `<div class="drv"><div class="drv-top"><span>${esc(drvName(d))}</span><b class="num">${d.delta > 0 ? '+' : '−'}${Math.abs(d.delta).toFixed(1)} ${tl('pts', 'अंक', 'गुण')}${d.delta < 0 ? ` <span class="muted" style="font-weight:400">${tl('lowers peak', 'चरम घटाता है', 'कमाल कमी करते')}</span>` : ''}</b></div>
+    <div class="drv-bar"><span class="${d.delta < 0 ? (d.id.startsWith('act_') ? 'neg' : 'low') : ''}" style="width:${(Math.abs(d.delta) / mx * 100).toFixed(1)}%"></span></div><p>${esc(drvText(d))}</p></div>`).join('') || `<p class="muted">${tl('No single factor moves the peak by more than half a point.', 'कोई एक कारण चरम को आधे अंक से अधिक नहीं बदलता।', 'कोणतेही एक कारण कमाल पातळी अर्ध्या गुणापेक्षा जास्त बदलत नाही.')}</p>`;
 }
 
 function calDays() {
@@ -1383,7 +1530,7 @@ function renderEpidemic() {
   $('levels').innerHTML = Object.keys(S.SYNDROMES).map(sy => { const d = D[sy] || { level: 0, ratio: 1, z: 0 }; return `<div class="lvl l${d.level}"><div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><b class="small">${esc(S.SYNDROMES[sy])}</b>${pill(LVL_SEV[d.level], S.LEVELS[d.level])}</div>
     <span class="num small">${d.ratio.toFixed(2)}× expected · z ${d.z.toFixed(1)}${d.doubling ? ` · doubling ${d.doubling.toFixed(1)} d` : ''}</span>${spark(d.daily)}<span class="muted" style="font-size:.72rem">Last 7 days: observed (solid) vs seasonal expectation (dashed)</span></div>`; }).join('');
   const w = A.worst;
-  $('worstTitle').textContent = w.title;
+  $('worstTitle').textContent = worstTitle();
   $('worstNote').textContent = `Next ${w.days} days, assuming ${A.epiFit ? 'growth 40% faster than detected, levelling off at about 1.4× normal ED arrivals' : 'cases doubling every 4 days, levelling off at about 0.7× normal ED arrivals'}, 15% fewer nurses, 10% fewer doctors, oxygen supply cut 30% and 15% of ambulances off road. Peak extra epidemic patients: ${loc(w.peakEpi[0])}/day around ${fmtD(A.now + w.peakEpi[1])}.`;
   $('worst').innerHTML = `<thead><tr><th>Resource</th><th>Runs out / full</th><th>Worst shortfall</th></tr></thead><tbody>` + w.rows.map(r => {
     const sh = r.tat ? `${r.tat[0].toFixed(1)} h at worst` : r.short[0] > 0.5 ? `${loc(r.short[0])} ${r.unit} short · ${fmtD(A.now + r.short[1])}` : 'none';
@@ -1508,19 +1655,19 @@ function renderActions() {
   let html = '';
   for (const ap of A.approved) {
     const a = S.ACTION_BY_ID[ap.id], startsAt = ap.at + a.lead;
-    html += `<div class="act approved"><div style="display:grid;gap:4px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><h3>${esc(a.title)}</h3>${pill('info', 'Approved')}</div><p>Approved by <b>${esc(ap.by)}</b> at ${fmtT(ap.at)} · ${startsAt > A.now ? 'takes effect ' + fmtT(startsAt) : 'in effect'} · owner: ${esc(a.owner)}</p></div><div class="btns"><button class="btn small" type="button" data-revoke="${a.id}">Withdraw</button></div></div>`;
+    html += `<div class="act approved"><div style="display:grid;gap:4px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><h3>${esc(a.title)}</h3>${pill('info', 'Approved')}</div><p>${tl(`Approved by <b>${esc(ap.by)}</b> at ${fmtT(ap.at)} · ${startsAt > A.now ? 'takes effect ' + fmtT(startsAt) : 'in effect'} · owner: ${esc(a.owner)}`, `<b>${esc(ap.by)}</b> द्वारा ${fmtL(ap.at)} को स्वीकृत · ${startsAt > A.now ? fmtL(startsAt) + ' से लागू' : 'लागू'} · ज़िम्मेदार: ${esc(tx(a.owner))}`, `<b>${esc(ap.by)}</b> यांनी ${fmtL(ap.at)} रोजी मंजूर · ${startsAt > A.now ? fmtL(startsAt) + ' पासून लागू' : 'लागू'} · जबाबदार: ${esc(tx(a.owner))}`)}</p></div><div class="btns"><button class="btn small" type="button" data-revoke="${a.id}">Withdraw</button></div></div>`;
   }
-  if (!scored.length && !A.approved.length) html += `<div class="empty">No preventive action is suggested: no unit is at risk in this window.</div>`;
+  if (!scored.length && !A.approved.length) html += `<div class="empty">${tl('No preventive action is suggested: no unit is at risk in this window.', 'कोई निवारक कदम सुझाया नहीं गया: इस अवधि में कोई इकाई जोखिम में नहीं है।', 'कोणताही प्रतिबंधात्मक उपाय सुचवलेला नाही: या कालावधीत कोणताही विभाग धोक्यात नाही.')}</div>`;
   for (const x of scored.slice(0, 7)) {
     const a = x.a, conf = A.confirming === a.id;
-    const imp = x.deltas.filter(d => d.before - d.after > 0.005).map(d => `${UID[d.u].name} ${pct(d.before)} → ${pct(d.after)}`).join(' · ');
+    const imp = x.deltas.filter(d => d.before - d.after > 0.005).map(d => `${tx(UID[d.u].name)} ${pct(d.before)} → ${pct(d.after)}`).join(' · ');
     html += `<div class="act" id="act-${a.id}"><div style="display:grid;gap:6px"><h3>${esc(a.title)}</h3><p>${esc(a.detail)}</p>
-      <div style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center"><span class="impact">${imp || 'Protects against the worst case'}${x.critSaved > 0 ? ` · ${x.critSaved} fewer unit-hours at critical` : ''}</span><span class="muted" style="font-size:.8rem">Owner: ${esc(a.owner)} · lead time ${a.lead ? a.lead + ' h' : 'none'}</span></div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center"><span class="impact">${imp || tl('Protects against the worst case', 'सबसे बुरी स्थिति से बचाव', 'सर्वात वाईट स्थितीपासून संरक्षण')}${x.critSaved > 0 ? tl(` · ${x.critSaved} fewer unit-hours at critical`, ` · गंभीर स्तर पर ${x.critSaved} इकाई-घंटे कम`, ` · गंभीर पातळीवर ${x.critSaved} विभाग-तास कमी`) : ''}</span><span class="muted" style="font-size:.8rem">${tl(`Owner: ${esc(a.owner)} · lead time ${a.lead ? a.lead + ' h' : 'none'}`, `ज़िम्मेदार: ${esc(tx(a.owner))} · तैयारी समय ${a.lead ? a.lead + ' घंटे' : 'नहीं'}`, `जबाबदार: ${esc(tx(a.owner))} · पूर्वतयारी वेळ ${a.lead ? a.lead + ' तास' : 'नाही'}`)}</span></div></div>
       <div class="btns"><button class="btn small primary" type="button" data-approve="${a.id}">Approve…</button><button class="btn small" type="button" data-try="${a.id}">Preview</button><button class="btn small ghost" type="button" data-dismiss="${a.id}">Dismiss</button></div>
-      ${conf ? `<form class="confirm" data-confirm="${a.id}"><label for="by-${a.id}">Approved by</label><input class="in" id="by-${a.id}" placeholder="Name and role" required value="${esc(store.get('approver', ''))}"><button class="btn small primary" type="submit">Confirm approval</button><button class="btn small ghost" type="button" data-cancel>Cancel</button><span class="muted" style="font-size:.8rem">Adds this action to the plan from ${fmtT(A.now + a.lead)}.</span></form>` : ''}</div>`;
+      ${conf ? `<form class="confirm" data-confirm="${a.id}"><label for="by-${a.id}">Approved by</label><input class="in" id="by-${a.id}" placeholder="Name and role" required value="${esc(store.get('approver', ''))}"><button class="btn small primary" type="submit">Confirm approval</button><button class="btn small ghost" type="button" data-cancel>Cancel</button><span class="muted" style="font-size:.8rem">${tl(`Adds this action to the plan from ${fmtT(A.now + a.lead)}.`, `यह कदम ${fmtL(A.now + a.lead)} से योजना में जुड़ेगा।`, `हा उपाय ${fmtL(A.now + a.lead)} पासून नियोजनात जोडला जाईल.`)}</span></form>` : ''}</div>`;
   }
   const nd = Object.keys(A.dismissed).length;
-  if (nd) html += `<p class="muted small">${nd} suggestion${nd > 1 ? 's' : ''} dismissed. <button class="btn small ghost" type="button" data-undismiss>Show again</button></p>`;
+  if (nd) html += `<p class="muted small">${tl(`${nd} suggestion${nd > 1 ? 's' : ''} dismissed.`, `${nd} सुझाव खारिज।`, `${nd} सूचना नाकारल्या.`)} <button class="btn small ghost" type="button" data-undismiss>Show again</button></p>`;
   $('acts').innerHTML = html;
 }
 
@@ -1553,15 +1700,15 @@ function srcLine(s) { return `<span class="srcdot ${s.live ? 'live' : ''}"></spa
 function renderFeeds() {
   const v = A.feedVals, nowT = S.START + A.now * S.HOUR, mo = new Date(nowT).getMonth();
   const na = '<span class="muted">not received</span>';
-  $('feedStatus').innerHTML = 'Rain, temperature and air quality are live from Open-Meteo when the page can reach it. Disease counts come from the BMC figures in the table above; enter this week\'s BMC count when it is released to replace the projection.';
-  const dz = id => { const c = S.SER[id].ms[mo]; return `${loc(S.rateAt(id, nowT) * 7)}/week now · ${MON[mo]} ${S.DATA.YEAR}: ${loc(c.c)} ${kb(c.kind, c.note)}`; };
+  $('feedStatus').innerHTML = tl('Rain, temperature and air quality are live from Open-Meteo when the page can reach it. Disease counts come from the BMC figures in the table above, rescaled by any recent BMC report entered below.', 'पेज के Open-Meteo तक पहुँच पाने पर बारिश, तापमान और वायु गुणवत्ता लाइव आते हैं। बीमारियों के आँकड़े ऊपर की तालिका के बीएमसी आँकड़ों से आते हैं, और नीचे दर्ज किसी हालिया बीएमसी रिपोर्ट से समायोजित होते हैं।', 'पेज Open-Meteo पर्यंत पोहोचल्यास पाऊस, तापमान व हवा गुणवत्ता थेट येतात. आजारांचे आकडे वरील तक्त्यातील बीएमसी आकड्यांवरून येतात, आणि खाली नोंदवलेल्या अलीकडील बीएमसी अहवालानुसार समायोजित होतात.');
+  const ff = feeds(), dz = id => { const c = S.SER[id].ms[mo]; return `${loc(S.rateAt(id, nowT) * 7 * (ff[id] || 1))}/week now · ${MON[mo]} ${S.DATA.YEAR}: ${loc(c.c)} ${kb(c.kind, c.note)}`; };
   $('feeds').innerHTML = [
     `<div class="feed"><span class="eyebrow">Rain today and next 3 days</span><span class="v">${A.src.weather.live ? Math.round(v.rainToday) + ' / ' + Math.round(v.rainNext) + ' mm' : na}</span><span class="ink2 small">${A.src.weather.live ? `Today: ${S.rainClass(v.rainToday)} · worst coming day: ${S.rainClass(v.rainNext)} (IMD categories). ` : ''}Used for ambulance trip times ${kb('U', 'the slow-down per IMD category is a placeholder; no Mumbai data is published')}.</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
     `<div class="feed"><span class="eyebrow">Heavy-rain days, last 14 days</span><span class="v">${A.src.weather.live ? v.heavyRecent : na}</span><span class="ink2 small">Days with ≥ 64.5 mm (IMD "heavy"). Shown for awareness: leptospirosis follows flooding by 1–2 weeks.</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
     `<div class="feed"><span class="eyebrow">AQI forecast, next 3 days</span><span class="v">${v.aqi != null ? v.aqi : na}</span><span class="ink2 small">${v.aqi != null ? `${S.aqiBand(v.aqi)} · PM2.5 ${Math.round(v.pm25)}, PM10 ${Math.round(v.pm10)} µg/m³ (CPCB Indian AQI). ` : ''}Shown for awareness only: no published Mumbai figure converts AQI into admissions.</span><span class="src">${srcLine(A.src.air)}</span></div>`,
     `<div class="feed"><span class="eyebrow">Max temperature, next 3 days</span><span class="v">${v.tmax != null ? Math.round(v.tmax) + ' °C' : na}</span><span class="ink2 small">Shown for awareness only (heat illness is not notifiable in Mumbai).</span><span class="src">${srcLine(A.src.weather)}</span></div>`,
-    `<div class="feed"><span class="eyebrow">Dengue, Mumbai</span><span class="v small">${dz('dengue')}</span><div class="row"><input class="in num" id="fd-dengue" type="number" min="0" max="50000" placeholder="this week" value="${v.dengueWeekly ?? ''}" aria-label="BMC dengue cases this week"><button class="btn small" type="button" data-feed="dengue">Record</button></div><span class="src">Enter the BMC weekly count when released${v.dengueWeekly ? ` · recorded: ${v.dengueWeekly} ${kb('H')}` : ''}</span></div>`,
-    `<div class="feed"><span class="eyebrow">Malaria, Mumbai</span><span class="v small">${dz('malaria')}</span><div class="row"><input class="in num" id="fd-malaria" type="number" min="0" max="50000" placeholder="this week" value="${v.malariaWeekly ?? ''}" aria-label="BMC malaria cases this week"><button class="btn small" type="button" data-feed="malaria">Record</button></div><span class="src">Enter the BMC weekly count when released${v.malariaWeekly ? ` · recorded: ${v.malariaWeekly} ${kb('H')}` : ''}</span></div>`
+    `<div class="feed"><span class="eyebrow">Dengue, Mumbai</span><span class="v small">${dz('dengue')}</span><span class="src">${repNote('dengue')}</span></div>`,
+    `<div class="feed"><span class="eyebrow">Malaria, Mumbai</span><span class="v small">${dz('malaria')}</span><span class="src">${repNote('malaria')}</span></div>`
   ].join('');
 }
 
@@ -1663,6 +1810,154 @@ function renderDengueModel() {
     <p class="muted small">Months with published or derived counts keep them; only the projected months (Oct–Dec) are replaced by the rainfall model. Reanalysis rainfall can under-read Mumbai's local gauges, which is why the model works with each month's ratio to its own normal.</p>`;
 }
 
+/* ---------------- hospital checklist (inputs no source publishes) ---------------- */
+const CHECK = [
+  { key: 'ICU', ids: ['s-ICU'], q: ['How many adult ICU beds are staffed and usable today?', 'आज कितने वयस्क आईसीयू बिस्तर स्टाफ के साथ उपयोग योग्य हैं?', 'आज किती प्रौढ आयसीयू खाटा कर्मचाऱ्यांसह वापरण्यायोग्य आहेत?'], who: ['Medical Superintendent / ICU in-charge', 'चिकित्सा अधीक्षक / आईसीयू प्रभारी', 'वैद्यकीय अधीक्षक / आयसीयू प्रमुख'] },
+  { key: 'ISO', ids: ['s-ISO'], q: ['How many isolation beds (single rooms or negative-pressure) can take infectious patients?', 'संक्रामक मरीज़ों के लिए कितने आइसोलेशन बिस्तर (अलग कमरे या नेगेटिव-प्रेशर) हैं?', 'संसर्गजन्य रुग्णांसाठी किती विलगीकरण खाटा (स्वतंत्र खोल्या किंवा निगेटिव्ह-प्रेशर) आहेत?'], who: ['Infection Control Officer', 'संक्रमण नियंत्रण अधिकारी', 'संसर्ग नियंत्रण अधिकारी'] },
+  { key: 'vents', ids: ['s-vents'], q: ['How many working ventilators are there (ICU, casualty and transport)?', 'कितने चालू वेंटिलेटर हैं (आईसीयू, आपातकालीन और ट्रांसपोर्ट)?', 'किती चालू व्हेंटिलेटर आहेत (आयसीयू, आपत्कालीन व ट्रान्सपोर्ट)?'], who: ['Biomedical Engineering', 'बायोमेडिकल इंजीनियरिंग', 'बायोमेडिकल अभियांत्रिकी'] },
+  { key: 'nurses', ids: ['s-n0', 's-n1', 's-n2'], sub: 'shift', q: ['How many nurses are on duty hospital-wide in each shift?', 'हर शिफ़्ट में पूरे अस्पताल में कितनी नर्सें ड्यूटी पर होती हैं?', 'प्रत्येक शिफ्टमध्ये संपूर्ण रुग्णालयात किती परिचारिका कामावर असतात?'], who: ['Nursing Superintendent', 'नर्सिंग अधीक्षक', 'परिचर्या अधीक्षक'] },
+  { key: 'docs', ids: ['s-d0', 's-d1', 's-d2'], sub: 'shift', q: ['How many doctors staff casualty in each shift?', 'हर शिफ़्ट में आपातकालीन विभाग में कितने डॉक्टर होते हैं?', 'प्रत्येक शिफ्टमध्ये आपत्कालीन विभागात किती डॉक्टर असतात?'], who: ['Head of Emergency / CMO', 'आपातकालीन विभाग प्रमुख / सीएमओ', 'आपत्कालीन विभाग प्रमुख / सीएमओ'] },
+  { key: 'edSpaces', ids: ['s-ed'], q: ['How many treatment spaces (beds, trolleys, chairs) does casualty have?', 'आपातकालीन विभाग में कितनी उपचार जगहें (बिस्तर, ट्रॉली, कुर्सियाँ) हैं?', 'आपत्कालीन विभागात किती उपचार जागा (खाटा, ट्रॉली, खुर्च्या) आहेत?'], who: ['Head of Emergency', 'आपातकालीन विभाग प्रमुख', 'आपत्कालीन विभाग प्रमुख'] },
+  { key: 'edLOS', ids: ['s-edlos'], q: ['On average, how many hours does a patient spend in casualty before discharge or admission?', 'औसतन एक मरीज़ डिस्चार्ज या भर्ती से पहले आपातकालीन विभाग में कितने घंटे रहता है?', 'सरासरी एक रुग्ण डिस्चार्ज किंवा दाखल होण्यापूर्वी आपत्कालीन विभागात किती तास असतो?'], who: ['Head of Emergency / Medical Records', 'आपातकालीन विभाग प्रमुख / मेडिकल रिकॉर्ड्स', 'आपत्कालीन विभाग प्रमुख / वैद्यकीय नोंदी'] },
+  { key: 'lab', ids: ['s-labd', 's-labn'], sub: 'dn', q: ['How many tests per hour can the central lab report, by day and by night?', 'केंद्रीय लैब दिन और रात में प्रति घंटे कितनी जाँच रिपोर्ट कर सकती है?', 'केंद्रीय प्रयोगशाळा दिवसा व रात्री दर तासाला किती चाचण्यांचे अहवाल देऊ शकते?'], who: ['Lab Director', 'लैब निदेशक', 'प्रयोगशाळा संचालक'] },
+  { key: 'xray', ids: ['s-xrd', 's-xrn'], sub: 'dn', q: ['How many X-ray studies per hour can radiology do, by day and by night?', 'रेडियोलॉजी दिन और रात में प्रति घंटे कितने एक्स-रे कर सकता है?', 'रेडिओलॉजी विभाग दिवसा व रात्री दर तासाला किती एक्स-रे करू शकतो?'], who: ['Head of Radiology', 'रेडियोलॉजी प्रमुख', 'रेडिओलॉजी प्रमुख'] },
+  { key: 'img', ids: ['s-imgd', 's-imgn'], sub: 'dn', q: ['How many CT and ultrasound studies per hour, by day and by night?', 'दिन और रात में प्रति घंटे कितने सीटी और अल्ट्रासाउंड होते हैं?', 'दिवसा व रात्री दर तासाला किती सीटी व सोनोग्राफी होतात?'], who: ['Head of Radiology', 'रेडियोलॉजी प्रमुख', 'रेडिओलॉजी प्रमुख'] },
+  { key: 'o2Capacity', ids: ['s-o2c'], q: ['Oxygen stored on site, in D-type cylinder equivalents (liquid tank plus cylinders)?', 'अस्पताल में भंडारित ऑक्सीजन, D-टाइप सिलेंडर समतुल्य में (लिक्विड टैंक और सिलेंडर)?', 'रुग्णालयात साठवलेला ऑक्सिजन, D-प्रकार सिलेंडर समतुल्यात (लिक्विड टाकी व सिलेंडर)?'], who: ['Biomedical Engineer', 'बायोमेडिकल इंजीनियर', 'बायोमेडिकल अभियंता'] },
+  { key: 'o2Delivery', ids: ['s-o2d'], q: ['Oxygen refills delivered per day, in cylinder equivalents?', 'प्रति दिन ऑक्सीजन की कितनी रीफ़िल आती है, सिलेंडर समतुल्य में?', 'दररोज किती ऑक्सिजन रिफिल येतात, सिलेंडर समतुल्यात?'], who: ['Biomedical Engineer / Stores', 'बायोमेडिकल इंजीनियर / स्टोर्स', 'बायोमेडिकल अभियंता / भांडार'] },
+  { key: 'ambulances', ids: ['s-amb'], q: ['How many ambulances serve the hospital (own plus linked 108)?', 'अस्पताल के लिए कितनी एम्बुलेंस हैं (अपनी और जुड़ी हुई 108)?', 'रुग्णालयासाठी किती रुग्णवाहिका आहेत (स्वतःच्या व जोडलेल्या 108)?'], who: ['Transport Officer', 'परिवहन अधिकारी', 'वाहतूक अधिकारी'] },
+  { key: 'plateletSupply', ids: ['s-pltS'], q: ['How many platelet units does the blood bank prepare per day?', 'ब्लड बैंक प्रति दिन कितनी प्लेटलेट यूनिट तैयार करता है?', 'रक्तपेढी दररोज किती प्लेटलेट युनिट तयार करते?'], who: ['Blood Bank Officer', 'ब्लड बैंक अधिकारी', 'रक्तपेढी अधिकारी'] },
+  { key: 'plateletStock', ids: ['s-pltN'], q: ['Platelet units in stock right now?', 'अभी स्टॉक में कितनी प्लेटलेट यूनिट हैं?', 'सध्या साठ्यात किती प्लेटलेट युनिट आहेत?'], who: ['Blood Bank Officer', 'ब्लड बैंक अधिकारी', 'रक्तपेढी अधिकारी'] },
+  { key: 'arrPerDay', ids: ['s-arr'], q: ['Casualty attendances per day (last 12 months average)?', 'प्रति दिन आपातकालीन विभाग में आने वाले मरीज़ (पिछले 12 महीनों का औसत)?', 'दररोज आपत्कालीन विभागात येणारे रुग्ण (गेल्या 12 महिन्यांची सरासरी)?'], who: ['Medical Records', 'मेडिकल रिकॉर्ड्स', 'वैद्यकीय नोंदी'] },
+  { key: 'admissionsPerDay', ids: ['s-adm'], q: ['Admissions per day (last 12 months average)?', 'प्रति दिन भर्ती (पिछले 12 महीनों का औसत)?', 'दररोज दाखल रुग्ण (गेल्या 12 महिन्यांची सरासरी)?'], who: ['Medical Records', 'मेडिकल रिकॉर्ड्स', 'वैद्यकीय नोंदी'] },
+  { key: 'alos', ids: ['s-alos'], q: ['Average length of stay, in days?', 'औसत भर्ती अवधि, दिनों में?', 'सरासरी दाखल कालावधी, दिवसांत?'], who: ['Medical Records', 'मेडिकल रिकॉर्ड्स', 'वैद्यकीय नोंदी'] },
+  { key: 'bor', ids: ['s-bor'], q: ['Bed occupancy now, in percent?', 'अभी बिस्तर भराव, प्रतिशत में?', 'सध्याची खाट भराव टक्केवारी?'], who: ['Medical Records / Nursing Superintendent', 'मेडिकल रिकॉर्ड्स / नर्सिंग अधीक्षक', 'वैद्यकीय नोंदी / परिचर्या अधीक्षक'] }
+];
+const SUBL = { shift: [['Night', 'रात', 'रात्र'], ['Day', 'दिन', 'दिवस'], ['Evening', 'शाम', 'संध्याकाळ']], dn: [['Day', 'दिन', 'दिवस'], ['Night', 'रात', 'रात्र']] };
+let CHK_STATE = null;
+const L3 = a => tl(a[0], a[1], a[2]);
+function renderChecklist() {
+  const el = $('checklist'); if (!el) return;
+  const pv = A.setup.prov || {}, kindOf = k => (pv[k] || {}).kind || 'P';
+  const needs = CHECK.filter(c => ['U', 'R', 'H'].includes(kindOf(c.key))), done = needs.filter(c => kindOf(c.key) === 'H').length, rest = CHECK.filter(c => !needs.includes(c));
+  $('chkProgress').textContent = tl(`${done} of ${needs.length} answered by the hospital`, `${needs.length} में से ${done} का उत्तर अस्पताल ने दिया`, `${needs.length} पैकी ${done} उत्तरे रुग्णालयाने दिली`);
+  $('chkBar').style.width = (needs.length ? done / needs.length * 100 : 100) + '%';
+  const row = c => { const k = kindOf(c.key);
+    const inputs = c.ids.map((id, i) => `<label class="field"><span>${c.sub ? L3(SUBL[c.sub][i]) : tl('Value', 'मान', 'मूल्य')}</span><input class="in num" type="number" min="0" step="any" data-mirror="${id}" value="${esc($(id).value)}"></label>`).join('');
+    return `<div class="chk"><div class="chk-q"><b>${esc(L3(c.q))}</b><span class="muted small">${tl('Ask', 'पूछें', 'विचारा')}: ${esc(L3(c.who))}</span><span class="print-only small">${tl('Hospital value', 'अस्पताल का मान', 'रुग्णालयाचे मूल्य')}: ______________</span></div><div class="chk-in">${inputs}</div><div class="chk-st">${kb(k, (pv[c.key] || {}).note)}<label><input type="checkbox" data-chk="${c.key}"${k === 'H' ? ' checked' : ''}> ${tl('Confirmed', 'पुष्टि की', 'खात्री केली')}</label></div></div>`; };
+  el.innerHTML = needs.map(row).join('') + (rest.length ? `<details class="no-print" style="margin-top:8px"><summary style="cursor:pointer" class="small">${tl(`Already from published or your imported data (${rest.length})`, `पहले से प्रकाशित या आपके आयातित डेटा से (${rest.length})`, `आधीच प्रकाशित किंवा तुमच्या आयात डेटामधून (${rest.length})`)}</summary>${rest.map(row).join('')}</details>` : '');
+}
+function saveChecklist() {
+  document.querySelectorAll('#checklist [data-mirror]').forEach(inp => { if (inp.value !== '') $(inp.dataset.mirror).value = inp.value; });
+  const confirmed = new Set(), unconfirmed = new Set();
+  document.querySelectorAll('#checklist [data-chk]').forEach(cb => (cb.checked ? confirmed : unconfirmed).add(cb.dataset.chk));
+  CHK_STATE = { confirmed, unconfirmed };
+  $('setupForm').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+}
+function requestLetter() {
+  const pv = A.setup.prov || {}, need = CHECK.filter(c => ['U', 'R'].includes((pv[c.key] || {}).kind));
+  const cur = c => c.ids.map((id, i) => (c.sub ? SUBL[c.sub][i][0].toLowerCase() + ' ' : '') + $(id).value).join(', ');
+  const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  const subject = `Request for anonymised bed-census and capacity data for surge forecasting — ${A.setup.name}`;
+  const body = `To: The Medical Superintendent / Dean, and the Head of Medical Records, ${A.setup.name}
+
+Subject: ${subject}
+
+We are piloting Surge Watch, a decision-support tool that forecasts pressure on beds, ICU, isolation, oxygen, ambulances, laboratory and X-ray up to 30 days ahead for Mumbai hospitals. It currently runs on published figures (NIRF, Medical Records reports, BMC disease data) and on placeholders where nothing is published. To make the forecast reflect ${A.setup.name}, we request:
+
+1. An anonymised census export for the last 8 weeks (at least 4), one row per hour if available, otherwise one row per day:
+   - date and time
+   - casualty attendances in that hour or day
+   - patients in casualty, and patients in casualty waiting for a ward bed
+   - beds occupied in Medicine, Surgery (including obstetrics), ICU, Paediatrics and Isolation
+   - admissions and discharges in that hour or day
+   - optional: lab tests pending, platelet units in stock, oxygen stock, ambulances out on trips
+   Aggregate counts only. No names, MRD numbers or other patient identifiers are needed, in line with the Digital Personal Data Protection Act, 2023.
+
+2. Capacity figures that are not published anywhere${need.length ? '' : ' (all currently answered; please confirm they are still correct)'}:
+${(need.length ? need : CHECK.slice(0, 6)).map(c => `   - ${c.q[0]} (currently assumed: ${cur(c)}; usually known by: ${c.who[0]})`).join('\n')}
+
+3. Format: CSV or Excel, with any column names (the tool recognises common HMIS headings). A blank template can be provided.
+
+The data stays on the computer where the tool runs; nothing is uploaded to an outside server. Forecasts support, and do not replace, decisions by hospital staff.
+
+Contact: ______________________
+Date: ${today}`;
+  return { subject, body };
+}
+function renderRequest() {
+  const el = $('reqLetter'); if (!el) return;
+  const r = requestLetter();
+  el.textContent = r.body;
+  $('reqMail').href = `mailto:?subject=${encodeURIComponent(r.subject)}&body=${encodeURIComponent(r.body)}`;
+  $('reqTemplate').href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(COLS.join(',') + '\n');
+}
+
+/* ---------------- morning briefing ---------------- */
+function renderBriefing() {
+  const el = $('briefBody'); if (!el || !A.F) return;
+  const r = ranked(), T = tileData(), lv = epiLevel(), f = feeds(), nowT = S.START + A.now * S.HOUR, pv = A.setup.prov || {};
+  const uCount = Object.values(pv).filter(x => x.kind === 'U').length;
+  const today = fDate.format(new Date());
+  const rows = T.map(t => `<tr><td>${esc(tx(t.label))}</td><td class="num"><b>${t.val}</b> <span class="muted">${esc(t.small)}</span></td><td>${t.sev !== 'ok' ? pill(t.sev, sevL(t.sev)) : pill('ok', sevL('ok'))}</td><td class="tw small">${esc(t.sub)}</td></tr>`).join('');
+  const bn = r.slice(0, 6).map(x => `<tr><td><b>${esc(uL(x.unit))}</b></td><td>${pill(x.sev, sevL(x.sev))}</td><td>${esc(relL(x.firstSerious.start))}<div class="muted small">${esc(fmtL(A.now + x.firstSerious.start))}</div></td><td class="num">${pct(x.worst.peak)}<div class="muted small">${esc(fmtL(A.now + x.worst.peakAt))}</div></td><td class="num">${x.pCrit == null ? '…' : Math.round(x.pCrit * 100) + '%'}</td></tr>`).join('');
+  const dis = S.DISEASES.map(se => ({ se, wk: S.rateAt(se.id, nowT) * 7 * (f[se.id] || 1) })).sort((a, b) => b.wk - a.wk).slice(0, 5);
+  const rev = A.alerts.filter(a => a.status === 'review'), V = a => (LANG !== 'en' && a.tr && a.tr[LANG]) || a;
+  const units = r.slice(0, 3).map(x => x.unit);
+  const sugg = S.ACTIONS.filter(a => a.units.some(u => units.includes(u)) && !A.approved.some(x => x.id === a.id) && !A.dismissed[a.id]).slice(0, 4);
+  const epiTxt = lv ? `${pill(LVL_SEV[lv], tx(S.LEVELS[lv]))} ${esc(A.epiFit ? tl(`${S.SYNDROMES[A.epiFit.syn]} at ${A.det[A.epiFit.syn].ratio.toFixed(2)}× the seasonal expectation.`, `${tx(S.SYNDROMES[A.epiFit.syn])} मौसमी अपेक्षा के ${A.det[A.epiFit.syn].ratio.toFixed(2)}× पर।`, `${tx(S.SYNDROMES[A.epiFit.syn])} हंगामी अपेक्षेच्या ${A.det[A.epiFit.syn].ratio.toFixed(2)}× वर.`) : '')}` : `${pill('ok', sevL('ok'))} ${tl('No syndrome above its seasonal expectation.', 'कोई भी लक्षण समूह अपनी मौसमी अपेक्षा से ऊपर नहीं।', 'कोणताही लक्षण गट हंगामी अपेक्षेपेक्षा जास्त नाही.')}`;
+  el.innerHTML = `<div class="brief-head"><div><span class="eyebrow">${tl('Morning briefing', 'सुबह की ब्रीफ़िंग', 'सकाळची माहिती')}</span><h2>${esc(A.setup.name)}</h2><p class="muted small">${esc(today)} · ${tl('forecast from', 'पूर्वानुमान', 'अंदाज')} ${esc(fmtL(A.now))} · ${tl(`next ${A.horizonDays} days`, `अगले ${A.horizonDays} दिन`, `पुढील ${A.horizonDays} दिवस`)}</p></div>
+      <button class="btn primary no-print" type="button" id="briefPrint">${tl('Print or save as PDF', 'प्रिंट या PDF सहेजें', 'प्रिंट किंवा PDF जतन करा')}</button></div>
+    <p class="brief-note">${A.imported ? tl('Current state comes from the imported census file.', 'मौजूदा स्थिति आयात की गई रोगी-संख्या फ़ाइल से है।', 'सध्याची स्थिती आयात केलेल्या रुग्णसंख्या फाइलमधून आहे.') : tl('Current state is SIMULATED from published averages, because Mumbai hospitals do not publish live bed data. Import census data in Setup for real numbers.', 'मौजूदा स्थिति प्रकाशित औसत से सिमुलेटेड है, क्योंकि मुंबई के अस्पताल लाइव बिस्तर डेटा प्रकाशित नहीं करते। असली संख्याओं के लिए सेटअप में रोगी-संख्या डेटा आयात करें।', 'सध्याची स्थिती प्रकाशित सरासरीवरून अनुकरणित आहे, कारण मुंबईतील रुग्णालये थेट खाट डेटा प्रकाशित करत नाहीत. खऱ्या आकड्यांसाठी सेटअपमध्ये रुग्णसंख्या डेटा आयात करा.')}${uCount ? ' ' + tl(`${uCount} inputs are still placeholders.`, `${uCount} इनपुट अभी भी अस्थायी मान हैं।`, `${uCount} माहिती अजूनही तात्पुरती मूल्ये आहेत.`) : ''}</p>
+    <div class="panel sec"><h3>${tl('1. Right now', '1. अभी', '1. आत्ता')}</h3><div class="scroll-x"><table class="cmp"><tbody>${rows}</tbody></table></div></div>
+    <div class="panel sec"><h3>${tl('2. Bottlenecks coming', '2. आने वाली अड़चनें', '2. येणारे अडथळे')}</h3>${bn ? `<div class="scroll-x"><table class="cmp"><thead><tr><th>${tl('Unit', 'इकाई', 'विभाग')}</th><th>${tl('Level', 'स्तर', 'पातळी')}</th><th>${tl('Starts', 'शुरुआत', 'सुरुवात')}</th><th>${tl('Peak', 'चरम', 'शिखर')}</th><th>${tl('Chance of 105%', '105% की संभावना', '105% ची शक्यता')}</th></tr></thead><tbody>${bn}</tbody></table></div>` : `<p>${tl(`No unit is expected above 95% in the next ${A.horizonDays} days.`, `अगले ${A.horizonDays} दिनों में कोई इकाई 95% से ऊपर अपेक्षित नहीं।`, `पुढील ${A.horizonDays} दिवसांत कोणताही विभाग 95% पेक्षा जास्त अपेक्षित नाही.`)}</p>`}</div>
+    <div class="panel sec"><h3>${tl('3. Outbreaks and seasonal diseases', '3. प्रकोप और मौसमी बीमारियाँ', '3. उद्रेक व हंगामी आजार')}</h3><p>${epiTxt}</p>
+      <div class="scroll-x"><table class="cmp"><thead><tr><th>${tl('Disease', 'बीमारी', 'आजार')}</th><th class="num">${tl('Mumbai cases expected this week', 'इस सप्ताह मुंबई में अपेक्षित मामले', 'या आठवड्यात मुंबईत अपेक्षित रुग्ण')}</th><th>${tl('Basis', 'आधार', 'आधार')}</th></tr></thead><tbody>${dis.map(x => { const c = S.SER[x.se.id].ms[new Date(nowT).getMonth()]; return `<tr><td>${esc(tx(x.se.name))}</td><td class="num">${loc(x.wk)}</td><td class="small">${f.used[x.se.id] ? `${kb('H')} ${tl('BMC report', 'बीएमसी रिपोर्ट', 'बीएमसी अहवाल')} ×${f[x.se.id].toFixed(2)}` : `${kb(c.kind)} ${esc(kindL(c.kind))}`}</td></tr>`; }).join('')}</tbody></table></div></div>
+    <div class="panel sec"><h3>${tl('4. Decisions needed today', '4. आज के निर्णय', '4. आजचे निर्णय')}</h3>
+      <p><b>${tl('Alert drafts waiting for review', 'समीक्षा की प्रतीक्षा में चेतावनी मसौदे', 'पुनरावलोकनाच्या प्रतीक्षेत इशारा मसुदे')}: ${rev.length}</b></p>${rev.length ? `<ul>${rev.slice(0, 4).map(a => `<li>${esc(V(a).subject.replace('[Surge Watch] ', ''))}</li>`).join('')}</ul>` : ''}
+      <p><b>${tl('Preventive actions to consider', 'विचार के लिए निवारक कदम', 'विचारार्थ प्रतिबंधात्मक उपाय')}</b></p>${sugg.length ? `<ul>${sugg.map(a => `<li>${esc(tx(a.title))} — ${tl('owner', 'ज़िम्मेदार', 'जबाबदार')}: ${esc(tx(a.owner))}</li>`).join('')}</ul>` : `<p class="muted">${tl('None suggested.', 'कोई सुझाव नहीं।', 'कोणतीही सूचना नाही.')}</p>`}
+      ${A.approved.length ? `<p><b>${tl('Already approved', 'पहले से स्वीकृत', 'आधीच मंजूर')}</b></p><ul>${A.approved.map(a => `<li>${esc(tx(S.ACTION_BY_ID[a.id].title))} — ${esc(a.by)}</li>`).join('')}</ul>` : ''}</div>
+    <p class="muted small">${tl('Decision support only: forecasts are model outputs and every action needs a named approver.', 'केवल निर्णय सहायता: पूर्वानुमान मॉडल के परिणाम हैं और हर कदम के लिए नामित अनुमोदक चाहिए।', 'केवळ निर्णय सहाय्य: अंदाज हे मॉडेलचे निष्कर्ष आहेत आणि प्रत्येक उपायासाठी नाव असलेला मंजूरकर्ता हवा.')} ${tl('Prepared by Surge Watch', 'Surge Watch द्वारा तैयार', 'Surge Watch ने तयार केले')} ${esc(new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }))} IST.</p>
+    <div class="sign"><span>${tl('Reviewed by', 'समीक्षक', 'पुनरावलोकनकर्ता')}: ______________________</span><span>${tl('Signature', 'हस्ताक्षर', 'स्वाक्षरी')}: ______________</span><span>${tl('Time', 'समय', 'वेळ')}: ________</span></div>`;
+}
+
+/* BMC disease reports (shared by all hospitals on this device) */
+const SEED_REPORTS = [
+  { id: 'seed-mitkat', seed: true, from: new Date(2026, 5, 1).getTime(), to: new Date(2026, 8, 30).getTime(), counts: { malaria: 7422, flu: 504, dengue: 2941, gastro: 2194 }, src: 'BMC Public Health Department, via Mitkat Advisory (8 Oct 2026): https://mitkatadvisory.com/rising-malaria-and-swine-flu-cases-reported-in-mumbai/' },
+  { id: 'seed-fpj', seed: true, from: new Date(2026, 0, 1).getTime(), to: new Date(2026, 8, 15).getTime(), counts: { dengue: 2656, malaria: 8723, lepto: 390, gastro: 4997, flu: 507 }, src: 'BMC data, via Free Press Journal (Sep 2026)' }
+];
+async function loadReports() {
+  const saved = await DB.get('bulletins');
+  if (Array.isArray(saved)) return saved;
+  const seed = SEED_REPORTS.map(r => Object.assign({}, r, { counts: Object.assign({}, r.counts), added: Date.now() }));
+  DB.set('bulletins', seed); return seed;
+}
+function saveReports() { DB.set('bulletins', REPORTS); }
+const disName = id => S.DISEASES.find(x => x.id === id).name;
+const fmtDay = t => new Date(t).toLocaleDateString(LANG === 'en' ? 'en-IN' : LANG + '-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+function repNote(id) {
+  const f = feeds(), u = f.used[id];
+  if (!u) return `<a href="#bulletin">${tl('Enter a BMC report', 'बीएमसी रिपोर्ट दर्ज करें', 'बीएमसी अहवाल नोंदवा')}</a> ${tl('to update the current rate.', 'ताकि मौजूदा दर अपडेट हो।', 'म्हणजे सध्याचा दर अद्ययावत होईल.')}`;
+  const r = REPORTS.find(x => x.id === u.report);
+  return `${kb('H')} ×${f[id].toFixed(2)} ${tl('from the BMC report ending', 'बीएमसी रिपोर्ट से, जो समाप्त हुई', 'बीएमसी अहवालावरून, शेवट')} ${esc(fmtDay(r.to))}`;
+}
+function renderBulletins() {
+  const el = $('bulTable'); if (!el) return;
+  const f = feeds(), ids = S.DISEASES.map(x => x.id), list = REPORTS.slice().sort((a, b) => b.to - a.to);
+  const usedTxt = Object.keys(f.used).map(id => `${tx(disName(id))} ×${f[id].toFixed(2)}`).join(', ');
+  $('bulStatus').innerHTML = usedTxt ? `${kb('H')} ${tl('Rescaling now:', 'अभी समायोजन:', 'सध्याचे समायोजन:')} ${esc(usedTxt)}` : esc(tl('No recent report: forecasts use the monthly BMC figures.', 'कोई हालिया रिपोर्ट नहीं: पूर्वानुमान मासिक बीएमसी आँकड़ों पर आधारित है।', 'अलीकडील अहवाल नाही: अंदाज मासिक बीएमसी आकड्यांवर आधारित आहे.'));
+  if (!list.length) { el.innerHTML = `<tbody><tr><td class="muted">${tl('No reports entered yet.', 'अभी कोई रिपोर्ट दर्ज नहीं।', 'अद्याप कोणताही अहवाल नोंदवलेला नाही.')}</td></tr></tbody>`; return; }
+  const nowT = S.START + A.now * S.HOUR;
+  el.innerHTML = `<thead><tr><th>${tl('Period', 'अवधि', 'कालावधी')}</th>${ids.map(id => `<th class="num">${esc(tx(disName(id)))}</th>`).join('')}<th>${tl('Source', 'स्रोत', 'स्रोत')}</th><th></th></tr></thead><tbody>` + list.map(r => {
+    const days = Math.round((r.to - r.from) / S.DAY) + 1, active = Object.values(f.used).some(u => u.report === r.id);
+    const why = active ? tl('in use', 'उपयोग में', 'वापरात') : days > 35 ? tl('record only (longer than 5 weeks)', 'केवल रिकॉर्ड (5 सप्ताह से लंबी)', 'फक्त नोंद (5 आठवड्यांपेक्षा जास्त)') : nowT - r.to > 21 * S.DAY ? tl('record only (older than 21 days)', 'केवल रिकॉर्ड (21 दिन से पुरानी)', 'फक्त नोंद (21 दिवसांपेक्षा जुना)') : r.to > nowT ? tl('ends after the forecast start', 'पूर्वानुमान शुरू होने के बाद समाप्त', 'अंदाज सुरू झाल्यानंतर संपतो') : tl('record', 'रिकॉर्ड', 'नोंद');
+    const cells = ids.map(id => { const c = r.counts[id]; if (c == null) return '<td class="num muted">—</td>';
+      const e = S.expectedCases(id, r.from, r.to + S.DAY), use = f.used[id] && f.used[id].report === r.id;
+      return `<td class="num"><b>${loc(c)}</b>${use ? ' ' + kb('H') : ''}<div class="muted small">${tl('model', 'मॉडल', 'मॉडेल')} ${loc(e)} · ×${(c / Math.max(1, e)).toFixed(2)}</div></td>`; }).join('');
+    const src = r.src && /^https?:\/\//.test(r.src.split(' ').pop()) ? `<a href="${esc(r.src.split(' ').pop())}" target="_blank" rel="noopener">${esc(r.src.replace(/\s*https?:\/\/\S+$/, '').replace(/[:,]\s*$/, '') || 'link')}</a>` : esc(r.src || '—');
+    return `<tr><td class="tw">${esc(fmtDay(r.from))} – ${esc(fmtDay(r.to))}<div class="muted small">${days} ${tl('days', 'दिन', 'दिवस')} · ${why}</div></td>${cells}<td class="tw small">${src}</td><td><button class="btn small ghost" type="button" data-bdel="${r.id}">${tl('Remove', 'हटाएँ', 'काढा')}</button></td></tr>`;
+  }).join('') + '</tbody>';
+}
+
 /* alerts */
 function recipientsFor(unit, sev) { return A.people.filter(p => (p.units === 'ALL' || p.units.split(',').includes(unit)) && (p.minSev === 'warning' || sev === 'critical')); }
 function evaluateAlerts() {
@@ -1682,9 +1977,50 @@ function evaluateEpiAlert() {
   if (lv <= A.epiAlertLevel) return;
   A.epiAlertLevel = lv;
   const f = A.epiFit, d = A.det[f.syn], w = A.worst;
-  const short = w.rows.filter(r => r.full != null || (r.short && r.short[0] > 0.5)).map(r => `  • ${r.what}: ${r.full != null ? 'runs out ' + rel(r.full) + ' (' + fmtT(A.now + r.full) + ')' : ''}${r.short && r.short[0] > 0.5 ? ` — ${loc(r.short[0])} ${r.unit} short at worst` : ''}`).join('\n') || '  • No shortfall in the worst case.';
   const acts = []; for (const r of w.rows) if (r.full != null || (r.short && r.short[0] > 0.5)) for (const id of r.act) if (!acts.includes(id)) acts.push(id);
-  const subject = `[Surge Watch] ${S.LEVELS[lv].toUpperCase()}: ${S.SYNDROMES[f.syn]} patients ${d.ratio.toFixed(2)}× expected at ${A.setup.name}`;
+  const en = epiAlertText(lv, f, d, w, acts, 'en');
+  pushAlert({ id: 'e' + Date.now(), unit: 'EPI', epi: true, sev: 'critical', created: A.now, startAbs: A.now, subject: en.subject, body: en.body, tr: { hi: epiAlertText(lv, f, d, w, acts, 'hi'), mr: epiAlertText(lv, f, d, w, acts, 'mr') }, to: recipientsFor('EPI', 'critical').map(p => p.email), status: 'review' });
+  addLog(`${S.LEVELS[lv]} detected: ${S.SYNDROMES[f.syn]} at ${d.ratio.toFixed(2)}× expected. Epidemic alert drafted; forecasts now include the outbreak.`, 'critical');
+  notify(`${S.LEVELS[lv]}: ${S.SYNDROMES[f.syn]}`, `${d.ratio.toFixed(2)}× expected at ${A.setup.name}. Alert draft waiting for review.`);
+}
+function epiAlertText(lv, f, d, w, acts, lg) {
+  const T = (a, b, c) => tl(a, b, c, lg), F = t => fmtL(t, lg), R = h => relL(h, lg), r2 = d.ratio.toFixed(2), syn = tx(S.SYNDROMES[f.syn], lg), lvl = tx(S.LEVELS[lv], lg), dbl = d.doubling ? d.doubling.toFixed(1) : null;
+  const short = w.rows.filter(r => r.full != null || (r.short && r.short[0] > 0.5)).map(r => {
+    const what = tx(r.what, lg), sh = r.short && r.short[0] > 0.5 ? loc(r.short[0]) + ' ' + tx(r.unit, lg) : null;
+    if (lg === 'en') return `  • ${r.what}: ${r.full != null ? 'runs out ' + rel(r.full) + ' (' + fmtT(A.now + r.full) + ')' : ''}${sh ? ` — ${sh} short at worst` : ''}`;
+    return `  • ${what}: ${r.full != null ? T('', `${R(r.full)} (${F(A.now + r.full)}) ख़त्म`, `${R(r.full)} (${F(A.now + r.full)}) संपेल`) : ''}${sh ? T('', ` — सबसे बुरी स्थिति में ${sh} की कमी`, ` — सर्वात वाईट स्थितीत ${sh} कमी`) : ''}`;
+  }).join('\n') || T('  • No shortfall in the worst case.', '  • सबसे बुरी स्थिति में भी कोई कमी नहीं।', '  • सर्वात वाईट स्थितीतही कोणतीही कमतरता नाही.');
+  const others = Object.entries(A.det).filter(([k]) => k !== f.syn).map(([k, x]) => `${tx(S.SYNDROMES[k], lg).split(' (')[0]} ${x.ratio.toFixed(2)}× (${tx(S.LEVELS[x.level], lg)})`).join('; ');
+  const actList = acts.slice(0, 8).map(id => { const a = S.ACTION_BY_ID[id]; return `  • ${tx(a.title, lg)} (${T('owner', 'ज़िम्मेदार', 'जबाबदार')}: ${tx(a.owner, lg)}, ${T('lead time', 'तैयारी समय', 'पूर्वतयारी वेळ')} ${a.lead} ${T('h', 'घंटे', 'तास')})`; }).join('\n');
+  if (lg === 'hi') return { subject: `[Surge Watch] ${lvl}: ${A.setup.name} में ${syn} वाले मरीज़ अपेक्षा के ${r2}×`, body: `महामारी पूर्व चेतावनी — Surge Watch, ${A.setup.name}, मुंबई
+${F(A.now)} को जारी। स्तर: ${lvl}।
+
+पिछले 3 दिनों में ${syn} वाले मरीज़: मौसमी अपेक्षा के ${r2}× (z = ${d.z.toFixed(1)})${dbl ? `, लगभग हर ${dbl} दिन में दोगुने` : ''}।
+अन्य लक्षण समूह: ${others}।
+
+सबसे बुरी स्थिति के लिए तैयारी — ${worstTitle(lg)} (अगले ${w.days} दिन, स्टाफ की बीमारी और आपूर्ति बाधा सहित):
+${short}
+
+अनुशंसित तैयारी कदम (अभी स्वीकृत नहीं):
+${actList || '  • आइसोलेशन, ऑक्सीजन और स्टाफिंग योजनाओं की समीक्षा करें।'}
+
+कृपया प्रयोगशाला जाँच से इस समूह की पुष्टि करें और प्रोटोकॉल के अनुसार बीएमसी महामारी विज्ञान प्रकोष्ठ / IDSP को सूचित करें।
+डेटा: ${A.imported ? 'आयात किया गया रोगी-संख्या डेटा' : 'सिमुलेटेड अवलोकन' + (A.drill ? ', प्रकोप अभ्यास सहित' : '')}। कोई भी कदम स्वचालित रूप से नहीं उठाया गया है; निर्णय अस्पताल स्टाफ का है।` };
+  if (lg === 'mr') return { subject: `[Surge Watch] ${lvl}: ${A.setup.name} येथे ${syn} असलेले रुग्ण अपेक्षेच्या ${r2}×`, body: `साथीची पूर्वसूचना — Surge Watch, ${A.setup.name}, मुंबई
+${F(A.now)} रोजी जारी. पातळी: ${lvl}.
+
+गेल्या 3 दिवसांत ${syn} असलेले रुग्ण: हंगामी अपेक्षेच्या ${r2}× (z = ${d.z.toFixed(1)})${dbl ? `, सुमारे दर ${dbl} दिवसांनी दुप्पट` : ''}.
+इतर लक्षण गट: ${others}.
+
+सर्वात वाईट स्थितीसाठी तयारी — ${worstTitle(lg)} (पुढील ${w.days} दिवस, कर्मचारी आजारपण व पुरवठा अडचणींसह):
+${short}
+
+शिफारस केलेले तयारीचे उपाय (अद्याप मंजूर नाहीत):
+${actList || '  • विलगीकरण, ऑक्सिजन व कर्मचारी नियोजनाचा आढावा घ्या.'}
+
+कृपया प्रयोगशाळा चाचणीद्वारे या समूहाची खात्री करा आणि नियमांनुसार बीएमसी साथरोग कक्ष / IDSP ला कळवा.
+डेटा: ${A.imported ? 'आयात केलेला रुग्णसंख्या डेटा' : 'अनुकरणित निरीक्षणे' + (A.drill ? ', उद्रेक सरावासह' : '')}. कोणताही उपाय आपोआप केलेला नाही; निर्णय रुग्णालय कर्मचाऱ्यांचा आहे.` };
+  const subject = `[Surge Watch] ${S.LEVELS[lv].toUpperCase()}: ${S.SYNDROMES[f.syn]} patients ${r2}× expected at ${A.setup.name}`;
   const body = `EPIDEMIC EARLY WARNING — Surge Watch, ${A.setup.name}, Mumbai
 Issued ${fmtT(A.now)}. Level: ${S.LEVELS[lv]}.
 
@@ -1695,17 +2031,66 @@ Prepare for the worst — ${w.title.toLowerCase()} (next ${w.days} days, with st
 ${short}
 
 Recommended preparedness actions (not yet approved):
-${acts.slice(0, 8).map(id => `  • ${S.ACTION_BY_ID[id].title} (owner: ${S.ACTION_BY_ID[id].owner}, lead time ${S.ACTION_BY_ID[id].lead} h)`).join('\n') || '  • Review isolation, oxygen and staffing plans.'}
+${actList || '  • Review isolation, oxygen and staffing plans.'}
 
 Please confirm the cluster with laboratory testing and notify the BMC Epidemiology Cell / IDSP as per protocol.
 Data: ${A.imported ? 'imported census data' : 'SIMULATED observations' + (A.drill ? ' including an OUTBREAK DRILL' : '')}. No action has been taken automatically; decisions rest with hospital staff.`;
-  pushAlert({ id: 'e' + Date.now(), unit: 'EPI', epi: true, sev: 'critical', created: A.now, startAbs: A.now, subject, body, to: recipientsFor('EPI', 'critical').map(p => p.email), status: 'review' });
-  addLog(`${S.LEVELS[lv]} detected: ${S.SYNDROMES[f.syn]} at ${d.ratio.toFixed(2)}× expected. Epidemic alert drafted; forecasts now include the outbreak.`, 'critical');
-  notify(`${S.LEVELS[lv]}: ${S.SYNDROMES[f.syn]}`, `${d.ratio.toFixed(2)}× expected at ${A.setup.name}. Alert draft waiting for review.`);
+  return { subject, body };
 }
 function pushAlert(a) { A.alerts.unshift(a); if (!a.epi) notify(a.subject.replace('[Surge Watch] ', ''), 'Alert draft waiting for review.'); }
 function makeAlert(s, e) {
-  const u = UID[s.unit], x = explain(s.unit);
+  const x = explain(s.unit), en = alertText(s, e, x, 'en');
+  return { id: 'a' + Date.now() + Math.random().toString(36).slice(2, 6), unit: s.unit, sev: s.sev, created: A.now, startAbs: A.now + e.start, subject: en.subject, body: en.body, tr: { hi: alertText(s, e, x, 'hi'), mr: alertText(s, e, x, 'mr') }, to: recipientsFor(s.unit, s.sev).map(p => p.email), status: 'review' };
+}
+function alertText(s, e, x, lg) {
+  const u = UID[s.unit], T = (a, b, c) => tl(a, b, c, lg), F = t => fmtL(t, lg), nm = uL(s.unit, lg), n = ensembleSize(), pF = Math.round((s.pFirst || 0) * 100);
+  if (lg !== 'en') {
+    const drivers = x.drivers.filter(d => d.delta > 0).slice(0, 3).map(d => `  • ${drvName(d, lg)} (+${d.delta.toFixed(0)} ${T('', 'अंक', 'गुण')})`).join('\n');
+    const knock = Object.values(A.F.sum).filter(o => o.unit !== s.unit).map(o => `  • ${uL(o.unit, lg)}: ${sevL(o.sev, lg)}, ${F(A.now + o.firstSerious.start)} ${T('', 'से', 'पासून')}`).join('\n');
+    const acts = S.ACTIONS.filter(a => a.units.includes(s.unit) && !A.approved.some(p => p.id === a.id)).slice(0, 3).map(a => `  • ${tx(a.title, lg)} (${T('', 'ज़िम्मेदार', 'जबाबदार')}: ${tx(a.owner, lg)})`).join('\n');
+    const spare = (A.net || []).filter(r => !r.focus).sort((a, b) => b.genFree - a.genFree).slice(0, 2).map(r => `${r.h.name} (~${loc(r.genFree)} ${T('', 'वार्ड बिस्तर', 'वॉर्ड खाटा')})`).join(', ');
+    const lvl = s.sev === 'critical' ? T('', 'गंभीर (105%)', 'गंभीर (105%)') : T('', 'चेतावनी (95%)', 'इशारा (95%)');
+    const data = A.imported ? T('', 'आयात किया गया रोगी-संख्या डेटा', 'आयात केलेला रुग्णसंख्या डेटा') : T('', 'सिमुलेटेड अवलोकन', 'अनुकरणित निरीक्षणे');
+    const live = v => v ? T('', 'लाइव', 'थेट') : T('', 'सिमुलेटेड', 'अनुकरणित');
+    if (lg === 'hi') return { subject: `[Surge Watch] ${sevL(s.sev, lg)}: ${nm} के ${F(A.now + e.start)} से ${pct(s.worst.peak)} तक पहुँचने की संभावना`, body: `Surge Watch से पूर्व चेतावनी, ${A.setup.name}, मुंबई
+${F(A.now)} को नीचे दिए प्राप्तकर्ताओं की समीक्षा के लिए जारी।
+
+${nm} के ${relL(e.start, lg)} (${F(A.now + e.start)}) ${lvl} स्तर पार करने की संभावना है।
+अपेक्षित चरम: ${pct(s.worst.peak)} (${F(A.now + s.worst.peakAt)})। अगले ${A.horizonDays} दिनों में ${s.hours} घंटे 95% से ऊपर।
+संभावना: ${n} सिमुलेटेड भविष्यों में से ${pF}% में तब तक यह स्तर पहुँच जाता है।
+माप: ${tx(u.measure, lg)}।
+
+मुख्य कारण
+${drivers || '  • कोई एक प्रमुख कारण नहीं।'}
+
+इसी अवधि में प्रभावित अन्य इकाइयाँ
+${knock || '  • कोई अन्य इकाई 95% से ऊपर अपेक्षित नहीं।'}
+
+विचार के लिए निवारक कदम (अभी स्वीकृत नहीं)
+${acts || '  • विकल्पों के लिए Surge Watch देखें।'}
+${spare ? `\nसबसे अधिक अनुमानित खाली बिस्तर वाले पास के अस्पताल: ${spare}।\n` : ''}
+डेटा: ${data}; मौसम ${live(A.src.weather.live)}; वायु गुणवत्ता ${live(A.src.air.live)}।
+यह निर्णय-सहायक पूर्वानुमान है। कोई भी कदम स्वचालित रूप से नहीं उठाया गया है।` };
+    return { subject: `[Surge Watch] ${sevL(s.sev, lg)}: ${nm} ${F(A.now + e.start)} पासून ${pct(s.worst.peak)} पर्यंत पोहोचण्याची शक्यता`, body: `Surge Watch कडून पूर्वसूचना, ${A.setup.name}, मुंबई
+${F(A.now)} रोजी खालील प्राप्तकर्त्यांच्या पुनरावलोकनासाठी जारी.
+
+${nm} ${relL(e.start, lg)} (${F(A.now + e.start)}) ${lvl} पातळी ओलांडण्याची शक्यता आहे.
+अपेक्षित कमाल: ${pct(s.worst.peak)} (${F(A.now + s.worst.peakAt)}). पुढील ${A.horizonDays} दिवसांत ${s.hours} तास 95% पेक्षा जास्त.
+शक्यता: ${n} अनुकरणित भविष्यांपैकी ${pF}% मध्ये तोपर्यंत ही पातळी गाठली जाते.
+मापन: ${tx(u.measure, lg)}.
+
+मुख्य कारणे
+${drivers || '  • कोणतेही एक प्रमुख कारण नाही.'}
+
+याच कालावधीत प्रभावित इतर विभाग
+${knock || '  • इतर कोणताही विभाग 95% पेक्षा जास्त अपेक्षित नाही.'}
+
+विचारार्थ प्रतिबंधात्मक उपाय (अद्याप मंजूर नाहीत)
+${acts || '  • पर्यायांसाठी Surge Watch पहा.'}
+${spare ? `\nसर्वाधिक अंदाजित रिकाम्या खाटा असलेली जवळची रुग्णालये: ${spare}.\n` : ''}
+डेटा: ${data}; हवामान ${live(A.src.weather.live)}; हवा गुणवत्ता ${live(A.src.air.live)}.
+हा निर्णय-सहाय्यक अंदाज आहे. कोणताही उपाय आपोआप केलेला नाही.` };
+  }
   const drivers = x.drivers.filter(d => d.delta > 0).slice(0, 3).map(d => `  • ${d.name} (+${d.delta.toFixed(0)} pts)`).join('\n');
   const knock = Object.values(A.F.sum).filter(o => o.unit !== s.unit).map(o => `  • ${UID[o.unit].long}: ${o.sev}, from ${fmtT(A.now + o.firstSerious.start)}`).join('\n') || '  • No other unit expected above 95%.';
   const acts = S.ACTIONS.filter(a => a.units.includes(s.unit) && !A.approved.some(p => p.id === a.id)).slice(0, 3).map(a => `  • ${a.title} (owner: ${a.owner})`).join('\n');
@@ -1716,7 +2101,7 @@ Issued ${fmtT(A.now)} for review by the recipients below.
 
 ${u.long} is expected to pass the ${s.sev === 'critical' ? 'critical (105%)' : 'warning (95%)'} level ${rel(e.start)}, at ${fmtT(A.now + e.start)}.
 Expected peak: ${pct(s.worst.peak)} on ${fmtT(A.now + s.worst.peakAt)}. Above 95% for ${s.hours} h in the next ${A.horizonDays} days.
-Probability: ${Math.round(s.pFirst * 100)}% of ${A.F.ens.n} simulated futures reach this level by then.
+Probability: ${pF}% of ${n} simulated futures reach this level by then.
 Measure: ${u.measure}.
 
 Main contributing factors
@@ -1730,7 +2115,7 @@ ${acts || '  • See Surge Watch for options.'}
 ${spare ? `\nNearby hospitals with most estimated spare beds: ${spare}.\n` : ''}
 Data: ${A.imported ? 'imported census data' : 'SIMULATED observations'}; weather ${A.src.weather.live ? 'live' : 'simulated'}; air quality ${A.src.air.live ? 'live' : 'simulated'}.
 This is a decision-support forecast. No action has been taken automatically.`;
-  return { id: 'a' + Date.now() + Math.random().toString(36).slice(2, 6), unit: s.unit, sev: s.sev, created: A.now, startAbs: A.now + e.start, subject, body, to: recipientsFor(s.unit, s.sev).map(p => p.email), status: 'review' };
+  return { subject, body };
 }
 function notify(title, body) {
   try { if ('Notification' in window && Notification.permission === 'granted') new Notification('Surge Watch — ' + title, { body }); } catch (e) {}
@@ -1738,17 +2123,20 @@ function notify(title, body) {
 function renderAlerts() {
   $('ruleSev').value = A.rule.minSev; $('ruleLead').value = String(A.rule.leadH); $('ruleProb').value = String(A.rule.prob);
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
-  $('notifyStatus').textContent = perm === 'granted' ? 'Desktop notifications are on for new alert drafts.' : perm === 'denied' ? 'Notifications are blocked in this browser or viewer.' : perm === 'unsupported' ? 'This browser does not support notifications.' : 'Off.';
+  $('notifyStatus').textContent = perm === 'granted' ? tl('Desktop notifications are on for new alert drafts.', 'नए चेतावनी मसौदों के लिए डेस्कटॉप सूचनाएँ चालू हैं।', 'नवीन इशारा मसुद्यांसाठी डेस्कटॉप सूचना सुरू आहेत.') : perm === 'denied' ? tl('Notifications are blocked in this browser or viewer.', 'इस ब्राउज़र में सूचनाएँ बंद हैं।', 'या ब्राउझरमध्ये सूचना बंद आहेत.') : perm === 'unsupported' ? tl('This browser does not support notifications.', 'यह ब्राउज़र सूचनाएँ नहीं दिखा सकता।', 'हा ब्राउझर सूचना दाखवू शकत नाही.') : tl('Off.', 'बंद।', 'बंद.');
   $('notifyBtn').hidden = perm === 'granted' || perm === 'unsupported';
-  const paused = leversChanged() ? `<div class="empty">Routine alerts are paused while a what-if scenario is on, so hypothetical numbers are never sent. Epidemic alerts still fire from observed data.</div>` : '';
+  const paused = leversChanged() ? `<div class="empty">${tl('Routine alerts are paused while a what-if scenario is on, so hypothetical numbers are never sent. Epidemic alerts still fire from observed data.', 'क्या-अगर परिदृश्य चालू रहने तक सामान्य चेतावनियाँ रुकी हैं, ताकि काल्पनिक आँकड़े कभी न भेजे जाएँ। महामारी चेतावनियाँ दर्ज आँकड़ों से फिर भी आती हैं।', 'जर-तर परिस्थिती सुरू असताना नेहमीचे इशारे थांबवले आहेत, जेणेकरून काल्पनिक आकडे कधीही पाठवले जाणार नाहीत. साथीचे इशारे नोंदवलेल्या आकडेवारीवरून तरीही येतात.')}</div>` : '';
   const list = A.alerts.filter(a => a.status !== 'dismissed');
-  if (!list.length) { $('alerts').innerHTML = paused + `<div class="empty">No alert drafts. A draft appears when a ${A.rule.minSev === 'critical' ? 'critical' : 'warning or critical'} bottleneck has at least a ${Math.round(A.rule.prob * 100)}% chance of starting within ${A.rule.leadH} h, or when an outbreak is detected.</div>`; return; }
-  $('alerts').innerHTML = paused + list.slice(0, 6).map(a => `<div class="alert ${a.epi ? 'epi' : ''}"><div class="alert-head"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${pill(a.sev, a.epi ? 'Epidemic' : SEV_LABEL[a.sev])}<b>${esc(a.epi ? 'Outbreak watch' : UID[a.unit].long)}</b><span class="muted" style="font-size:.82rem">drafted ${fmtT(a.created)}</span></div>
-    ${a.status === 'sent' ? pill('info', 'Marked sent by ' + a.sentBy) : pill('watch', 'Needs review')}</div>
-    <div><span class="eyebrow">To</span> <span class="recips">${esc(a.to.join(', ') || 'No matching stakeholders')}</span></div>
-    <div><span class="eyebrow">Subject</span> <span style="font-size:.9rem">${esc(a.subject)}</span></div>
-    <details ${a.epi ? 'open' : ''}><summary style="cursor:pointer;font-size:.88rem">Email text</summary><div class="email" tabindex="0">${esc(a.body)}</div></details>
-    <div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn small primary" type="button" data-copy="${a.id}">Copy email</button><a class="btn small" href="mailto:${encodeURIComponent(a.to.join(','))}?subject=${encodeURIComponent(a.subject)}&body=${encodeURIComponent(a.body)}" target="_blank" rel="noopener">Open in mail app</a>${a.status !== 'sent' ? `<button class="btn small" type="button" data-sent="${a.id}">Mark as sent</button>` : ''}<button class="btn small ghost" type="button" data-dismiss-alert="${a.id}">Dismiss</button></div></div>`).join('');
+  const pr = Math.round(A.rule.prob * 100), lh = A.rule.leadH, cr = A.rule.minSev === 'critical';
+  if (!list.length) { $('alerts').innerHTML = paused + `<div class="empty">${tl(`No alert drafts. A draft appears when a ${cr ? 'critical' : 'warning or critical'} bottleneck has at least a ${pr}% chance of starting within ${lh} h, or when an outbreak is detected.`, `कोई चेतावनी मसौदा नहीं। मसौदा तब बनता है जब किसी ${cr ? 'गंभीर' : 'चेतावनी या गंभीर'} अड़चन के ${lh} घंटे में शुरू होने की कम से कम ${pr}% संभावना हो, या कोई प्रकोप पहचाना जाए।`, `कोणताही इशारा मसुदा नाही. एखाद्या ${cr ? 'गंभीर' : 'इशारा किंवा गंभीर'} अडथळ्याची ${lh} तासांत सुरू होण्याची किमान ${pr}% शक्यता असल्यास, किंवा उद्रेक आढळल्यास मसुदा तयार होतो.`)}</div>`; return; }
+  const V = a => (LANG !== 'en' && a.tr && a.tr[LANG]) || a;
+  $('alerts').innerHTML = paused + list.slice(0, 6).map(a => `<div class="alert ${a.epi ? 'epi' : ''}"><div class="alert-head"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${pill(a.sev, a.epi ? 'Epidemic' : SEV_LABEL[a.sev])}<b>${esc(a.epi ? tx('Outbreak watch') : uL(a.unit))}</b><span class="muted" style="font-size:.82rem">${tl('drafted', 'मसौदा', 'मसुदा')} ${fmtL(a.created)}</span></div>
+    ${a.status === 'sent' ? pill('info', tl('Marked sent by ', 'भेजा गया, ', 'पाठवले, ') + a.sentBy) : pill('watch', tx('Needs review'))}</div>
+    <div><span class="eyebrow">To</span> <span class="recips">${esc(a.to.join(', ') || tl('No matching stakeholders', 'कोई मेल खाता हितधारक नहीं', 'जुळणारे अधिकारी नाहीत'))}</span></div>
+    <div><span class="eyebrow">Subject</span> <span style="font-size:.9rem">${esc(V(a).subject)}</span></div>
+    <details ${a.epi ? 'open' : ''}><summary style="cursor:pointer;font-size:.88rem">Email text</summary><div class="email" tabindex="0">${esc(V(a).body)}</div></details>
+    ${V(a) !== a ? `<details><summary style="cursor:pointer;font-size:.88rem">English version</summary><div class="email" tabindex="0">${esc(a.subject + '\n\n' + a.body)}</div></details>` : ''}
+    <div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn small primary" type="button" data-copy="${a.id}">Copy email</button><a class="btn small" href="mailto:${encodeURIComponent(a.to.join(','))}?subject=${encodeURIComponent(V(a).subject)}&body=${encodeURIComponent(V(a).body)}" target="_blank" rel="noopener">Open in mail app</a>${a.status !== 'sent' ? `<button class="btn small" type="button" data-sent="${a.id}">Mark as sent</button>` : ''}<button class="btn small ghost" type="button" data-dismiss-alert="${a.id}">Dismiss</button></div></div>`).join('');
 }
 function renderPeople() {
   const un = u => u === 'ALL' ? 'All' : u.split(',').map(x => x === 'EPI' ? 'Outbreaks' : UID[x] ? UID[x].name : x).join(', ');
@@ -1787,22 +2175,82 @@ function renderAcc() {
 
 /* ---------------- data import ---------------- */
 const COLS = ['timestamp', 'ed_arrivals', 'ed_census', 'ed_waiting_for_bed', 'med_occupied', 'surg_occupied', 'icu_occupied', 'peds_occupied', 'iso_occupied', 'lab_backlog', 'platelet_stock', 'oxygen_stock', 'ambulances_busy', 'admissions', 'discharges'];
+// Column names hospitals commonly use, mapped to the import columns.
+const ALIAS = {
+  timestamp: ['timestamp', 'date', 'datetime', 'date_time', 'day', 'reporting_date', 'census_date', 'report_date', 'period_end'],
+  _time: ['time', 'hour', 'hr', 'time_of_day', 'hour_ending'],
+  ed_arrivals: ['ed_arrivals', 'arrivals', 'casualty', 'casualty_attendance', 'casualty_attendances', 'casualty_patients', 'casualty_visits', 'emergency_visits', 'emergency_attendance', 'er_visits', 'ed_visits', 'ed_attendance'],
+  ed_census: ['ed_census', 'casualty_census', 'patients_in_casualty', 'ed_occupancy', 'er_census'],
+  ed_waiting_for_bed: ['ed_waiting_for_bed', 'boarders', 'ed_boarders', 'waiting_for_bed', 'awaiting_admission', 'awaiting_bed'],
+  med_occupied: ['med_occupied', 'medicine_occupied', 'medicine_census', 'medicine_beds_occupied', 'medical_ward_occupied', 'medicine'],
+  surg_occupied: ['surg_occupied', 'surgery_occupied', 'surgery_census', 'surgical_census', 'surgical_ward_occupied', 'surgery'],
+  icu_occupied: ['icu_occupied', 'icu_census', 'icu_beds_occupied', 'micu_occupied', 'icu'],
+  peds_occupied: ['peds_occupied', 'paediatric_occupied', 'pediatric_occupied', 'paediatrics_census', 'pediatrics_census', 'paediatrics', 'pediatrics'],
+  iso_occupied: ['iso_occupied', 'isolation_occupied', 'isolation_census', 'isolation'],
+  lab_backlog: ['lab_backlog', 'lab_pending', 'pending_tests', 'tests_pending'],
+  platelet_stock: ['platelet_stock', 'platelets', 'platelet_units', 'platelets_in_stock'],
+  oxygen_stock: ['oxygen_stock', 'o2_stock', 'oxygen_cylinders', 'oxygen'],
+  ambulances_busy: ['ambulances_busy', 'ambulances_out', 'ambulances_on_trip'],
+  admissions: ['admissions', 'ipd_admissions', 'new_admissions', 'admitted', 'total_admissions'],
+  discharges: ['discharges', 'ipd_discharges', 'discharged', 'total_discharges']
+};
+const normH = h => String(h).toLowerCase().replace(/^﻿/, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+const ALIAS_MAP = (() => { const m = {}; for (const c in ALIAS) for (const a of ALIAS[c]) m[a] = c; return m; })();
+function splitLine(line, sep) {
+  const out = []; let cur = '', q = false;
+  for (let i = 0; i < line.length; i++) { const ch = line[i];
+    if (q) { if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+    else if (ch === '"') q = true; else if (ch === sep) { out.push(cur); cur = ''; } else cur += ch; }
+  out.push(cur); return out.map(x => x.trim());
+}
+const MONTH_IX = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+// Reads ISO, day-first (DD/MM/YYYY), 14-Oct-2026 and Excel serial dates, with optional time (24 h or AM/PM).
+function parseWhen(str) {
+  str = String(str).trim(); if (!str) return null;
+  if (/^\d{5}(\.\d+)?$/.test(str)) { const n = +str; if (n > 20000 && n < 80000) { const d = new Date(Math.round((n - 25569) * 864e5)); return { t: new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes()).getTime(), dateOnly: n % 1 === 0 }; } }
+  let m, y, mo, d, rest;
+  if ((m = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(.*)$/))) { y = +m[1]; mo = +m[2] - 1; d = +m[3]; rest = m[4]; }
+  else if ((m = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})(.*)$/))) { d = +m[1]; mo = +m[2] - 1; y = +m[3]; rest = m[4]; }
+  else if ((m = str.match(/^(\d{1,2})[-/. ]([A-Za-z]{3,9})[-/., ]+(\d{2,4})(.*)$/))) { d = +m[1]; mo = MONTH_IX[m[2].toLowerCase().slice(0, 3)]; y = +m[3]; rest = m[4]; }
+  else return null;
+  if (y < 100) y += 2000;
+  if (mo == null || mo < 0 || mo > 11 || d < 1 || d > 31) return null;
+  const tm = rest.match(/(\d{1,2})(?::(\d{2}))?(?::\d{2})?\s*([AaPp][Mm])?/), hasTime = !!(rest.trim() && tm);
+  let H = 0, M = 0;
+  if (hasTime) { H = +tm[1]; M = +(tm[2] || 0); if (tm[3]) { const pm = /p/i.test(tm[3]); if (H === 12) H = pm ? 12 : 0; else if (pm) H += 12; } if (H > 23 || M > 59) return null; }
+  const dt = new Date(y, mo, d, H, M);
+  return isNaN(dt.getTime()) || dt.getDate() !== d ? null : { t: dt.getTime(), dateOnly: !hasTime };
+}
 function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim() && !l.trim().startsWith('#'));
   if (lines.length < 2) throw new Error('Need a header row and at least one data row.');
-  const head = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
-  if (!head.includes('timestamp')) throw new Error('The header must include a "timestamp" column.');
-  const unknown = head.filter(h => !COLS.includes(h));
+  const sep = ['\t', ';', ','].map(c => [c, lines[0].split(c).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const raw = splitLine(lines[0], sep), canon = raw.map(h => ALIAS_MAP[normH(h)] || null);
+  canon.forEach((c, i) => { if (c && canon.indexOf(c) !== i) canon[i] = null; });
+  if (!canon.includes('timestamp') && canon.includes('_time')) canon[canon.indexOf('_time')] = 'timestamp';
+  if (!canon.includes('timestamp')) throw new Error('No date column found. Name one column "timestamp" or "date", with values like 14/10/2026 08:00 or 2026-10-14 08:00.');
+  const ti = canon.indexOf('timestamp'), hi = canon.indexOf('_time');
+  let dateOnlyAll = true;
   const rows = lines.slice(1).map((l, i) => {
-    const cells = l.split(','), r = {};
-    head.forEach((h, j) => { const v = (cells[j] || '').trim(); r[h] = h === 'timestamp' ? v : v === '' ? null : +v; });
-    const t = Date.parse(r.timestamp.replace(' ', 'T'));
-    if (isNaN(t)) throw new Error(`Row ${i + 2}: cannot read timestamp "${r.timestamp}". Use YYYY-MM-DD HH:MM.`);
-    r.t = S.floorHour(t);
-    for (const h of head) if (h !== 'timestamp' && r[h] != null && isNaN(r[h])) throw new Error(`Row ${i + 2}: "${h}" is not a number.`);
+    const cells = splitLine(l, sep), r = {};
+    let when = cells[ti] || '';
+    if (hi >= 0 && cells[hi]) when += ' ' + (/^\d{1,2}$/.test(cells[hi]) ? cells[hi] + ':00' : cells[hi]);
+    const w = parseWhen(when);
+    if (!w) throw new Error(`Row ${i + 2}: cannot read the date "${when}". Use DD/MM/YYYY HH:MM, YYYY-MM-DD HH:MM or 14-Oct-2026.`);
+    if (!w.dateOnly) dateOnlyAll = false;
+    r.timestamp = when; r._t = w.t;
+    canon.forEach((c, j) => { if (!c || c === 'timestamp' || c === '_time') return;
+      const v = (cells[j] || '').replace(/[,\s]/g, '');
+      r[c] = v === '' || v === '-' || /^n\/?a$/i.test(v) ? null : +v;
+      if (r[c] != null && isNaN(r[c])) throw new Error(`Row ${i + 2}: "${raw[j]}" is not a number ("${cells[j]}").`); });
     return r;
-  }).sort((a, b) => a.t - b.t);
-  return { rows, head, unknown };
+  });
+  // Rows with dates but no times are daily totals: stamp them at the end of their day, as hourly rows are stamped at the end of their hour.
+  for (const r of rows) r.t = S.floorHour(dateOnlyAll ? r._t + S.DAY : r._t);
+  rows.sort((a, b) => a.t - b.t);
+  const head = [...new Set(canon.filter(c => c && c !== '_time'))];
+  const mapped = raw.map((h, i) => [h, canon[i]]).filter(x => x[1] && x[1] !== '_time' && normH(x[0]) !== x[1]);
+  return { rows, head, unknown: raw.filter((h, i) => !canon[i]), mapped, daily: dateOnlyAll };
 }
 const WCOL = [['med_occupied', 'MED'], ['surg_occupied', 'SURG'], ['icu_occupied', 'ICU'], ['peds_occupied', 'PEDS'], ['iso_occupied', 'ISO']];
 function rowState(r, prev) {
@@ -1828,6 +2276,8 @@ function applyImport(parsed) {
   for (const r of rows) if (r.ed_arrivals != null) { act += r.ed_arrivals; for (let i = 0; i < stepH; i++) exp += S.expectedAt(r.t - (stepH - 1 - i) * S.HOUR, f); }
   // If arrivals per day were learned directly, they already match the data; otherwise scale the published figure to it.
   A.arrScale = A.learned && A.learned.fields.arrPerDay ? 1 : exp > 0 ? Math.max(0.3, Math.min(3, act / exp)) : 1; S.P.arrScale = A.arrScale;
+  // Rows covering several hours (daily totals) are compared with the average expected rate over those hours.
+  const avgExp = t => { let e = 0; for (let i = 0; i < stepH; i++) e += S.expectedAt(t - (stepH - 1 - i) * S.HOUR, f); return e / stepH; };
   A.history = []; let st = null;
   for (const r of rows) {
     st = rowState(r, st);
@@ -1835,7 +2285,7 @@ function applyImport(parsed) {
     if (r.ed_census != null) p.ED = (r.ed_census + (r.ed_waiting_for_bed || 0)) / S.P.edSpaces;
     for (const [c, u] of WCOL) if (r[c] != null) p[u] = r[c] / S.P.beds[u];
     if (r.ambulances_busy != null) p.AMB = r.ambulances_busy / S.P.amb;
-    A.history.push({ k, t: r.t, p, arrivals: r.ed_arrivals != null ? r.ed_arrivals / stepH : null, expected: r.ed_arrivals != null ? S.expectedAt(r.t, f) : null, state: S.cloneState(st), boarders: r.ed_waiting_for_bed || 0 });
+    A.history.push({ k, t: r.t, p, arrivals: r.ed_arrivals != null ? r.ed_arrivals / stepH : null, expected: r.ed_arrivals != null ? avgExp(r.t) : null, state: S.cloneState(st), boarders: r.ed_waiting_for_bed || 0 });
   }
   A.state = rowState(last, st);
   addLog(`Imported ${rows.length} rows (${stepH === 24 ? 'daily' : stepH === 1 ? 'hourly' : 'every ' + stepH + ' h'}). ${act ? `Demand calibrated ×${A.arrScale.toFixed(2)} to your ED arrivals.` : 'No ED arrivals column, so demand uses the setup value.'}`);
@@ -1927,7 +2377,14 @@ function readSetup() {
   // Record which inputs staff changed, so their provenance shows as "entered by hospital".
   const base = S.setupFor(S.HOSPITALS.find(h => h.id === A.hospitalId)), changed = [];
   const val = (o, k) => k in o.beds ? o.beds[k] : o[k];
+  // Values learned from imported data stay marked as learned unless staff edit them.
+  const learnedSame = k => (A.setup.prov[k] || {}).kind === 'I' && (k === 'bor' ? Math.abs(out.bor - A.setup.bor) < 0.0006 : JSON.stringify(val(out, k)) === JSON.stringify(val(A.setup, k)));
+  // Learned values are re-applied from the import itself, so the saved setup keeps the published value underneath.
+  for (const k of ['arrPerDay', 'admissionsPerDay', 'alos', 'bor']) if (learnedSame(k)) out[k] = base[k];
   for (const k in SETUP_KEYS) if (JSON.stringify(val(out, k)) !== JSON.stringify(val(base, k)) && !(k === 'bor' && Math.abs(out.bor - base.bor) < 0.0006)) changed.push(k);
+  // Values staff confirmed as correct count as hospital-entered even when they equal the placeholder.
+  for (const k in SETUP_KEYS) if ((A.setup.prov[k] || {}).kind === 'H' && !changed.includes(k) && !(CHK_STATE && CHK_STATE.unconfirmed.has(k))) changed.push(k);
+  if (CHK_STATE) { for (const k of CHK_STATE.confirmed) if (!changed.includes(k)) changed.push(k); CHK_STATE = null; }
   out.changed = changed;
   return out;
 }
@@ -1971,6 +2428,11 @@ document.addEventListener('click', e => {
   if (t.id === 'liveBtn') return setLive(!A.live);
   if (t.id === 'stepBtn') return advance(1);
   if (t.id === 'dayBtn') return advance(24);
+  if (t.id === 'chkSave') { saveChecklist(); return; }
+  if (t.id === 'chkPrint') { document.body.classList.add('print-chk'); try { window.print(); } catch (e) { toast('Use your browser\'s Print command (Ctrl+P)'); } return; }
+  if (t.id === 'briefPrint') { try { window.print(); } catch (e) { toast('Use your browser\'s Print command (Ctrl+P)'); } return; }
+  if (t.id === 'reqCopy') { const r = requestLetter(), p2 = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(r.body) : Promise.reject();
+    p2.then(() => toast('Letter copied'), () => { const rg = document.createRange(); rg.selectNodeContents($('reqLetter')); const sl = getSelection(); sl.removeAllRanges(); sl.addRange(rg); toast('Text selected — press Ctrl+C to copy'); }); return; }
   if (t.id === 'forgetBtn') { DB.del('state:' + A.hospitalId); A.learned = null; setLive(false); boot({ feedVals: A.feedVals, src: A.src, mode: A.mode }); toast('Saved data for this hospital removed from this device'); return; }
   if (t.id === 'resetBtn') { setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: A.imported, mode: A.mode }); toast('Forecast restarted'); return; }
   if (t.id === 'refetch') { toast('Fetching live Mumbai weather and air quality…'); fetchFeeds(false); return; }
@@ -1995,25 +2457,48 @@ document.addEventListener('click', e => {
   if (d.undismiss !== undefined) { A.dismissed = {}; renderActions(); return; }
   if (d.revoke) { const a = A.approved.find(x => x.id === d.revoke); A.approved = A.approved.filter(x => x.id !== d.revoke); addLog(`Action withdrawn: ${S.ACTION_BY_ID[d.revoke].title} (approved earlier by ${a.by}).`); recompute(false); return; }
   if (d.feed) { recordFeed(d.feed); return; }
-  if (d.copy) { const a = A.alerts.find(x => x.id === d.copy), text = `To: ${a.to.join(', ')}\nSubject: ${a.subject}\n\n${a.body}`;
+  if (d.bdel) { REPORTS = REPORTS.filter(r => r.id !== d.bdel); saveReports(); addLog('BMC report removed.'); A.netAt = -999; recompute(false); return; }
+  if (d.copy) { const a = A.alerts.find(x => x.id === d.copy), v = (LANG !== 'en' && a.tr && a.tr[LANG]) || a, text = `To: ${a.to.join(', ')}\nSubject: ${v.subject}\n\n${v.body}`;
     const p = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : Promise.reject();
     p.then(() => toast('Email copied'), () => { const box = t.closest('.alert'); box.querySelector('details').open = true; const r = document.createRange(); r.selectNodeContents(box.querySelector('.email')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Text selected — press Ctrl+C to copy'); }); return; }
   if (d.sent) { const a = A.alerts.find(x => x.id === d.sent); a.status = 'sent'; a.sentBy = store.get('approver', '') || 'reviewer'; addLog(`Alert "${a.subject.replace('[Surge Watch] ', '')}" marked as sent by ${a.sentBy}.`); renderAlerts(); renderLog(); save(); return; }
   if (d.dismissAlert) { const a = A.alerts.find(x => x.id === d.dismissAlert); a.status = 'dismissed'; addLog('Alert dismissed.'); renderAlerts(); renderLog(); save(); return; }
   if (d.pdel) { A.people.splice(+d.pdel, 1); store.set('people', A.people); renderPeople(); return; }
-  if (t.id === 'setupDefaults') { const ov = store.get('overrides', {}); delete ov[A.hospitalId]; store.set('overrides', ov); fillSetup(S.setupFor(S.HOSPITALS.find(h => h.id === A.hospitalId))); toast('Estimates restored; save to apply'); return; }
+  if (t.id === 'setupDefaults') { const ov = store.get('overrides', {}); delete ov[A.hospitalId]; store.set('overrides', ov); setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: A.imported, mode: A.mode, drill: A.drill }); fillSetup(); toast('Estimates restored and forecast restarted'); return; }
   if (t.id === 'csvSample') { $('csvText').value = sampleCSV(); $('csvStatus').textContent = `${Math.round(($('csvText').value.split('\n').length - 1) / 24)} days of hourly example rows generated by the model, for trying the import. Not real data.`; return; }
   if (t.id === 'csvClear') { A.learned = null; setLive(false); boot({ feedVals: A.feedVals, src: A.src, mode: A.mode }); $('csvStatus').textContent = 'Back to simulated observations.'; return; }
   if (t.id === 'csvImport') {
     try { const parsed = parseCSV($('csvText').value); setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: parsed, mode: A.mode });
-      $('csvStatus').textContent = `Imported ${parsed.rows.length} rows.` + (parsed.unknown.length ? ` Ignored columns: ${parsed.unknown.join(', ')}.` : ''); toast('Data imported; forecast restarted from your last row'); }
+      $('csvStatus').textContent = `Imported ${parsed.rows.length} ${parsed.daily ? 'daily' : ''} rows.` + (parsed.mapped.length ? ` Recognised: ${parsed.mapped.map(x => `${x[0]} → ${x[1]}`).join(', ')}.` : '') + (parsed.unknown.length ? ` Ignored columns: ${parsed.unknown.join(', ')}.` : ''); toast('Data imported; forecast restarted from your last row'); }
     catch (err) { $('csvStatus').textContent = err.message; }
   }
 });
 document.addEventListener('click', () => { if (LANG !== 'en') setTimeout(() => translateDom(document.body), 0); });
+(() => {
+  const ta = $('csvText');
+  ta.addEventListener('dragover', e => { e.preventDefault(); ta.classList.add('drop'); });
+  ta.addEventListener('dragleave', () => ta.classList.remove('drop'));
+  ta.addEventListener('drop', e => {
+    e.preventDefault(); ta.classList.remove('drop');
+    const file = e.dataTransfer.files[0]; if (!file) return;
+    if (/\.xlsx?$/i.test(file.name)) { $('csvStatus').textContent = 'Excel workbooks cannot be read directly: in Excel use File → Save As → CSV, then drop that file.'; return; }
+    const r = new FileReader(); r.onload = () => { ta.value = r.result; $('csvStatus').textContent = `Loaded ${file.name}. Click Import.`; }; r.readAsText(file);
+  });
+  window.addEventListener('afterprint', () => document.body.classList.remove('print-chk'));
+})();
 document.addEventListener('submit', e => {
   e.preventDefault();
   const f = e.target;
+  if (f.id === 'bulForm') {
+    const from = Date.parse($('b-from').value + 'T00:00'), to = Date.parse($('b-to').value + 'T00:00');
+    if (!isFinite(from) || !isFinite(to) || to < from) { toast(tl('Check the dates: the last day must be on or after the first day.', 'तारीखें जाँचें: अंतिम दिन पहले दिन के बाद होना चाहिए।', 'तारखा तपासा: शेवटचा दिवस पहिल्या दिवसानंतर असावा.')); return; }
+    const counts = {};
+    for (const x of S.DISEASES) { const v = $('b-' + x.id).value; if (v === '') continue; const n = +v; if (!isFinite(n) || n < 0) { toast(tl('Counts must be zero or more', 'संख्या शून्य या अधिक होनी चाहिए', 'संख्या शून्य किंवा अधिक असावी')); return; } counts[x.id] = Math.round(n); }
+    if (!Object.keys(counts).length) { toast(tl('Enter at least one count', 'कम से कम एक संख्या दर्ज करें', 'किमान एक संख्या नोंदवा')); return; }
+    REPORTS.push({ id: 'r' + Date.now(), from, to, counts, src: $('b-src').value.trim(), added: Date.now() }); saveReports(); f.reset();
+    addLog(`BMC report added for ${isoDay(from)} to ${isoDay(to)}: ${Object.entries(counts).map(([k, v]) => `${disName(k)} ${v}`).join(', ')}.`);
+    A.netAt = -999; recompute(false); toast(tl('Report added; forecast updated', 'रिपोर्ट जुड़ी; पूर्वानुमान अपडेट हुआ', 'अहवाल जोडला; अंदाज अद्ययावत झाला')); return;
+  }
   if (f.dataset.confirm) {
     const id = f.dataset.confirm, by = $('by-' + id).value.trim();
     if (!by) return;

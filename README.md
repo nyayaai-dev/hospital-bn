@@ -49,20 +49,25 @@ Mumbai does not publish live bed occupancy. The current state is simulated from 
 python -m http.server 8000
 ```
 
-Then open http://localhost:8000. It also works on GitHub Pages. Live weather needs a real web origin, not `file://`.
+Then open http://localhost:8000. Live weather needs a real web origin, not `file://`.
+
+Public copy on GitHub Pages: https://nyayaai-dev.github.io/hospital-bn/
 
 ## Features
 
 - **Forecasts:** a 7/14/30-day forecast per unit, with 100 Monte Carlo runs (60 for 30 days) giving breach probabilities and 80% ranges. The runs happen in a background Web Worker so the page never freezes.
-- **Diseases:** a table of the 7 notified diseases with each month's figure and its working.
+- **Diseases:** a table of the 7 notified diseases with each month's figure and its working. September 2026 comes from BMC's June–September totals (malaria 7,422, dengue 2,941, gastroenteritis 2,194, H1N1 504; reported 8 Oct 2026).
+- **BMC disease reports:** enter any BMC release (period plus counts per disease). A report that ended in the last 21 days and covers up to 5 weeks rescales each disease's current rate. Longer or older reports are kept as a record, with the model's expected count shown beside each figure. Reports are shared by all hospitals on the device.
 - **Dengue from rainfall:** Pol et al. (IDSP Mumbai, 2009–18) report that dengue follows rainfall with a 2-month lag. The app fits that lag on their month-by-month dengue table and Open-Meteo daily rainfall for the same years. It then projects October–December from this year's rain, labelled **M**. The fit shows β, r and n. When the year-to-year signal is weak, it says so, and the forecast stays near the IDSP seasonal shape.
 - **City network:** 13 hospitals, each showing its published operating data and how many of its inputs are P/D, R or U.
 - **Outbreak watch:** syndromic detection that escalates Watch → Outbreak → Epidemic. When it triggers, the outbreak is carried into every forecast, an epidemic alert email is drafted, desktop notifications fire, and a worst case with a preparedness checklist is produced. Outbreak drills test it without touching real data.
 - **What-if scenarios and actions:** what-if scenarios, 20 preventive actions that each need a named approver, and alert drafts reviewed and sent by a person.
+- **Morning briefing:** a one-page summary for the 9 am meeting: availability now, coming bottlenecks, outbreak status, this week's expected Mumbai cases, alerts and actions awaiting decisions, and a sign-off line. It prints or saves as PDF.
 - **Updates and accuracy:** real-time mode (hourly re-forecast; live rain and AQI every 30 minutes), CSV census import, and a 7-day accuracy backtest.
+- **Getting real hospital data:** the import accepts commas, semicolons or tabs and quoted numbers. It recognises common HMIS headings (`Date`, `Casualty attendance`, `ICU census`, `IPD admissions`…) and day-first dates (`14/10/2026 08:00`, `14-Oct-2026`, Excel serials, or a separate hour column). It accepts daily or hourly rows, and files can be dragged in. Setup also has a hospital checklist of every input no source publishes: the question, who to ask, and a Confirmed tick, with answers labelled **H** and a print view. It also has a ready-to-send data-request letter to the Medical Superintendent and Medical Records, asking for aggregate counts only, plus a blank CSV template.
 - **Learning from your data:** import 7+ days of census rows, adding `admissions` and `discharges` columns if you have them. The app learns casualty attendances and admissions per day, average stay (occupied beds ÷ admissions) and occupancy. Hourly rows also teach the hour-of-day arrival pattern; 14+ days teach the weekday arrival and discharge patterns. These values are labelled **I**.
 - **Saved between visits:** history, approvals, alerts, stakeholders, scenario settings and learned values are kept in IndexedDB on this device, one save per hospital. On return, the app simulates the hours missed (up to 7 days). A button forgets the saved data.
-- **Languages:** English, हिन्दी (Hindi) and मराठी (Marathi) for menus, headings, tiles, buttons and disease names. Dates are shown in the chosen language. Detailed explanations and emails stay in English.
+- **Languages:** English, हिन्दी (Hindi) and मराठी (Marathi) cover menus, tiles, the headline, the "why" explanations, banners, preventive actions, the briefing, the checklist and alert emails. Each email also keeps an English version for official records. Dates are shown in the chosen language. Data-source notes and hospital names stay in English.
 
 ## Files
 

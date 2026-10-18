@@ -1,5 +1,5 @@
 /* Surge Watch — background worker: runs the Monte Carlo ensemble off the page's main thread. */
-importScripts('data.js', 'model.js');
+importScripts('data.js?v=7', 'model.js?v=7');
 self.onmessage = e => {
   const m = e.data;
   try {

@@ -225,10 +225,20 @@
   const floodFactor = mm => mm >= 204.5 ? 2.2 : mm >= 115.6 ? 1.7 : mm >= 64.5 ? 1.35 : 1;
 
   // v: raw readings. dengueWeekly / malariaWeekly: optional BMC weekly counts entered by staff (scale the published series).
+  // Expected notified cases in Mumbai between two times, from the monthly series.
+  function expectedCases(id, from, to) { let e = 0; for (let t = from; t < to; t += DAY) e += rateAt(id, t + DAY / 2); return e; }
   function feedFactors(v) {
     const now = v.now || Date.now();
     const ratio = (id, wk) => wk ? Math.max(0.2, Math.min(5, (wk / 7) / Math.max(0.1, rateAt(id, now)))) : 1;
-    return { dengue: ratio('dengue', v.dengueWeekly), malaria: ratio('malaria', v.malariaWeekly), rainDays: v.rainDays || {} };
+    const out = { dengue: ratio('dengue', v.dengueWeekly), malaria: ratio('malaria', v.malariaWeekly), rainDays: v.rainDays || {}, used: {} };
+    // BMC reports entered by staff: the newest report that ended within 21 days and covers at most 5 weeks rescales each disease.
+    const reps = (v.reports || []).filter(r => r.to <= now && now - r.to <= 21 * DAY && r.to - r.from <= 35 * DAY).sort((a, b) => b.to - a.to);
+    for (const id in SER) {
+      const r = reps.find(x => x.counts && x.counts[id] != null); if (!r) continue;
+      const e = expectedCases(id, r.from, r.to + DAY); if (e < 1) continue;
+      out[id] = Math.max(0.2, Math.min(5, r.counts[id] / e)); out.used[id] = { report: r.id, expected: e };
+    }
+    return out;
   }
 
   /* ---------------- scenarios & actions ---------------- */
@@ -682,7 +692,7 @@
   const api = {
     HOUR, DAY, MUMBAI, HOSPITALS, ISOLATION_RESERVE, UPCOMING, UNITS, WARDS, R, DISEASES, PATHOGENS, SYNDROMES, SYN_TO_PATHOGEN, LEVELS,
     DEFAULT_SETUP, ACTIONS, ACTION_BY_ID, OUTBREAKS, THRESH, HOLIDAYS, DIWALI,
-    setupFor, configure, setStart, floorHour, dayStart, seasonRaw, dayOfYear, holidayOn, indianAQI, aqiBand, rainClass, floodFactor, feedFactors,
+    setupFor, configure, setStart, floorHour, dayStart, seasonRaw, dayOfYear, holidayOn, indianAQI, aqiBand, rainClass, floodFactor, feedFactors, expectedCases,
     defaultLevers, initialState, cloneState, step, simulate, ensemble, detectEvents, detectOutbreak, mulberry, cfgAt, expectedAt, rateAt, SER, NOT_MODELLED, CITY_BEDS, DATA, ensembleSummary, setDiseaseMonths, HOURP, DOW, DISDOW
   };
   Object.defineProperty(api, 'START', { get: () => START, enumerable: true });
