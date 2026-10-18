@@ -35,6 +35,9 @@
     fpjSep2026: { title: 'FPJ: H1N1 cases surge 511% to 507; malaria rises 39% to 8,723 (BMC data, 1 Jan–15 Sep)', url: 'https://www.freepressjournal.in/mumbai/mumbai-h1n1-cases-surge-511-per-cent-to-507-malaria-rises-39-pc-to-8723-bmc-data-shows', date: 'Sep 2026' },
     fpjSep2b2026: { title: 'FPJ: H1N1 cases surge 612%, malaria rises 20.1% (BMC data, Jun–Aug; gastroenteritis 1,954 vs 2,197)', url: 'https://www.freepressjournal.in/mumbai/mumbai-monsoon-health-alert-h1n1-cases-surge-612-per-cent-malaria-rises-201-pc-as-bmc-intensifies-disease-surveillance', date: '2 Sep 2026' },
     mitkatOct2026: { title: 'Mitkat Advisory: Rising malaria and swine flu cases in Mumbai (BMC Public Health Dept, Jun–Sep 2026: malaria 7,422, H1N1 504, dengue 2,941, gastroenteritis 2,194)', url: 'https://mitkatadvisory.com/rising-malaria-and-swine-flu-cases-reported-in-mumbai/', date: '8 Oct 2026' },
+    latestlySep2026: { title: 'LatestLY (citing Times of India): Mumbai malaria cases rise to 9,298 in 2026, 2 deaths (state health dept data to Sep); BMC monsoon data 1 Jun–15 Sep 2026: malaria 5,984, dengue 2,161, leptospirosis 277, H1N1 488', url: 'https://www.latestly.com/india/news/mumbai-malaria-cases-rise-to-9298-in-2026-2-deaths-reported-after-3-year-zero-fatality-run-7617870.html', date: '24 Sep 2026' },
+    mumbaiLiveOct2026: { title: 'Mumbai Live: Malaria, swine flu cases rise in Mumbai during monsoon; dengue and gastro decline (BMC, Jun–Sep 2026: malaria 7,422, H1N1 504, dengue 2,941, gastroenteritis 2,194, leptospirosis 286, chikungunya 66)', url: 'https://www.mumbailive.com/en/health/malaria-swine-flu-cases-rise-in-mumbai-during-monsoon-dengue-and-gastro-cases-decline-94618', date: 'Oct 2026 (no date on the page)' },
+    htOct2026: { title: 'Hindustan Times: Malaria, dengue cases on the decline in October, says BMC (Jun–Sep 2026: malaria 7,422, dengue 2,941; no October figures released)', url: 'https://www.hindustantimes.com/cities/mumbai-news/malaria-dengue-cases-on-the-decline-in-october-says-bmc-101792177497035.html', date: '17 Oct 2026' },
     week2025: { title: 'The Week/PTI: Mumbai sees rise in malaria, gastro, dengue cases in first half of 2025', url: 'https://www.theweek.in/wire-updates/national/2025/07/01/bom23-mh-monsoon-mumbai-diseases.html', date: 'Jul 2025' },
     week2025b: { title: 'The Week/PTI: early monsoon — malaria, chikungunya rise (BMC data to 14 Jul 2025)', url: 'https://www.theweek.in/wire-updates/national/2025/07/15/bom33-mh-bmc-monsoon-diseases.html', date: 'Jul 2025' },
     mems: { title: 'Maharashtra MEMS 108 — new fleet of 1,756 ambulances (rollout from Nov 2025); earlier 937 (233 ALS, 704 BLS)', url: 'https://biospectrumindia.com/news/16/26090/government-of-maharashtra-to-revolutionise-emergency-medical-services-in-india.html', date: '2025' },
@@ -131,36 +134,39 @@
     2018: [11, 6, 2, 7, 12, 21, 59, 153, 399, 249, 48, 36]
   };
   const DISEASE_SERIES = {
-    dengue: { src: ['fpjJul2026', 'fpjMidJul2026', 'fpjSep2026', 'mitkatOct2026', 'polIDSP'], months: [
+    dengue: { src: ['fpjMidJul2026', 'fpjJul2026', 'latestlySep2026', 'mitkatOct2026', 'mumbaiLiveOct2026', 'htOct2026', 'polIDSP'], months: [
       m(92, 'D', 'Jan–May: 938 (1 Jan–14 Jul) − 266 (Jun) − 210 (1–14 Jul) = 462 ÷ 5'), m(92, 'D', 'see Jan'), m(92, 'D', 'see Jan'), m(92, 'D', 'see Jan'), m(92, 'D', 'see Jan'),
       m(266, 'P', 'June 2026'), m(466, 'P', 'July 2026'),
-      m(709, 'D', '2,656 (1 Jan–15 Sep) − 1,194 (Jan–Jul) = 1,462 for Aug + 1–15 Sep, split by the IDSP 2009–18 Aug:½Sep ratio (1,350 : 1,434)'),
-      m(1500, 'D', '2,941 (Jun–Sep, BMC via Mitkat 8 Oct) − 266 − 466 − 709'),
-      m(1335, 'X', 'Sep × 2,552 / 2,868 — Oct/Sep ratio in IDSP Mumbai 2009–18'),
-      m(760, 'X', 'Sep × 1,454 / 2,868 — Nov/Sep ratio in IDSP 2009–18'),
-      m(365, 'X', 'Sep × 698 / 2,868 — Dec/Sep ratio in IDSP 2009–18') ] },
-    malaria: { src: ['fpjJul2026', 'fpjMidJul2026', 'outlookSep2026', 'fpjSep2026', 'mitkatOct2026'], months: [
-      m(481, 'D', 'Jan–May: 3,681 (1 Jan–14 Jul) − 655 (Jun) − 623 (1–14 Jul) = 2,403 ÷ 5'), m(481, 'D', 'see Jan'), m(481, 'D', 'see Jan'), m(481, 'D', 'see Jan'), m(481, 'D', 'see Jan'),
+      m(693, 'D', '2,161 (1 Jun–15 Sep, BMC via LatestLY 24 Sep) − 266 − 466 = 1,429 for Aug + 1–15 Sep, split by the IDSP 2009–18 Aug:½Sep ratio (1,350 : 1,434)'),
+      m(1516, 'D', '2,941 (Jun–Sep, BMC via Mitkat 8 Oct, Mumbai Live and HT 17 Oct) − 266 − 466 − 693'),
+      m(1349, 'X', 'Sep × 2,552 / 2,868 — Oct/Sep ratio in IDSP Mumbai 2009–18. BMC said on 17 Oct (HT) that 1–15 Oct cases fell compared with September but released no figures'),
+      m(769, 'X', 'Sep × 1,454 / 2,868 — Nov/Sep ratio in IDSP 2009–18'),
+      m(369, 'X', 'Sep × 698 / 2,868 — Dec/Sep ratio in IDSP 2009–18') ] },
+    malaria: { src: ['fpjJul2026', 'fpjMidJul2026', 'outlookSep2026', 'fpjSep2026', 'latestlySep2026', 'mitkatOct2026', 'mumbaiLiveOct2026', 'htOct2026'], months: [
+      m(481, 'D', 'Jan–May: 3,681 (1 Jan–14 Jul) − 655 (Jun) − 623 (1–14 Jul) = 2,403 ÷ 5. (The state health department\'s 9,298 for 2026 to September, cited by LatestLY/TOI 24 Sep, is a separate series with an unstated end date and is not used here.)'), m(481, 'D', 'see Jan'), m(481, 'D', 'see Jan'), m(481, 'D', 'see Jan'), m(481, 'D', 'see Jan'),
       m(655, 'P', 'June 2026'), m(1380, 'P', 'July 2026'),
       m(2450, 'D', '4,485 (Jun–Aug) − 655 − 1,380'),
-      m(2937, 'D', '7,422 (Jun–Sep, BMC via Mitkat 8 Oct) − 4,485 (Jun–Aug)'),
-      m(2937, 'X', 'Held at the last published level (no Oct–Dec data published)'), m(2937, 'X', 'Held at the last published level'), m(2937, 'X', 'Held at the last published level') ] },
-    lepto: { src: ['fpjJul2026', 'fpjSep2026', 'week2025'], months: [
-      m(17, 'D', 'Jan–May 2026 not published; 2025 Jan–Jun = 101 → 101 ÷ 6'), m(17, 'D', 'see Jan'), m(17, 'D', 'see Jan'), m(17, 'D', 'see Jan'), m(17, 'D', 'see Jan'),
+      m(2937, 'D', '7,422 (Jun–Sep, BMC via Mitkat 8 Oct, Mumbai Live and HT 17 Oct) − 4,485 (Jun–Aug). Consistent with 5,984 for 1 Jun–15 Sep (BMC via LatestLY): 1,499 in 1–15 Sep'),
+      m(2937, 'X', 'Held at the last published level. BMC said on 17 Oct (HT) that 1–15 Oct cases fell compared with September but released no figures'), m(2937, 'X', 'Held at the last published level'), m(2937, 'X', 'Held at the last published level') ] },
+    lepto: { src: ['fpjJul2026', 'fpjSep2026', 'latestlySep2026', 'mumbaiLiveOct2026'], months: [
+      m(23, 'D', 'Jan–May: 390 (1 Jan–15 Sep, FPJ) − 277 (1 Jun–15 Sep, BMC via LatestLY) = 113 ÷ 5'), m(23, 'D', 'see Jan'), m(23, 'D', 'see Jan'), m(23, 'D', 'see Jan'), m(23, 'D', 'see Jan'),
       m(33, 'P', 'June 2026'), m(78, 'P', 'July 2026'),
-      m(130, 'D', '390 (1 Jan–15 Sep) − 85 (Jan–May) − 111 (Jun–Jul) = 194 for Aug + 1–15 Sep, split pro rata by days (31 : 15)'),
-      m(126, 'D', '63 for 1–15 Sep (see Aug) × 2'),
-      m(17, 'X', 'Back to the Jan–May level (leptospirosis follows monsoon flooding)'), m(17, 'X', 'Jan–May level'), m(17, 'X', 'Jan–May level') ] },
-    gastro: { src: ['fpjJul2026', 'fpjSep2026', 'fpjSep2b2026', 'mitkatOct2026'], months: [
+      m(112, 'D', '277 (1 Jun–15 Sep, BMC via LatestLY) − 33 − 78 = 166 for Aug + 1–15 Sep, split pro rata by days (31 : 15)'),
+      m(63, 'D', '286 (Jun–Sep, BMC via Mumbai Live) − 33 − 78 − 112'),
+      m(23, 'X', 'Back to the Jan–May level (leptospirosis follows monsoon flooding)'), m(23, 'X', 'Jan–May level'), m(23, 'X', 'Jan–May level') ] },
+    gastro: { src: ['fpjJul2026', 'fpjSep2026', 'fpjSep2b2026', 'mitkatOct2026', 'mumbaiLiveOct2026'], months: [
       m(585, 'D', '4,997 (1 Jan–15 Sep) − 603 − 851 − 500 (Aug) − 120 (½ Sep) = 2,923 ÷ 5'), m(585, 'D', 'see Jan'), m(585, 'D', 'see Jan'), m(585, 'D', 'see Jan'), m(585, 'D', 'see Jan'),
       m(603, 'P', 'June 2026'), m(851, 'P', 'July 2026'), m(500, 'D', '1,954 (Jun–Aug) − 603 − 851'), m(240, 'D', '2,194 (Jun–Sep, BMC via Mitkat 8 Oct) − 1,954 (Jun–Aug)'),
       m(585, 'X', 'Jan–May average level'), m(585, 'X', 'Jan–May average level'), m(585, 'X', 'Jan–May average level') ] },
     hep: { src: ['week2025b'], months: Array.from({ length: 12 }, () => m(73, 'D', '2025: 477 cases 1 Jan–14 Jul ÷ 6.45 months (2026 figure not published)')) },
-    flu: { src: ['fpjJul2026', 'outlookSep2026', 'fpjSep2026', 'mitkatOct2026'], months: [
+    flu: { src: ['fpjJul2026', 'outlookSep2026', 'fpjSep2026', 'latestlySep2026', 'mitkatOct2026', 'mumbaiLiveOct2026'], months: [
       m(0, 'D', 'No Jan–May figure published; 504 cases in Jun–Sep against 507 for 1 Jan–15 Sep leaves almost none before June'), m(0, 'D', 'see Jan'), m(0, 'D', 'see Jan'), m(0, 'D', 'see Jan'), m(0, 'D', 'see Jan'),
       m(58, 'P', 'June 2026'), m(105, 'P', 'July 2026'), m(278, 'D', '441 (Jun–Aug) − 58 − 105'), m(63, 'D', '504 (Jun–Sep, BMC via Mitkat 8 Oct) − 441 (Jun–Aug)'),
       m(63, 'X', 'Held at the last published level'), m(63, 'X', 'Held at the last published level'), m(63, 'X', 'Held at the last published level') ] },
-    chik: { src: ['fpjSep2026'], months: Array.from({ length: 12 }, () => m(9, 'D', '80 cases 1 Jan–15 Sep 2026 ÷ 8.5 months')) }
+    chik: { src: ['fpjSep2026', 'mumbaiLiveOct2026'], months: [
+      m(4, 'D', 'Jan–May: 80 (1 Jan–15 Sep, FPJ) − 58 (3.5 months at the Jun–Sep rate, see Jun) = 22 ÷ 5'), m(4, 'D', 'see Jan'), m(4, 'D', 'see Jan'), m(4, 'D', 'see Jan'), m(4, 'D', 'see Jan'),
+      m(17, 'D', '66 (Jun–Sep, BMC via Mumbai Live) ÷ 4 months'), m(17, 'D', 'see Jun'), m(17, 'D', 'see Jun'), m(17, 'D', 'see Jun'),
+      m(17, 'X', 'Held at the last published level'), m(17, 'X', 'Held at the last published level'), m(17, 'X', 'Held at the last published level') ] }
   };
 
   // Inputs the model needs that no source publishes for Mumbai hospitals. The UI asks hospitals to replace these.
