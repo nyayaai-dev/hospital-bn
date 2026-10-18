@@ -76,11 +76,12 @@
     const amb = put('ambulances', Math.max(3, Math.round(arr / 25)), 'U', 'mems', 'Mumbai and per-hospital 108 allocation not published (statewide fleet: 1,756). Placeholder.');
     const pltS = F.bloodUnitsPerDay ? put('plateletSupply', Math.round(F.bloodUnitsPerDay.v * 0.25), 'U', 'sionMUHS', '75-80 blood units dispensed a day (published) x 25% platelets (split not published)')
       : put('plateletSupply', Math.round(arr * 0.11), 'U', null, 'Blood bank output not published. Placeholder.');
+    const patterns = put('patterns', 'Default profile', 'U', null, 'Hour-of-day arrivals, weekday arrivals and weekday discharges are not published. Default profiles are used until learned from imported census data.');
     const pltN = put('plateletStock', Math.round(pltS * 3), 'U', null, 'Stock not published. Placeholder: 3 days of supply.');
     return { hospitalId: h.id, name: h.name + ', ' + h.area, type: h.type, totalBeds: beds,
       beds: { MED: med, SURG: surg, ICU: icu, PEDS: peds, ISO: iso },
       edSpaces: ed, edLOS, vents, arrPerDay: arr, admissionsPerDay: adm, alos, bor, startOcc: bor, nurses, docs, lab, xray, img,
-      plateletSupply: pltS, plateletStock: pltN, o2Capacity: o2Cap, o2Delivery: o2Del, ambulances: amb, prov };
+      plateletSupply: pltS, plateletStock: pltN, patterns, o2Capacity: o2Cap, o2Delivery: o2Del, ambulances: amb, prov };
   }
   const DEFAULT_SETUP = setupFor(HOSPITALS[0]);
 
@@ -203,7 +204,7 @@
       los: { MED: s.alos, SURG: s.alos, ICU: s.alos, PEDS: s.alos, ISO: s.alos },
       lab: Object.assign({}, R.lab, s.lab), xray: Object.assign({}, R.xray, s.xray), img: Object.assign({}, R.img, s.img),
       pltSupply: s.plateletSupply / 12, pltStock: s.plateletStock, o2Cap: s.o2Capacity, o2Delivery: s.o2Delivery / 24,
-      amb: s.ambulances, startOcc: s.startOcc || s.bor || 0.75, share: (s.totalBeds || sumBeds) / CITY_BEDS, sizeK: s.arrPerDay / 200 };
+      amb: s.ambulances, hourp: s.hourp || null, dow: s.dow || null, disdow: s.disdow || null, startOcc: s.startOcc || s.bor || 0.75, share: (s.totalBeds || sumBeds) / CITY_BEDS, sizeK: s.arrPerDay / 200 };
     api.P = P; api.SETUP = s;
     return P;
   }
@@ -336,12 +337,13 @@
   function step(s, k, absHour, run) {
     const t = START + absHour * HOUR, d = new Date(t), h = d.getHours(), dow = d.getDay();
     const c = cfgAt(run, k), F = run.flags || {}, rnd = run.rand, fe = run.feeds || {};
+    const HP = P.hourp || HOURP, DW = P.dow || DOW, DD = P.disdow || DISDOW;
     const hol = F.noHoliday ? null : holidayOn(t);
-    const dowF = F.flatDow ? 1 : DOW[dow];
+    const dowF = F.flatDow ? 1 : DW[dow];
     const sh = h >= 7 && h < 15 ? 1 : (h >= 15 && h < 23 ? 2 : 0);
     const [seasonShock, dayShock, epiShock] = shocks(run, t);
     const m = c.arrMult * (run.nowcast || 1) * (run.band || 1) * dayShock * P.arrScale;
-    const unit = P.arr * HOURP[h] * dowF;
+    const unit = P.arr * HP[h] * dowF;
     let base = unit * m;
     const expectedBase = unit * c.arrMult * P.arrScale;
 
@@ -366,7 +368,7 @@
       if (c.outbreak === 'gastro' && S.id === 'gastro') r *= 2.5;
       // Published hospital arrivals already contain the yearly average; only the deviation from it is added.
       const dev = (r - Sx.mean) * c.seasonScale;
-      const perHour = dev * P.share * HOURP[h] / 24;
+      const perHour = dev * P.share * HP[h] / 24;
       synExp[S.syn] += perHour * c.arrMult * P.arrScale / (run.seasonBand || 1);
       const x = perHour * seasonShock * m;
       parts.push([S, x]); seasonArr += x;
@@ -376,7 +378,7 @@
     const ep = F.noEpi ? null : run.epi;
     if (ep && absHour >= ep.t0) {
       epiP = PATHOGENS[ep.pathogen];
-      epiX = Math.min(ep.cap * P.sizeK, ep.a0 * P.sizeK * Math.exp(ep.r * epiShock * (absHour - ep.t0))) * HOURP[h] * (run.band || 1) * dayShock;
+      epiX = Math.min(ep.cap * P.sizeK, ep.a0 * P.sizeK * Math.exp(ep.r * epiShock * (absHour - ep.t0))) * HP[h] * (run.band || 1) * dayShock;
       if (epiP.staff && !F.noLeave) staffAbs += epiP.staff * Math.min(1, epiX / Math.max(1, P.arr));
     }
     if (rnd) {
@@ -444,6 +446,7 @@
     const edIn = (base + seasonArr * (1 - c.fastTrack) + epiX * (1 - c.jumbo) + mci) * (1 - divert);
     s.ed += edIn;
     s.ed -= Math.min(s.ed / edLOS, docs * R.docRate);
+    const admTot = WARDS.reduce((a, u) => a + adm[u], 0);
     for (const u of WARDS) s.bd[u] += adm[u];
 
     // Ambulances: trips scale with arrivals; Mumbai traffic and flooding lengthen each trip.
@@ -455,12 +458,13 @@
 
     // Discharges (fewer at weekends and on public holidays); each freed bed then needs cleaning
     const offDay = dow === 0 || dow === 6 || !!hol;
-    const dd = hol && dow >= 1 && dow <= 5 ? 0.6 : DISDOW[dow];
+    const dd = hol && dow >= 1 && dow <= 5 ? 0.6 : DD[dow];
     const dF = DISP[h] * (offDay && F.noWeekendDip ? 0.95 : offDay && c.weekendDc ? Math.max(dd, 0.72) : dd) * c.dcBoost;
     const disOf = (u, x) => rnd ? Math.min(s.occ[u], poisson(x, rnd)) : x;
-    for (const u of ['MED', 'SURG', 'PEDS', 'ISO']) { const x = disOf(u, s.occ[u] / (P.los[u] * 24) * dF); s.occ[u] -= x; s.dirty[u] += x; }
+    let disTot = 0;
+    for (const u of ['MED', 'SURG', 'PEDS', 'ISO']) { const x = disOf(u, s.occ[u] / (P.los[u] * 24) * dF); s.occ[u] -= x; s.dirty[u] += x; disTot += x; }
     const icuDis = disOf('ICU', s.occ.ICU / (P.los.ICU * 24) * (0.5 + 0.5 * dF));
-    s.occ.ICU -= icuDis * (1 - R.icuToMed); s.dirty.ICU += icuDis * (1 - R.icuToMed);
+    s.occ.ICU -= icuDis * (1 - R.icuToMed); s.dirty.ICU += icuDis * (1 - R.icuToMed); disTot += icuDis;
     s.icuStep += icuDis * R.icuToMed;
     const cleanH = F.noCleaning ? 0.2 : c.cleanFast ? 1.5 : R.clean[sh];
     for (const u of WARDS) s.dirty[u] -= s.dirty[u] * Math.min(1, 1 / cleanH);
@@ -532,7 +536,7 @@
     if (run.lite) return { p };
     const bgSum = Object.values(R.bg).reduce((x, y) => x + y, 0);
     return {
-      t, k: absHour, p, arrivals, expected: expectedBase * (1 - bgSum) + Object.values(synExp).reduce((x, y) => x + y, 0),
+      t, k: absHour, p, arrivals, admTot, disTot, expected: expectedBase * (1 - bgSum) + Object.values(synExp).reduce((x, y) => x + y, 0),
       syn, synExp, epiX, seasonArr, seasonBy, edIn, edLOS, labTAT, xrayTAT: Math.min(xrayTAT, 12), imgTAT: Math.min(imgTAT, 12),
       boarders: boardTotal, diverted: divert ? (base + seasonArr + mci) * divert : 0, icuStepWait: s.icuStep, cancelled,
       nurseReq: req, nurseAvail: avail, labDemand: labD, xrayDemand: xrayD, plt: s.plt, pltDemand, pltShort: pltDemand - used,
@@ -567,6 +571,42 @@
       return hit / n;
     };
     return q;
+  }
+
+  // Monte Carlo summary small enough to send from a Web Worker: P10/P90 per hour, the first hour each run
+  // crosses the warning and critical lines, and each run's peak per calendar day.
+  function ensembleSummary(s0, t0, hours, run, n, seed) {
+    const ids = UNITS.map(u => u.id), W = THRESH.warn, C = THRESH.crit;
+    const days = []; let k = 0;
+    while (k < hours) { const dd = new Date(START + (t0 + k) * HOUR), rest = 24 - dd.getHours(); days.push([k, Math.min(hours, k + rest)]); k += rest; }
+    const cols = {}; for (const id of ids) cols[id] = new Float32Array(n * hours);
+    const first = { warn: {}, crit: {} }, dayMax = {};
+    for (const id of ids) { first.warn[id] = new Int16Array(n).fill(-1); first.crit[id] = new Int16Array(n).fill(-1); dayMax[id] = new Float32Array(n * days.length); }
+    for (let i = 0; i < n; i++) {
+      const ser = simulate(s0, t0, hours, Object.assign({}, run, { rand: mulberry(seed + i * 7919), lite: true, _sh: null }));
+      for (const id of ids) {
+        const col = cols[id], fw = first.warn[id], fc = first.crit[id], dm = dayMax[id];
+        let di = 0;
+        for (let h = 0; h < hours; h++) {
+          const v = ser[h].p[id]; col[h * n + i] = v;
+          if (fw[i] < 0 && v >= W) fw[i] = h;
+          if (fc[i] < 0 && v >= C) fc[i] = h;
+          while (di < days.length - 1 && h >= days[di][1]) di++;
+          if (v > dm[i * days.length + di]) dm[i * days.length + di] = v;
+        }
+      }
+    }
+    const p10 = {}, p90 = {}, lo = Math.floor(0.1 * (n - 1)), hi = Math.ceil(0.9 * (n - 1));
+    for (const id of ids) {
+      const a = new Float32Array(hours), b = new Float32Array(hours), col = cols[id];
+      for (let h = 0; h < hours; h++) { const sl = col.subarray(h * n, h * n + n).slice().sort(); a[h] = sl[lo]; b[h] = sl[hi]; }
+      p10[id] = a; p90[id] = b;
+    }
+    return { n, hours, days, p10, p90, first, dayMax };
+  }
+  function setDiseaseMonths(id, months) {
+    const tot = months.reduce((a, x) => a + x.c, 0);
+    SER[id] = { ms: months, mean: tot / 365, peak: Math.max(...months.map((x, i) => x.c / dim(i))), total: tot };
   }
 
   /* ---------------- syndromic outbreak detection ---------------- */
@@ -632,9 +672,10 @@
   }
 
   function expectedAt(t, feeds) {
-    const d = new Date(t), unit = P.arr * HOURP[d.getHours()] * DOW[d.getDay()] * P.arrScale;
+    const HP = P.hourp || HOURP, DW = P.dow || DOW;
+    const d = new Date(t), unit = P.arr * HP[d.getHours()] * DW[d.getDay()] * P.arrScale;
     let x = unit;
-    for (const S of DISEASES) x += (rateAt(S.id, t) * ((feeds || {})[S.id] || 1) - SER[S.id].mean) * P.share * HOURP[d.getHours()] / 24;
+    for (const S of DISEASES) x += (rateAt(S.id, t) * ((feeds || {})[S.id] || 1) - SER[S.id].mean) * P.share * HP[d.getHours()] / 24;
     return x;
   }
 
@@ -642,10 +683,10 @@
     HOUR, DAY, MUMBAI, HOSPITALS, ISOLATION_RESERVE, UPCOMING, UNITS, WARDS, R, DISEASES, PATHOGENS, SYNDROMES, SYN_TO_PATHOGEN, LEVELS,
     DEFAULT_SETUP, ACTIONS, ACTION_BY_ID, OUTBREAKS, THRESH, HOLIDAYS, DIWALI,
     setupFor, configure, setStart, floorHour, dayStart, seasonRaw, dayOfYear, holidayOn, indianAQI, aqiBand, rainClass, floodFactor, feedFactors,
-    defaultLevers, initialState, cloneState, step, simulate, ensemble, detectEvents, detectOutbreak, mulberry, cfgAt, expectedAt, rateAt, SER, NOT_MODELLED, CITY_BEDS, DATA
+    defaultLevers, initialState, cloneState, step, simulate, ensemble, detectEvents, detectOutbreak, mulberry, cfgAt, expectedAt, rateAt, SER, NOT_MODELLED, CITY_BEDS, DATA, ensembleSummary, setDiseaseMonths, HOURP, DOW, DISDOW
   };
   Object.defineProperty(api, 'START', { get: () => START, enumerable: true });
   api.SEASONS = DISEASES;
   global.SW = api;
   configure(DEFAULT_SETUP);
-})(window);
+})(typeof window !== 'undefined' ? window : self);

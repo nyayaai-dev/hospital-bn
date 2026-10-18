@@ -41,6 +41,7 @@
     imd: { title: 'India Meteorological Department — rainfall intensity categories', url: 'https://mausam.imd.gov.in/', date: 'standard' },
     cpcb: { title: 'CPCB National Air Quality Index breakpoints', url: 'https://cpcb.nic.in/national-air-quality-index/', date: 'standard' },
     openMeteo: { title: 'Open-Meteo weather and air-quality APIs (live)', url: 'https://open-meteo.com/', date: 'live' },
+    openMeteoArchive: { title: 'Open-Meteo historical weather archive (daily rainfall, Mumbai)', url: 'https://open-meteo.com/en/docs/historical-weather-api', date: '2008–present' },
     holidays: { title: 'Gazetted holidays 2026 (Punjab AG office list; IIT Kanpur circular)', url: 'https://cag.gov.in/ag/punjab/en/page-ag-punjab-holiday-list', date: '2026' }
   };
 
@@ -114,6 +115,19 @@
      Each month: [cases, kind, note]. 'X' months are projections from the stated rule. */
   const m = (c, kind, note) => ({ c, kind, note });
   const IDSP_DENGUE_10Y = [333, 183, 138, 159, 191, 279, 703, 1350, 2868, 2552, 1454, 698]; // sum of 2009–2018 by month (Pol et al.)
+  // Month-wise dengue cases in Mumbai 2009–2018, Table 1 of Pol et al. 2021 (IDSP Epidemiology Cell, Mumbai). Jan..Dec per year.
+  const IDSP_DENGUE_BY_YEAR = {
+    2009: [13, 3, 6, 10, 8, 30, 80, 159, 244, 323, 121, 119],
+    2010: [66, 37, 18, 15, 8, 20, 81, 245, 253, 173, 51, 37],
+    2011: [20, 5, 6, 8, 2, 22, 115, 207, 353, 517, 344, 157],
+    2012: [11, 9, 5, 6, 4, 10, 60, 157, 242, 237, 166, 101],
+    2013: [94, 41, 24, 29, 37, 32, 66, 87, 168, 189, 96, 64],
+    2014: [33, 21, 26, 23, 32, 27, 52, 65, 167, 213, 146, 56],
+    2015: [32, 22, 21, 28, 30, 38, 57, 78, 248, 211, 108, 46],
+    2016: [21, 23, 22, 21, 27, 48, 63, 106, 382, 228, 189, 50],
+    2017: [32, 16, 8, 12, 31, 31, 70, 93, 412, 212, 185, 32],
+    2018: [11, 6, 2, 7, 12, 21, 59, 153, 399, 249, 48, 36]
+  };
   const DISEASE_SERIES = {
     dengue: { src: ['fpjJul2026', 'fpjMidJul2026', 'fpjSep2026', 'polIDSP'], months: [
       m(92, 'D', 'Jan–May: 938 (1 Jan–14 Jul) − 266 (Jun) − 210 (1–14 Jul) = 462 ÷ 5'), m(92, 'D', 'see Jan'), m(92, 'D', 'see Jan'), m(92, 'D', 'see Jan'), m(92, 'D', 'see Jan'),
@@ -162,5 +176,5 @@
     { key: 'patterns', label: 'Hour-of-day and weekday arrival and discharge patterns', why: 'No Mumbai hospital publishes these; enter from your HIS or import census data.' }
   ];
 
-  global.SWDATA = { SOURCES, HOSPITAL_FACTS, CITY_FACTS, DISEASE_SERIES, IDSP_DENGUE_10Y, UNPUBLISHED, YEAR: 2026 };
-})(window);
+  global.SWDATA = { SOURCES, HOSPITAL_FACTS, CITY_FACTS, DISEASE_SERIES, IDSP_DENGUE_10Y, IDSP_DENGUE_BY_YEAR, UNPUBLISHED, YEAR: 2026 };
+})(typeof window !== 'undefined' ? window : self);

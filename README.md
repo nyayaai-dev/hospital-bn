@@ -15,6 +15,8 @@ Every input carries a provenance label, shown as a badge in the app and in `data
 | **X** | Projection after the last published month; the rule is shown |
 | **H** | Entered by hospital staff |
 | **L** | Live data (Open-Meteo) |
+| **I** | Learned from the hospital's own imported census data |
+| **M** | Model forecast fitted on published data (dengue from rainfall) |
 
 **Hospital figures (official documents):**
 - **KEM:** NIRF 2026 submission for 2024 (1,900 beds, 1,430 occupied a day, 6,206 OPD a day). Medical Records report for 2023 (177 admissions a day, 1,43,098 casualty attendances, average stay 8.0 days). 2022 proforma (40 emergency beds).
@@ -51,15 +53,20 @@ Then open http://localhost:8000. It also works on GitHub Pages. Live weather nee
 
 ## Features
 
-- **Forecasts:** a 7/14/30-day forecast per unit, with 30 Monte Carlo runs giving breach probabilities and 80% ranges.
+- **Forecasts:** a 7/14/30-day forecast per unit, with 100 Monte Carlo runs (60 for 30 days) giving breach probabilities and 80% ranges. The runs happen in a background Web Worker so the page never freezes.
 - **Diseases:** a table of the 7 notified diseases with each month's figure and its working.
+- **Dengue from rainfall:** Pol et al. (IDSP Mumbai, 2009–18) report that dengue follows rainfall with a 2-month lag. The app fits that lag on their month-by-month dengue table and Open-Meteo daily rainfall for the same years. It then projects October–December from this year's rain, labelled **M**. The fit shows β, r and n. When the year-to-year signal is weak, it says so, and the forecast stays near the IDSP seasonal shape.
 - **City network:** 13 hospitals, each showing its published operating data and how many of its inputs are P/D, R or U.
 - **Outbreak watch:** syndromic detection that escalates Watch → Outbreak → Epidemic. When it triggers, the outbreak is carried into every forecast, an epidemic alert email is drafted, desktop notifications fire, and a worst case with a preparedness checklist is produced. Outbreak drills test it without touching real data.
 - **What-if scenarios and actions:** what-if scenarios, 20 preventive actions that each need a named approver, and alert drafts reviewed and sent by a person.
 - **Updates and accuracy:** real-time mode (hourly re-forecast; live rain and AQI every 30 minutes), CSV census import, and a 7-day accuracy backtest.
+- **Learning from your data:** import 7+ days of census rows, adding `admissions` and `discharges` columns if you have them. The app learns casualty attendances and admissions per day, average stay (occupied beds ÷ admissions) and occupancy. Hourly rows also teach the hour-of-day arrival pattern; 14+ days teach the weekday arrival and discharge patterns. These values are labelled **I**.
+- **Saved between visits:** history, approvals, alerts, stakeholders, scenario settings and learned values are kept in IndexedDB on this device, one save per hospital. On return, the app simulates the hours missed (up to 7 days). A button forgets the saved data.
+- **Languages:** English, हिन्दी (Hindi) and मराठी (Marathi) for menus, headings, tiles, buttons and disease names. Dates are shown in the chosen language. Detailed explanations and emails stay in English.
 
 ## Files
 
 - `data.js`: every sourced figure with source, date, kind and working.
 - `model.js`: the simulation model.
+- `worker.js`: runs the Monte Carlo ensemble in the background.
 - `index.html`: the interface.

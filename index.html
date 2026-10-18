@@ -276,6 +276,15 @@ details.setup[open] > summary h2::before { content: "▾ "; }
 .kb.k-U { background: var(--crit-soft); color: var(--ink); border-color: var(--crit); }
 .kb.k-X { background: var(--surface-2); color: var(--ink-2); border: 1px dashed var(--muted); }
 .kb.k-H { background: var(--ink); color: var(--bg); }
+.kb.k-I { background: var(--good); color: #fff; }
+.kb.k-M { background: var(--accent-soft); color: var(--ink); border: 1px dashed var(--accent); }
+table.cmp td.mc.k-M { color: var(--accent); font-style: italic; font-weight: 700; }
+.calc { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--muted); }
+.calc::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--accent); border-top-color: transparent; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .calc::before { animation: none; } }
+.stat-row { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: .9rem; }
+.stat-row b { font-family: var(--f-data); }
 table.cmp td.mc { text-align: right; font-family: var(--f-data); font-size: .76rem; padding: 4px 6px; }
 table.cmp td.mc.k-X { color: var(--muted); font-style: italic; }
 table.cmp td.mc.k-D { color: var(--ink-2); }
@@ -328,6 +337,7 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
     <div class="ctrls">
       <label class="sr" for="focusHosp">Hospital</label>
       <select class="in" id="focusHosp" aria-label="Hospital to forecast"></select>
+      <select class="in" id="lang" aria-label="Language"><option value="en">English</option><option value="hi">हिन्दी</option><option value="mr">मराठी</option></select>
       <select class="in" id="mode" aria-label="Clock mode"><option value="real">Real time</option><option value="fast">Fast-forward demo</option></select>
       <button class="btn" id="liveBtn" type="button"><span class="live-dot"></span><span id="liveLbl">Run</span></button>
       <button class="btn demo" id="stepBtn" type="button" title="Advance one hour">+1 h</button>
@@ -426,6 +436,10 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Mumbai</span><h2 id="h-dis">Seasonal infections and diseases that fill beds</h2></div>
       <p>Monthly notified cases in Mumbai for 2026, from BMC data and the IDSP dengue series, with each figure's working on hover. These drive the seasonal part of every forecast.</p></div>
     <div class="scroll-x"><table class="cmp" id="diseases"></table></div>
+    <div class="panel sec" style="background:var(--surface-2)">
+      <div class="sec-head"><h3>Dengue forecast from rainfall</h3><span class="small muted" id="dengueStatus"></span></div>
+      <div id="dengueModel" class="sec"></div>
+    </div>
   </section>
 
   <section class="panel sec" aria-labelledby="h-epi" id="epidemic" data-view="outbreak">
@@ -579,21 +593,26 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save and restart forecast</button><button class="btn" type="button" id="setupDefaults">Reset to estimates for this hospital</button></div>
       </form>
       <div class="sec">
+        <h3>Learned from your data</h3>
+        <div id="learnedBox" class="small ink2"></div>
         <h3>Import census data</h3>
         <p class="ink2 small" style="max-width:80ch">Paste or upload a CSV exported from your HIS, one row per hour or per day. Only <span class="mono">timestamp</span> is required. The last row becomes the forecast's starting point, ED arrivals calibrate demand, and earlier rows feed the accuracy check.</p>
-        <p class="mono small" style="overflow-wrap:anywhere">timestamp, ed_arrivals, ed_census, ed_waiting_for_bed, med_occupied, surg_occupied, icu_occupied, peds_occupied, iso_occupied, lab_backlog, platelet_stock, oxygen_stock, ambulances_busy</p>
+        <p class="mono small" style="overflow-wrap:anywhere">timestamp, ed_arrivals, ed_census, ed_waiting_for_bed, med_occupied, surg_occupied, icu_occupied, peds_occupied, iso_occupied, lab_backlog, platelet_stock, oxygen_stock, ambulances_busy, admissions, discharges</p>
+        <p class="ink2 small" style="max-width:80ch">With 7+ days of rows the app learns casualty attendances and admissions per day, average stay (occupied beds ÷ admissions) and occupancy. Hourly rows also teach the hour-of-day arrival pattern, and 14+ days the weekday arrival and discharge patterns. Learned values replace placeholders and are marked <span class="kb k-I">I</span>.</p>
         <textarea class="in" id="csvText" spellcheck="false" placeholder="timestamp,ed_arrivals,med_occupied&#10;2026-10-14 08:00,40,880&#10;…"></textarea>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button class="btn primary" type="button" id="csvImport">Import</button>
           <label class="btn" for="csvFile">Choose file…</label><input id="csvFile" type="file" accept=".csv,text/csv" hidden>
           <button class="btn" type="button" id="csvSample">Fill with example data</button>
           <button class="btn ghost" type="button" id="csvClear">Back to simulated data</button>
+          <button class="btn ghost" type="button" id="forgetBtn">Forget saved data on this device</button>
           <span class="muted small" id="csvStatus"></span>
         </div>
       </div>
     </div>
   </details>
 
+  <p class="foot" id="langNote" hidden>Detailed explanations, emails and data sources stay in English.</p>
   <p class="foot" id="foot"></p>
   <p class="foot" id="sources"></p>
 </main>
@@ -669,7 +688,8 @@ function freshApp(keep) {
     horizonDays: store.get('horizon', 14), selUnit: null, live: false, timer: null, mode: (keep && keep.mode) || 'real', heatMode: 'peak',
     log: [], alerts: [], prevSummary: null, rule: { minSev: 'critical', leadH: 72, prob: 0.5 },
     people: store.get('people', DEFAULT_PEOPLE), F: null, imported: null, acc: null, arrScale: 1,
-    drill: (keep && keep.drill) || null, det: null, epiFit: null, epiAlertLevel: 0, worst: null, net: null, netAt: -999
+    drill: (keep && keep.drill) || null, det: null, epiFit: null, epiAlertLevel: 0, worst: null, net: null, netAt: -999,
+    learned: null, ensPending: false, savedAt: null, saveFailed: false
   };
 }
 const feeds = () => S.feedFactors(Object.assign({}, A.feedVals, { now: S.START + A.now * S.HOUR }));
@@ -693,7 +713,7 @@ function boot(keep) {
   }
   updateNowcast(); detect();
   recompute(true);
-  backtest(); renderAcc();
+  backtest();
   setLive(true);
 }
 
@@ -735,27 +755,69 @@ function unitSummary(events) {
 function recompute(initial) {
   const h = H();
   const mid = S.simulate(A.state, A.now, h, baseRun());
-  const ens = S.ensemble(A.state, A.now, h, baseRun(), A.horizonDays > 14 ? 20 : ENS_N, 1000 + A.now);
+  const prev = A.F && A.F.ens;
+  const ens = prev && !prev.provisional && prev.p10.length === h ? prev : provisionalEns(mid);
   let compare = null, compareLabel = '';
   if (leversChanged()) { compare = S.simulate(A.state, A.now, h, baseRun({ levers: S.defaultLevers() })); compareLabel = 'Without scenario'; }
   else if (A.approved.length) { compare = S.simulate(A.state, A.now, h, baseRun({ actions: [] })); compareLabel = 'Without approved actions'; }
   const events = S.detectEvents(mid), sum = unitSummary(events);
-  for (const id in sum) {
-    const s = sum[id];
-    s.pCrit = ens.prob(id, 0, h - 1, S.THRESH.crit);
-    s.pFirst = ens.prob(id, 0, s.firstSerious.start + 12, s.firstSerious.sev === 'critical' ? S.THRESH.crit : S.THRESH.warn);
-  }
-  const risk = {};
-  for (const u of U) if (!sum[u.id]) { const pw = ens.prob(u.id, 0, h - 1, S.THRESH.warn); if (pw >= 0.5) risk[u.id] = { pw }; }
+  const risk = probsFor(ens, sum, h);
   const typical = S.simulate(A.state, A.now, h, baseRun({ levers: S.defaultLevers(), off: Object.fromEntries(S.DISEASES.map(s => [s.id, true])), nowcast: 1, epi: null }));
   A.F = { mid, ens, compare, compareLabel, events, sum, risk, typical };
   if (!A.selUnit) A.selUnit = pickDefaultUnit();
   computeWorst();
   if (A.now - A.netAt >= 6 || initial) computeNetwork();
-  if (!leversChanged()) { diffAndLog(initial); evaluateAlerts(); }
+  if (!leversChanged()) diffAndLog(initial);
   evaluateEpiAlert();
   render();
+  requestEnsemble();
 }
+// Probabilities from an ensemble for the current bottlenecks, plus units at risk only in some futures.
+function probsFor(ens, sum, h) {
+  const risk = {};
+  if (ens.provisional) { for (const id in sum) { sum[id].pCrit = null; sum[id].pFirst = null; } return risk; }
+  for (const id in sum) {
+    const s = sum[id];
+    s.pCrit = ens.prob(id, 0, h - 1, S.THRESH.crit);
+    s.pFirst = ens.prob(id, 0, s.firstSerious.start + 12, s.firstSerious.sev === 'critical' ? S.THRESH.crit : S.THRESH.warn);
+  }
+  for (const u of U) if (!sum[u.id]) { const pw = ens.prob(u.id, 0, h - 1, S.THRESH.warn); if (pw >= 0.5) risk[u.id] = { pw }; }
+  return risk;
+}
+function provisionalEns(mid) { return { n: 0, provisional: true, p10: mid, p90: mid, prob: () => null }; }
+function makeEns(res) {
+  const ids = U.map(u => u.id), p10 = [], p90 = [], n = res.n, D = res.days.length;
+  for (let k = 0; k < res.hours; k++) { const a = {}, b = {}; for (const id of ids) { a[id] = res.p10[id][k]; b[id] = res.p90[id][k]; } p10.push({ p: a }); p90.push({ p: b }); }
+  return { n, p10, p90, provisional: false, prob(id, from, to, thr) {
+    const key = thr >= S.THRESH.crit ? 'crit' : 'warn';
+    if (from === 0) { let c = 0; for (const f of res.first[key][id]) if (f >= 0 && f <= to) c++; return c / n; }
+    const di = res.days.findIndex(d => d[0] === from); if (di < 0) return 0;
+    const dm = res.dayMax[id]; let c = 0; for (let i = 0; i < n; i++) if (dm[i * D + di] >= thr) c++; return c / n;
+  } };
+}
+let worker = null, ensJob = 0;
+function initWorker() {
+  try { worker = new Worker('worker.js'); worker.onmessage = e => onEnsemble(e.data); worker.onerror = ev => { if (ev && ev.preventDefault) ev.preventDefault(); worker = null; requestEnsemble(); }; }
+  catch (e) { worker = null; }
+}
+function ensembleSize() { return A.horizonDays > 14 ? 60 : 100; }
+function requestEnsemble() {
+  const id = ++ensJob, h = H();
+  const msg = { id, start: S.START, setup: A.setup, arrScale: A.arrScale, dengueMonths: S.SER.dengue.ms, state: A.state, now: A.now, hours: h, run: baseRun(), n: ensembleSize(), seed: 1000 + A.now };
+  A.ensPending = true; renderEnsStatus();
+  if (worker) { try { worker.postMessage(msg); return; } catch (e) { worker = null; } }
+  setTimeout(() => { if (id !== ensJob) return; onEnsemble({ id, res: S.ensembleSummary(msg.state, msg.now, msg.hours, msg.run, msg.n, msg.seed) }); }, 30);
+}
+function onEnsemble(m) {
+  if (m.id !== ensJob || !A.F) return;
+  if (m.error) { worker = null; requestEnsemble(); return; }
+  A.ensPending = false;
+  A.F.ens = makeEns(m.res);
+  A.F.risk = probsFor(A.F.ens, A.F.sum, H());
+  if (!leversChanged()) evaluateAlerts();
+  render();
+}
+function renderEnsStatus() { const el = $('ensStatus'); if (el) el.innerHTML = A.ensPending ? '<span class="calc">Updating probabilities</span>' : ''; }
 function ranked() {
   const order = { critical: 0, warning: 1 };
   return Object.values(A.F.sum).sort((a, b) => order[a.sev] - order[b.sev] || a.firstSerious.start - b.firstSerious.start);
@@ -888,6 +950,75 @@ function diseaseText(se) {
 }
 const LEVER_NAMES = { arrivalPct: 'arrival change', seasonScale: 'seasonal surge', outbreak: 'outbreak', flood: 'Mumbai flood', nurseShortPct: 'nurse shortage', docShortPct: 'ED doctor shortage', medBedsClosed: 'Medicine beds closed', ventsDown: 'ventilators out of service', labDownPct: 'lab capacity lost', xrayDownPct: 'X-ray capacity lost', imgDownPct: 'CT/USG capacity lost', plateletCutPct: 'platelet supply cut', o2CutPct: 'oxygen supply cut', ambDownPct: 'ambulances off road' };
 
+/* ---------------- languages: English, Hindi, Marathi ---------------- */
+const I18N = {"Monitor": {"hi": "निगरानी", "mr": "देखरेख"}, "Plan": {"hi": "योजना", "mr": "नियोजन"}, "Data": {"hi": "डेटा", "mr": "डेटा"}, "Overview": {"hi": "सारांश", "mr": "आढावा"}, "Forecast": {"hi": "पूर्वानुमान", "mr": "अंदाज"}, "City network": {"hi": "शहर नेटवर्क", "mr": "शहर नेटवर्क"}, "Seasonal diseases": {"hi": "मौसमी बीमारियाँ", "mr": "हंगामी आजार"}, "Outbreak watch": {"hi": "प्रकोप निगरानी", "mr": "उद्रेक देखरेख"}, "What-if scenarios": {"hi": "क्या-अगर परिदृश्य", "mr": "जर-तर परिस्थिती"}, "Preventive actions": {"hi": "निवारक कदम", "mr": "प्रतिबंधात्मक उपाय"}, "Alerts": {"hi": "चेतावनियाँ", "mr": "इशारे"}, "Data sources": {"hi": "डेटा स्रोत", "mr": "डेटा स्रोत"}, "Setup & import": {"hi": "सेटअप और आयात", "mr": "सेटअप व आयात"}, "What is free now, what is about to run short, and why.": {"hi": "अभी क्या उपलब्ध है, क्या कम पड़ने वाला है, और क्यों।", "mr": "आत्ता काय उपलब्ध आहे, काय कमी पडणार आहे, आणि का."}, "Day-by-day load for every unit and how demand moves through the hospital.": {"hi": "हर इकाई का दिन-प्रतिदिन भार और अस्पताल में मांग का प्रवाह।", "mr": "प्रत्येक विभागाचा दररोजचा भार आणि रुग्णालयात मागणी कशी पसरते."}, "Published capacity of Mumbai hospitals and the model's view of where there is room.": {"hi": "मुंबई के अस्पतालों की प्रकाशित क्षमता और मॉडल के अनुसार कहाँ जगह है।", "mr": "मुंबईतील रुग्णालयांची प्रकाशित क्षमता आणि मॉडेलनुसार कुठे जागा आहे."}, "Mumbai notified cases by month (BMC) and live weather and air-quality signals.": {"hi": "मुंबई में माह-वार अधिसूचित मामले (बीएमसी) और लाइव मौसम व वायु-गुणवत्ता संकेत।", "mr": "मुंबईतील महिन्यानुसार अधिसूचित रुग्ण (बीएमसी) आणि थेट हवामान व हवा-गुणवत्ता संकेत."}, "Syndromic detection, the reasonable worst case and the preparedness checklist.": {"hi": "लक्षण-आधारित पहचान, संभावित सबसे बुरी स्थिति और तैयारी सूची।", "mr": "लक्षण-आधारित शोध, संभाव्य सर्वात वाईट स्थिती आणि तयारी यादी."}, "Test floods, outbreaks, staff shortages and supply failures before they happen.": {"hi": "बाढ़, प्रकोप, स्टाफ की कमी और आपूर्ति विफलता को पहले से परखें।", "mr": "पूर, साथ, कर्मचारी तुटवडा आणि पुरवठा अडचणी आधीच तपासा."}, "Options ranked by simulated effect. Each needs a named approver.": {"hi": "सिमुलेटेड प्रभाव के अनुसार क्रमबद्ध विकल्प। हर एक के लिए नामित अनुमोदक चाहिए।", "mr": "अनुकरणित परिणामानुसार क्रमवार पर्याय. प्रत्येकासाठी नाव असलेला मंजूरकर्ता हवा."}, "Early-warning drafts for review, stakeholders and the forecast log.": {"hi": "समीक्षा के लिए पूर्व-चेतावनी मसौदे, हितधारक और पूर्वानुमान लॉग।", "mr": "पुनरावलोकनासाठी पूर्वसूचना मसुदे, संबंधित अधिकारी आणि अंदाज नोंदवही."}, "Where every input comes from, what is missing, and how accurate the forecast has been.": {"hi": "हर इनपुट कहाँ से आता है, क्या कमी है, और पूर्वानुमान कितना सटीक रहा।", "mr": "प्रत्येक माहिती कुठून येते, काय उणे आहे, आणि अंदाज किती अचूक ठरला."}, "Replace placeholders with your hospital's figures or import census data.": {"hi": "प्लेसहोल्डर को अपने अस्पताल के आँकड़ों से बदलें या रोगी-संख्या डेटा आयात करें।", "mr": "तात्पुरती मूल्ये तुमच्या रुग्णालयाच्या आकड्यांनी बदला किंवा रुग्णसंख्या डेटा आयात करा."}, "Mumbai · IST": {"hi": "मुंबई · IST", "mr": "मुंबई · IST"}, "Real time": {"hi": "रियल टाइम", "mr": "प्रत्यक्ष वेळ"}, "Fast-forward demo": {"hi": "तेज़ डेमो", "mr": "जलद डेमो"}, "Live · pause": {"hi": "लाइव · रोकें", "mr": "थेट · थांबवा"}, "Follow real time": {"hi": "रियल टाइम चलाएँ", "mr": "प्रत्यक्ष वेळ सुरू करा"}, "Run": {"hi": "चलाएँ", "mr": "चालवा"}, "Pause": {"hi": "रोकें", "mr": "थांबवा"}, "Reset": {"hi": "रीसेट", "mr": "रीसेट"}, "Today in Mumbai": {"hi": "आज मुंबई में", "mr": "आज मुंबईत"}, "Next re-forecast": {"hi": "अगला पूर्वानुमान", "mr": "पुढील अंदाज"}, "Live weather & AQI refresh": {"hi": "लाइव मौसम और AQI अपडेट", "mr": "थेट हवामान व AQI अद्यतन"}, "Next public holiday": {"hi": "अगली सार्वजनिक छुट्टी", "mr": "पुढील सार्वजनिक सुट्टी"}, "Paused": {"hi": "रुका हुआ", "mr": "थांबलेले"}, "Running": {"hi": "चालू", "mr": "सुरू"}, "Right now": {"hi": "अभी", "mr": "आत्ता"}, "Availability": {"hi": "उपलब्धता", "mr": "उपलब्धता"}, "Bottleneck outlook": {"hi": "अड़चन पूर्वानुमान", "mr": "अडथळा अंदाज"}, "Forecast window": {"hi": "पूर्वानुमान अवधि", "mr": "अंदाज कालावधी"}, "7 days": {"hi": "7 दिन", "mr": "7 दिवस"}, "14 days": {"hi": "14 दिन", "mr": "14 दिवस"}, "30 days": {"hi": "30 दिन", "mr": "30 दिवस"}, "Forecast by unit": {"hi": "इकाई-वार पूर्वानुमान", "mr": "विभागनिहाय अंदाज"}, "Why this is predicted": {"hi": "यह पूर्वानुमान क्यों", "mr": "हा अंदाज का"}, "Load as % of safe capacity · observed, then forecast": {"hi": "सुरक्षित क्षमता के % में भार · दर्ज, फिर पूर्वानुमान", "mr": "सुरक्षित क्षमतेच्या % मध्ये भार · नोंदवलेले, नंतर अंदाज"}, "General beds free": {"hi": "सामान्य बिस्तर खाली", "mr": "सामान्य खाटा रिकाम्या"}, "ICU beds free": {"hi": "आईसीयू बिस्तर खाली", "mr": "आयसीयू खाटा रिकाम्या"}, "Ventilators free": {"hi": "वेंटिलेटर खाली", "mr": "व्हेंटिलेटर उपलब्ध"}, "Isolation beds free": {"hi": "आइसोलेशन बिस्तर खाली", "mr": "विलगीकरण खाटा रिकाम्या"}, "Oxygen on site": {"hi": "उपलब्ध ऑक्सीजन", "mr": "उपलब्ध ऑक्सिजन"}, "Ambulances available": {"hi": "उपलब्ध एम्बुलेंस", "mr": "उपलब्ध रुग्णवाहिका"}, "Lab turnaround": {"hi": "लैब रिपोर्ट समय", "mr": "प्रयोगशाळा अहवाल वेळ"}, "X-ray wait": {"hi": "एक्स-रे प्रतीक्षा", "mr": "एक्स-रे प्रतीक्षा"}, "CT / ultrasound wait": {"hi": "सीटी / अल्ट्रासाउंड प्रतीक्षा", "mr": "सीटी / सोनोग्राफी प्रतीक्षा"}, "Platelets in stock": {"hi": "प्लेटलेट्स स्टॉक में", "mr": "साठ्यातील प्लेटलेट्स"}, "Starts": {"hi": "शुरुआत", "mr": "सुरुवात"}, "Peak": {"hi": "चरम", "mr": "शिखर"}, "Above 95%": {"hi": "95% से ऊपर", "mr": "95% पेक्षा जास्त"}, "Chance of passing 105% in 7 days": {"hi": "7 दिनों में 105% पार करने की संभावना", "mr": "7 दिवसांत 105% ओलांडण्याची शक्यता"}, "Chance of passing 105% in 14 days": {"hi": "14 दिनों में 105% पार करने की संभावना", "mr": "14 दिवसांत 105% ओलांडण्याची शक्यता"}, "Chance of passing 105% in 30 days": {"hi": "30 दिनों में 105% पार करने की संभावना", "mr": "30 दिवसांत 105% ओलांडण्याची शक्यता"}, "At risk": {"hi": "जोखिम में", "mr": "धोक्यात"}, "Chance of passing 95%": {"hi": "95% पार करने की संभावना", "mr": "95% ओलांडण्याची शक्यता"}, "Critical": {"hi": "गंभीर", "mr": "गंभीर"}, "Warning": {"hi": "चेतावनी", "mr": "इशारा"}, "Watch": {"hi": "निगरानी", "mr": "लक्ष ठेवा"}, "Normal": {"hi": "सामान्य", "mr": "सामान्य"}, "Approved": {"hi": "स्वीकृत", "mr": "मंजूर"}, "Needs review": {"hi": "समीक्षा आवश्यक", "mr": "पुनरावलोकन आवश्यक"}, "Epidemic": {"hi": "महामारी", "mr": "साथ"}, "Outbreak": {"hi": "प्रकोप", "mr": "उद्रेक"}, "Severe epidemic": {"hi": "गंभीर महामारी", "mr": "गंभीर साथ"}, "Emergency": {"hi": "आपातकाल", "mr": "आपत्कालीन"}, "Medicine": {"hi": "मेडिसिन", "mr": "मेडिसिन"}, "Surgery": {"hi": "सर्जरी", "mr": "शस्त्रक्रिया"}, "Paediatrics": {"hi": "बाल रोग", "mr": "बालरोग"}, "Isolation": {"hi": "आइसोलेशन", "mr": "विलगीकरण"}, "Oxygen": {"hi": "ऑक्सीजन", "mr": "ऑक्सिजन"}, "Ambulances": {"hi": "एम्बुलेंस", "mr": "रुग्णवाहिका"}, "Laboratory": {"hi": "प्रयोगशाला", "mr": "प्रयोगशाळा"}, "X-ray": {"hi": "एक्स-रे", "mr": "एक्स-रे"}, "CT & USG": {"hi": "सीटी और यूएसजी", "mr": "सीटी व यूएसजी"}, "Nursing": {"hi": "नर्सिंग", "mr": "परिचारिका"}, "Blood bank": {"hi": "ब्लड बैंक", "mr": "रक्तपेढी"}, "Emergency Department": {"hi": "आपातकालीन विभाग", "mr": "आपत्कालीन विभाग"}, "Medicine wards": {"hi": "मेडिसिन वार्ड", "mr": "मेडिसिन वॉर्ड"}, "Surgical wards": {"hi": "सर्जिकल वार्ड", "mr": "शस्त्रक्रिया वॉर्ड"}, "Intensive care": {"hi": "गहन चिकित्सा", "mr": "अतिदक्षता"}, "Paediatric wards": {"hi": "बाल रोग वार्ड", "mr": "बालरोग वॉर्ड"}, "Isolation beds": {"hi": "आइसोलेशन बिस्तर", "mr": "विलगीकरण खाटा"}, "Medical oxygen": {"hi": "मेडिकल ऑक्सीजन", "mr": "वैद्यकीय ऑक्सिजन"}, "Ambulance fleet": {"hi": "एम्बुलेंस बेड़ा", "mr": "रुग्णवाहिका ताफा"}, "Diagnostic laboratory": {"hi": "नैदानिक प्रयोगशाला", "mr": "निदान प्रयोगशाळा"}, "X-ray section": {"hi": "एक्स-रे विभाग", "mr": "एक्स-रे विभाग"}, "CT and ultrasound": {"hi": "सीटी और अल्ट्रासाउंड", "mr": "सीटी व सोनोग्राफी"}, "Nurse staffing cover": {"hi": "नर्स स्टाफिंग", "mr": "परिचारिका उपलब्धता"}, "Blood bank: platelets": {"hi": "ब्लड बैंक: प्लेटलेट्स", "mr": "रक्तपेढी: प्लेटलेट्स"}, "Day by day": {"hi": "दिन-प्रतिदिन", "mr": "दिवसागणिक"}, "Peak load": {"hi": "चरम भार", "mr": "कमाल भार"}, "Chance of critical": {"hi": "गंभीर होने की संभावना", "mr": "गंभीर होण्याची शक्यता"}, "Knock-on effects": {"hi": "आगे के प्रभाव", "mr": "पुढील परिणाम"}, "City view": {"hi": "शहर का दृश्य", "mr": "शहराचे चित्र"}, "Mumbai hospital network": {"hi": "मुंबई अस्पताल नेटवर्क", "mr": "मुंबई रुग्णालय नेटवर्क"}, "Seasonal infections and diseases that fill beds": {"hi": "मौसमी संक्रमण और बीमारियाँ जो बिस्तर भरती हैं", "mr": "खाटा भरणारे हंगामी संसर्ग व आजार"}, "Mumbai": {"hi": "मुंबई", "mr": "मुंबई"}, "Epidemic and pandemic readiness": {"hi": "महामारी और विश्वमारी की तैयारी", "mr": "साथ व महासाथ तयारी"}, "Reasonable worst case": {"hi": "संभावित सबसे बुरी स्थिति", "mr": "संभाव्य सर्वात वाईट स्थिती"}, "Preparedness checklist": {"hi": "तैयारी सूची", "mr": "तयारी यादी"}, "Outbreak drill": {"hi": "प्रकोप अभ्यास", "mr": "उद्रेक सराव"}, "Start drill": {"hi": "अभ्यास शुरू करें", "mr": "सराव सुरू करा"}, "Stop drill": {"hi": "अभ्यास रोकें", "mr": "सराव थांबवा"}, "Start from:": {"hi": "यहाँ से शुरू करें:", "mr": "येथून सुरू करा:"}, "For staff to decide": {"hi": "स्टाफ के निर्णय हेतु", "mr": "कर्मचाऱ्यांच्या निर्णयासाठी"}, "Seasonal calendar": {"hi": "मौसमी कैलेंडर", "mr": "हंगामी दिनदर्शिका"}, "External signals": {"hi": "बाहरी संकेत", "mr": "बाह्य संकेत"}, "Refresh live data": {"hi": "लाइव डेटा अपडेट करें", "mr": "थेट डेटा अद्यतनित करा"}, "Early warning": {"hi": "पूर्व चेतावनी", "mr": "पूर्वसूचना"}, "Notifications": {"hi": "सूचनाएँ", "mr": "सूचना"}, "Stakeholders": {"hi": "हितधारक", "mr": "संबंधित अधिकारी"}, "Forecast log": {"hi": "पूर्वानुमान लॉग", "mr": "अंदाज नोंदवही"}, "Add stakeholder": {"hi": "हितधारक जोड़ें", "mr": "अधिकारी जोडा"}, "Turn on desktop notifications": {"hi": "डेस्कटॉप सूचनाएँ चालू करें", "mr": "डेस्कटॉप सूचना सुरू करा"}, "Forecast accuracy": {"hi": "पूर्वानुमान सटीकता", "mr": "अंदाजाची अचूकता"}, "Where every number comes from": {"hi": "हर संख्या कहाँ से आती है", "mr": "प्रत्येक आकडा कुठून येतो"}, "Data sources and completeness": {"hi": "डेटा स्रोत और पूर्णता", "mr": "डेटा स्रोत व पूर्णता"}, "Sources": {"hi": "स्रोत", "mr": "स्रोत"}, "Needed from the hospital (not published anywhere)": {"hi": "अस्पताल से आवश्यक (कहीं प्रकाशित नहीं)", "mr": "रुग्णालयाकडून आवश्यक (कुठेही प्रकाशित नाही)"}, "Hospital setup and data": {"hi": "अस्पताल सेटअप और डेटा", "mr": "रुग्णालय सेटअप व डेटा"}, "Import census data": {"hi": "रोगी-संख्या डेटा आयात करें", "mr": "रुग्णसंख्या डेटा आयात करा"}, "Import": {"hi": "आयात करें", "mr": "आयात करा"}, "Choose file…": {"hi": "फ़ाइल चुनें…", "mr": "फाइल निवडा…"}, "Fill with example data": {"hi": "उदाहरण डेटा भरें", "mr": "उदाहरण डेटा भरा"}, "Back to simulated data": {"hi": "सिमुलेटेड डेटा पर लौटें", "mr": "अनुकरणित डेटावर परत जा"}, "Save and restart forecast": {"hi": "सहेजें और पूर्वानुमान फिर शुरू करें", "mr": "जतन करा व अंदाज पुन्हा सुरू करा"}, "Reset to estimates for this hospital": {"hi": "इस अस्पताल के मूल मानों पर लौटें", "mr": "या रुग्णालयाची मूळ मूल्ये परत आणा"}, "Approve…": {"hi": "स्वीकृत करें…", "mr": "मंजूर करा…"}, "Preview": {"hi": "पूर्वावलोकन", "mr": "पूर्वावलोकन"}, "Dismiss": {"hi": "खारिज करें", "mr": "नाकारा"}, "Withdraw": {"hi": "वापस लें", "mr": "मागे घ्या"}, "Copy email": {"hi": "ईमेल कॉपी करें", "mr": "ईमेल कॉपी करा"}, "Open in mail app": {"hi": "मेल ऐप में खोलें", "mr": "मेल ॲपमध्ये उघडा"}, "Mark as sent": {"hi": "भेजा गया चिह्नित करें", "mr": "पाठवले म्हणून नोंदवा"}, "Record": {"hi": "दर्ज करें", "mr": "नोंदवा"}, "Clear scenario": {"hi": "परिदृश्य हटाएँ", "mr": "परिस्थिती काढा"}, "Edit": {"hi": "संपादित करें", "mr": "संपादित करा"}, "Confirm approval": {"hi": "स्वीकृति की पुष्टि करें", "mr": "मंजुरीची खात्री करा"}, "Cancel": {"hi": "रद्द करें", "mr": "रद्द करा"}, "Dengue": {"hi": "डेंगू", "mr": "डेंग्यू"}, "Malaria": {"hi": "मलेरिया", "mr": "हिवताप (मलेरिया)"}, "Leptospirosis": {"hi": "लेप्टोस्पायरोसिस", "mr": "लेप्टोस्पायरोसिस"}, "Gastroenteritis": {"hi": "गैस्ट्रोएंटेराइटिस", "mr": "जठरांत्रदाह (गॅस्ट्रो)"}, "Hepatitis": {"hi": "हेपेटाइटिस", "mr": "कावीळ (हिपॅटायटिस)"}, "H1N1 influenza": {"hi": "एच1एन1 इन्फ्लुएंज़ा", "mr": "एच1एन1 फ्लू"}, "Chikungunya": {"hi": "चिकनगुनिया", "mr": "चिकनगुनिया"}, "Fever (malaria, dengue, leptospirosis…)": {"hi": "बुखार (मलेरिया, डेंगू, लेप्टोस्पायरोसिस…)", "mr": "ताप (हिवताप, डेंग्यू, लेप्टोस्पायरोसिस…)"}, "Respiratory (influenza, pneumonia…)": {"hi": "श्वसन (इन्फ्लुएंज़ा, निमोनिया…)", "mr": "श्वसन (फ्लू, न्यूमोनिया…)"}, "Diarrhoea & jaundice": {"hi": "दस्त और पीलिया", "mr": "जुलाब व कावीळ"}, "Injuries & heat": {"hi": "चोटें और गर्मी", "mr": "जखमा व उष्माघात"}, "Observed": {"hi": "दर्ज", "mr": "नोंदवलेले"}, "Expected": {"hi": "अपेक्षित", "mr": "अपेक्षित"}, "Warning 95%": {"hi": "चेतावनी 95%", "mr": "इशारा 95%"}, "Critical 105%": {"hi": "गंभीर 105%", "mr": "गंभीर 105%"}, "* public holiday": {"hi": "* सार्वजनिक छुट्टी", "mr": "* सार्वजनिक सुट्टी"}, "Dengue forecast from rainfall": {"hi": "वर्षा से डेंगू पूर्वानुमान", "mr": "पावसावरून डेंग्यू अंदाज"}, "Learned from your data": {"hi": "आपके डेटा से सीखा गया", "mr": "तुमच्या डेटामधून शिकलेले"}, "Forget saved data on this device": {"hi": "इस डिवाइस से सहेजा डेटा हटाएँ", "mr": "या उपकरणावरील जतन डेटा काढा"}, "Updating probabilities": {"hi": "संभावनाएँ अपडेट हो रही हैं", "mr": "शक्यता अद्यतनित होत आहेत"}, "Detailed explanations, emails and data sources stay in English.": {"hi": "विस्तृत विवरण, ईमेल और डेटा स्रोत अंग्रेज़ी में रहते हैं।", "mr": "तपशीलवार स्पष्टीकरण, ईमेल व डेटा स्रोत इंग्रजीत राहतात."}};
+let LANG = store.get('lang', 'en'), translatedOnce = false;
+const ORIG = new WeakMap();
+function translateDom(root) {
+  if (LANG === 'en' && !translatedOnce) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode(n) { const p = n.parentElement; if (!p || p.closest('script,style,textarea,.email,.recips,#csvText')) return NodeFilter.FILTER_REJECT; return n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; } });
+  const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
+  for (const n of nodes) {
+    const orig = ORIG.has(n) ? ORIG.get(n) : n.nodeValue, key = orig.trim(), tr = LANG !== 'en' && I18N[key] && I18N[key][LANG];
+    if (tr) { if (!ORIG.has(n)) ORIG.set(n, orig); n.nodeValue = orig.replace(key, tr); translatedOnce = true; }
+    else if (ORIG.has(n)) n.nodeValue = orig;
+  }
+}
+function setLang(l) {
+  LANG = ['en', 'hi', 'mr'].includes(l) ? l : 'en'; store.set('lang', LANG);
+  document.documentElement.lang = LANG === 'en' ? 'en' : LANG + '-IN';
+  $('lang').value = LANG; $('langNote').hidden = LANG === 'en';
+  translatedOnce = true; translateDom(document.body);
+}
+
+/* ---------------- saved state (IndexedDB on this device) ---------------- */
+const SAVE_VER = 2;
+const DB = {
+  db: null,
+  open() { if (this.db) return Promise.resolve(this.db); return new Promise((res, rej) => { const r = indexedDB.open('surgewatch', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => { this.db = r.result; res(r.result); }; r.onerror = () => rej(r.error); }); },
+  async get(k) { try { const db = await this.open(); return await new Promise((res, rej) => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); } catch (e) { return null; } },
+  async set(k, v) { try { const db = await this.open(); await new Promise((res, rej) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }); return true; } catch (e) { return false; } },
+  async del(k) { try { const db = await this.open(); await new Promise(res => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').delete(k); tx.oncomplete = () => res(); tx.onerror = () => res(); }); } catch (e) {} }
+};
+function snapshot() {
+  return { v: SAVE_VER, savedAt: Date.now(), hospitalId: A.hospitalId, start: S.START, now: A.now, state: A.state, history: A.history.slice(-24 * 9),
+    approved: A.approved, dismissed: A.dismissed, alerts: A.alerts.slice(0, 60), log: A.log, levers: A.levers, rule: A.rule, drill: A.drill,
+    dengueWeekly: A.feedVals.dengueWeekly, malariaWeekly: A.feedVals.malariaWeekly, imported: A.imported, arrScale: A.arrScale, learned: A.learned,
+    mode: A.mode, epiAlertLevel: A.epiAlertLevel, prevSummary: A.prevSummary };
+}
+let saveT;
+function save() {
+  if (!A || !A.F) return;
+  clearTimeout(saveT);
+  saveT = setTimeout(async () => { const ok = await DB.set('state:' + A.hospitalId, snapshot()); A.savedAt = ok ? Date.now() : null; A.saveFailed = !ok; renderNav(); }, 500);
+}
+async function init(keep) {
+  const saved = await DB.get('state:' + store.get('hospital', 'kem'));
+  if (saved && saved.v === SAVE_VER) { try { if (restore(saved, keep)) return; } catch (e) { console.warn('Saved session could not be restored', e); } }
+  boot(keep);
+}
+function restore(sv, keep) {
+  if (A && A.timer) clearInterval(A.timer);
+  const due = sv.mode === 'real' ? Math.floor((S.floorHour(Date.now()) - S.floorHour(sv.start)) / S.HOUR) - sv.now : 0;
+  if (due > 24 * 7) return false; // more than a week away: start fresh rather than invent a week of observations
+  A = freshApp(Object.assign({}, keep, { mode: sv.mode, drill: sv.drill }));
+  Object.assign(A, { approved: sv.approved || [], dismissed: sv.dismissed || {}, alerts: sv.alerts || [], log: sv.log || [], levers: Object.assign(S.defaultLevers(), sv.levers),
+    rule: sv.rule || A.rule, imported: sv.imported || null, arrScale: sv.arrScale || 1, learned: sv.learned || null, epiAlertLevel: sv.epiAlertLevel || 0, prevSummary: sv.prevSummary || null });
+  A.feedVals.dengueWeekly = sv.dengueWeekly ?? null; A.feedVals.malariaWeekly = sv.malariaWeekly ?? null;
+  A.setup = withLearned(A.setup, A.learned);
+  applyConfig();
+  S.setStart(sv.start); A.now = sv.now; A.state = sv.state; A.history = sv.history;
+  const catchUp = Math.max(0, due);
+  for (let i = 0; i < catchUp; i++) { const rec = S.step(A.state, 0, A.now, obsRun()); rec.state = S.cloneState(A.state); A.history.push(rec); A.now++; }
+  if (A.history.length > 24 * 40) A.history = A.history.slice(-24 * 40);
+  addLog(`Restored the session saved on this device at ${new Date(sv.savedAt).toLocaleString('en-IN')}${catchUp ? `; simulated the ${catchUp} h since then` : ''}.`);
+  updateNowcast(); detect();
+  recompute(true);
+  backtest();
+  setLive(true);
+  return true;
+}
+
 /* ---------------- views ---------------- */
 const VIEWS = {
   overview: ['Overview', 'What is free now, what is about to run short, and why.'],
@@ -908,7 +1039,7 @@ function showView(v, anchor) {
   document.querySelectorAll('main [data-view]').forEach(el => { el.hidden = el.dataset.view !== v; });
   document.querySelectorAll('#side a').forEach(a => a.setAttribute('aria-current', a.dataset.nav === v ? 'page' : 'false'));
   $('viewTitle').textContent = VIEWS[v][0]; $('viewSub').textContent = VIEWS[v][1];
-  if (A && A.F) { if (v === 'overview') renderChart(); if (v === 'diseases') renderSeason(); if (v === 'city') renderNetwork(); }
+  if (A && A.F) { VIEW_RENDER[v](); renderEnsStatus(); translateDom(document.body); }
   const el = anchor && $(anchor);
   if (el) el.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
 }
@@ -931,21 +1062,21 @@ function renderNav() {
   set('scenarios', leversChanged() ? 'on' : '', leversChanged() ? 'warn' : '');
   const pv = A.setup.prov || {}, u = Object.values(pv).filter(x => x.kind === 'U').length; set('data', u ? u + ' U' : '', '');
   const full = (A.net || []).filter(x => x.peak >= S.THRESH.crit).length; set('city', full || '', full ? 'warn' : '');
-  $('sideMeta').innerHTML = `<span>${esc(A.setup.name)}</span><span>${A.src.weather.live ? '<span class="srcdot live"></span>Live weather' : '<span class="srcdot"></span>Weather not live'} · ${A.src.air.live ? 'live AQI' : 'AQI not live'}</span><span>Forecast ${hh(tOf(A.now))}, ${fmtD(A.now)}</span>`;
+  $('sideMeta').innerHTML = `<span>${esc(A.setup.name)}</span><span>${A.savedAt ? '<span class="srcdot live"></span>Saved on this device ' + hh(new Date(A.savedAt)).slice(0, 2) + ':' + String(new Date(A.savedAt).getMinutes()).padStart(2, '0') : A.saveFailed ? '<span class="srcdot"></span>Not saved: browser storage unavailable' : ''}</span><span>${A.src.weather.live ? '<span class="srcdot live"></span>Live weather' : '<span class="srcdot"></span>Weather not live'} · ${A.src.air.live ? 'live AQI' : 'AQI not live'}</span><span>Forecast ${hh(tOf(A.now))}, ${fmtD(A.now)}</span>`;
 }
 
 /* ---------------- provenance ---------------- */
-const KIND = { P: 'published', D: 'derived from published figures', R: "another Mumbai hospital's published figure used as reference", U: 'not published: placeholder to replace', X: 'projection beyond the last published month', H: 'entered by hospital staff', L: 'live data' };
+const KIND = { P: 'published', D: 'derived from published figures', R: "another Mumbai hospital's published figure used as reference", U: 'not published: placeholder to replace', X: 'projection beyond the last published month', H: 'entered by hospital staff', L: 'live data', I: 'learned from your imported census data', M: 'model forecast fitted on published data' };
 const kb = (k, title) => k ? `<span class="kb k-${k}" title="${esc((title ? title + ' — ' : '') + KIND[k])}">${k}</span>` : '';
 const srcLink = id => { const s = id && S.DATA.SOURCES[id]; return s ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a> <span class="muted">(${esc(s.date)})</span>` : ''; };
 const UNIT_INPUTS = { ED: ['edSpaces', 'arrPerDay', 'edLOS'], MED: ['MED', 'admissionsPerDay', 'alos'], SURG: ['SURG', 'admissionsPerDay', 'alos'], PEDS: ['PEDS', 'admissionsPerDay', 'alos'], ICU: ['ICU', 'vents', 'alos'], ISO: ['ISO'],
   O2: ['o2Capacity', 'o2Delivery'], AMB: ['ambulances'], LAB: ['lab'], XRAY: ['xray'], IMG: ['img'], NUR: ['nurses'], BLOOD: ['plateletSupply', 'plateletStock'] };
-const RANK = { U: 4, R: 3, X: 2, D: 1, P: 0, H: 0, L: 0 };
+const RANK = { U: 4, R: 3, X: 2, M: 2, D: 1, P: 0, H: 0, L: 0, I: 0 };
 function unitQuality(id) { const pv = A.setup.prov || {}; let worst = 'P'; const weak = []; for (const k of UNIT_INPUTS[id] || []) { const kd = (pv[k] || {}).kind || 'P'; if (RANK[kd] > RANK[worst]) worst = kd; if (kd === 'U' || kd === 'R') weak.push(PROV_LABEL[k] + ' (' + KIND[kd] + ')'); } return { worst, weak }; }
 const qualityNote = id => { const q = unitQuality(id); return q.worst === 'U' ? `<span class="small" style="color:var(--crit)">${kb('U')} Rests on unpublished placeholder inputs: ${esc(q.weak.join('; '))}. Replace them in setup.</span>` : q.worst === 'R' ? `<span class="small ink2">${kb('R')} Uses another hospital's published figures: ${esc(q.weak.join('; '))}.</span>` : `<span class="small ink2">${kb('P')} Inputs published or derived from published figures.</span>`; };
 const PROV_LABEL = { beds: 'Total beds', MED: 'Medicine-group beds', SURG: 'Surgical and obstetric beds', PEDS: 'Paediatric beds', ICU: 'Adult ICU beds', ISO: 'Isolation beds', admissionsPerDay: 'Admissions per day', arrPerDay: 'Casualty attendances per day',
   alos: 'Average length of stay (days)', bor: 'Bed occupancy', edSpaces: 'Emergency / casualty beds', edLOS: 'Casualty stay per patient (hours)', vents: 'Ventilators', nurses: 'Nurses per shift (night/day/evening)', docs: 'Casualty doctors per shift', lab: 'Lab tests per hour (day/night)',
-  xray: 'X-ray studies per hour (day/night)', img: 'CT + ultrasound studies per hour (day/night)', o2Capacity: 'Oxygen storage (D-type cylinder equivalents)', o2Delivery: 'Oxygen refills per day', ambulances: 'Ambulances', plateletSupply: 'Platelet units prepared per day', plateletStock: 'Platelet units in stock' };
+  xray: 'X-ray studies per hour (day/night)', img: 'CT + ultrasound studies per hour (day/night)', o2Capacity: 'Oxygen storage (D-type cylinder equivalents)', patterns: 'Hour-of-day and weekday patterns', o2Delivery: 'Oxygen refills per day', ambulances: 'Ambulances', plateletSupply: 'Platelet units prepared per day', plateletStock: 'Platelet units in stock' };
 function provValue(k, s) {
   const v = k in s.beds ? s.beds[k] : k === 'beds' ? s.totalBeds : s[k];
   if (k === 'bor') return pct(v);
@@ -956,7 +1087,7 @@ function provValue(k, s) {
 function renderData() {
   const s = A.setup, pv = s.prov || {}, counts = {};
   for (const k in pv) counts[pv[k].kind] = (counts[pv[k].kind] || 0) + 1;
-  $('kindLegend').innerHTML = ['P', 'D', 'R', 'U', 'H', 'X', 'L'].map(k => `<span>${kb(k)} ${esc(KIND[k])}${counts[k] ? ` · <b>${counts[k]}</b> inputs here` : ''}</span>`).join('');
+  $('kindLegend').innerHTML = ['P', 'D', 'I', 'R', 'U', 'H', 'X', 'M', 'L'].map(k => `<span>${kb(k)} ${esc(KIND[k])}${counts[k] ? ` · <b>${counts[k]}</b> inputs here` : ''}</span>`).join('');
   $('provTable').innerHTML = `<thead><tr><th>Input for ${esc(s.name)}</th><th>Value</th><th>Kind</th><th>Source and working</th></tr></thead><tbody>` +
     Object.keys(PROV_LABEL).filter(k => pv[k]).map(k => `<tr><td>${esc(PROV_LABEL[k])}</td><td class="num">${provValue(k, s)}</td><td>${kb(pv[k].kind)}</td><td class="tw small">${esc(pv[k].note)}${pv[k].src ? '<br>' + srcLink(pv[k].src) : ''}</td></tr>`).join('') + '</tbody>';
   $('unpub').innerHTML = S.DATA.UNPUBLISHED.map(u => `<li><b>${esc(u.label)}.</b> ${esc(u.why)}</li>`).join('');
@@ -964,10 +1095,23 @@ function renderData() {
 }
 
 /* ---------------- rendering ---------------- */
+// Only the visible view is drawn; the others are drawn when opened.
+const VIEW_RENDER = {
+  overview: () => { renderTiles(); renderHeadline(); renderCards(); renderTabs(); renderChart(); renderWhy(); },
+  forecast: () => { renderHeat(); renderCascade(); },
+  city: () => renderNetwork(),
+  diseases: () => { renderDiseases(); renderSeason(); renderFeeds(); renderDengueModel(); },
+  outbreak: () => renderEpidemic(),
+  scenarios: () => { renderLevers(); renderCompare(); },
+  actions: () => renderActions(),
+  alerts: () => { renderAlerts(); renderPeople(); renderLog(); },
+  data: () => { renderData(); renderAcc(); },
+  setup: () => { markSetup(); renderLearned(); }
+};
 function render() {
-  renderBar(); renderEpiBanner(); renderBanner(); renderTiles(); renderHeadline(); renderCards(); renderTabs(); renderChart(); renderWhy();
-  renderHeat(); renderNetwork(); renderDiseases(); renderEpidemic(); renderCascade(); renderLevers(); renderCompare(); renderActions();
-  renderSeason(); renderFeeds(); renderAlerts(); renderPeople(); renderLog(); renderFoot(); renderData(); markSetup(); renderNav();
+  renderBar(); renderEpiBanner(); renderBanner(); renderFoot(); renderNav();
+  (VIEW_RENDER[currentView] || VIEW_RENDER.overview)();
+  renderEnsStatus(); translateDom(document.body); save();
 }
 function renderBar() {
   $('hospLine').textContent = `${A.setup.name} · ${A.setup.type} · ${A.imported ? 'imported census data' : 'simulated load'}`;
@@ -1047,7 +1191,7 @@ function renderHeadline() {
   else { const f = r[0], parts = []; if (c) parts.push(`${c} critical`); if (w) parts.push(`${w} warning`); t = `${parts.join(' and ')} bottleneck${r.length > 1 ? 's' : ''} expected in the next ${A.horizonDays} days. First to act on: ${UID[f.unit].long}, ${rel(f.firstSerious.start)} (${fmtT(A.now + f.firstSerious.start)}).`; }
   $('headline').textContent = t;
 }
-const probRow = (label, p) => `<div class="prob"><div style="display:flex;justify-content:space-between;font-size:.84rem"><span class="muted">${label}</span><b class="num">${Math.round(p * 100)}%</b></div><div class="prob-bar"><span style="width:${Math.round(p * 100)}%"></span></div></div>`;
+const probRow = (label, p) => `<div class="prob"><div style="display:flex;justify-content:space-between;font-size:.84rem"><span class="muted">${label}</span><b class="num">${p == null ? '…' : Math.round(p * 100) + '%'}</b></div><div class="prob-bar"><span style="width:${p == null ? 0 : Math.round(p * 100)}%"></span></div></div>`;
 function renderCards() {
   const r = ranked(), risk = A.F.risk, n = A.F.ens.n;
   let html = r.map(s => { const e = s.firstSerious; return `<button class="card" type="button" data-unit="${s.unit}" aria-pressed="${A.selUnit === s.unit}">
@@ -1104,7 +1248,7 @@ function renderChart(preview) {
   g += `<line id="xh" x1="0" x2="0" y1="${m.t}" y2="${Hh - m.b}" stroke="var(--muted)" stroke-width="1" visibility="hidden"/><circle id="xhd" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
   g += `<rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${Hh - m.t - m.b}" fill="transparent"/>`;
   host.innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${esc(UID[id].long)} forecast, expected peak ${pct(pk[0])}">${g}</svg><div class="tip" id="tip" hidden></div>`;
-  $('fcLegend').innerHTML = (preview ? `<span class="pill info">Previewing: ${esc(preview.title)}</span>` : '') + `<span><i style="border-color:var(--ink-2)"></i>Observed</span><span><i style="border-color:var(--accent)"></i>Expected</span><span><i class="band"></i>80% range (${F.ens.n} simulated futures)</span>${cmp ? `<span><i style="border-color:var(--compare);border-top-style:dashed"></i>${esc(cmpLbl)}</span>` : ''}<span><i style="border-color:var(--warn);border-top-style:dashed"></i>Warning 95%</span><span><i style="border-color:var(--crit);border-top-style:dashed"></i>Critical 105%</span><span class="muted">* public holiday</span>`;
+  $('fcLegend').innerHTML = (preview ? `<span class="pill info">Previewing: ${esc(preview.title)}</span>` : '') + `<span><i style="border-color:var(--ink-2)"></i>Observed</span><span><i style="border-color:var(--accent)"></i>Expected</span><span><i class="band"></i>${F.ens.provisional ? 'Range: calculating' : `80% range (${F.ens.n} simulated futures)`}</span><span id="ensStatus"></span>${cmp ? `<span><i style="border-color:var(--compare);border-top-style:dashed"></i>${esc(cmpLbl)}</span>` : ''}<span><i style="border-color:var(--warn);border-top-style:dashed"></i>Warning 95%</span><span><i style="border-color:var(--crit);border-top-style:dashed"></i>Critical 105%</span><span class="muted">* public holiday</span>`;
   const svg = host.querySelector('svg'), tip = $('tip'), xh = svg.querySelector('#xh'), xhd = svg.querySelector('#xhd');
   svg.addEventListener('pointermove', ev => {
     const r = svg.getBoundingClientRect(), sx = (ev.clientX - r.left) * W / r.width;
@@ -1161,7 +1305,7 @@ function renderHeat() {
   for (const u of U) {
     h += `<tr class="${A.selUnit === u.id ? 'sel' : ''}"><th class="rowh">${esc(u.name)}</th>`;
     for (const [a, b] of C) {
-      if (prob) { const p = F.ens.prob(u.id, a, b - 1, S.THRESH.crit), s = p >= 0.6 ? 'critical' : p >= 0.3 ? 'warning' : p >= 0.1 ? 'watch' : ''; h += `<td class="${s}" data-unit="${u.id}" title="${esc(u.long)} · ${fmtD(A.now + a)} · ${Math.round(p * 100)}% chance of passing 105%">${Math.round(p * 100)}</td>`; }
+      if (prob && F.ens.provisional) { h += '<td>…</td>'; } else if (prob) { const p = F.ens.prob(u.id, a, b - 1, S.THRESH.crit), s = p >= 0.6 ? 'critical' : p >= 0.3 ? 'warning' : p >= 0.1 ? 'watch' : ''; h += `<td class="${s}" data-unit="${u.id}" title="${esc(u.long)} · ${fmtD(A.now + a)} · ${Math.round(p * 100)}% chance of passing 105%">${Math.round(p * 100)}</td>`; }
       else { let mx = 0; for (let i = a; i < b; i++) mx = Math.max(mx, F.mid[i].p[u.id]); const s = sevOf(mx); h += `<td class="${s === 'ok' ? '' : s}" data-unit="${u.id}" title="${esc(u.long)} · ${fmtD(A.now + a)} · expected peak ${pct(mx)}">${Math.round(mx * 100)}</td>`; }
     }
     h += '</tr>';
@@ -1422,13 +1566,14 @@ function renderFeeds() {
 }
 
 /* live feeds (Open-Meteo, no key) */
-async function getJSON(url) {
-  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 9000);
+async function getJSON(url, ms) {
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), ms || 9000);
   try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); } finally { clearTimeout(to); }
 }
 const isoDay = t => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const feedClock = { t: 0 }; // survives restarts of the app state
 async function fetchFeeds(quiet) {
-  A.lastFetch = Date.now();
+  feedClock.t = Date.now();
   const c = S.MUMBAI, v = A.feedVals, today = isoDay(Date.now()), stamp = hh(new Date()) + ' ' + today, changes = [];
   try {
     const w = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&daily=precipitation_sum,temperature_2m_max&past_days=40&forecast_days=7&timezone=Asia%2FKolkata`);
@@ -1454,9 +1599,68 @@ async function fetchFeeds(quiet) {
     Object.assign(v, { pm25: worst.p25, pm10: worst.p10, aqi });
     A.src.air = { live: true, msg: `Live: Open-Meteo air quality, fetched ${stamp}` };
   } catch (e) { A.src.air = { live: false, msg: `Simulated: live air quality unavailable here (${e.name === 'AbortError' ? 'timed out' : 'blocked or offline'})` }; }
-  A.lastFetch = Date.now();
+  feedClock.t = Date.now();
   if (A.src.weather.live || A.src.air.live) { addLog(`Live Mumbai data: ${changes.join('; ')}. Forecast recalculated.`); A.netAt = -999; recompute(false); }
   else { if (!quiet) toast('Live weather and air-quality data could not be reached; using simulated readings'); renderFeeds(); }
+}
+
+/* dengue forecast from rainfall two months earlier (Pol et al. 2021: r = 0.912 at a 2-month lag) */
+const BASE_DENGUE = S.DATA.DISEASE_SERIES.dengue.months.map(x => Object.assign({}, x));
+async function fitDengueRain() {
+  const today = isoDay(Date.now()), cached = await DB.get('dengueFit');
+  if (cached && cached.day === today && cached.v === 1) { applyDengueFit(cached); return; }
+  A.dengueModel = { pending: true }; if (currentView === 'diseases') renderDengueModel();
+  const c = S.MUMBAI, Y = S.DATA.YEAR, q = `latitude=${c.lat}&longitude=${c.lon}&daily=precipitation_sum&timezone=Asia%2FKolkata`;
+  try {
+    const hist = await getJSON(`https://archive-api.open-meteo.com/v1/archive?${q}&start_date=2008-11-01&end_date=2018-12-31`, 25000);
+    const recent = await getJSON(`https://archive-api.open-meteo.com/v1/archive?${q}&start_date=${Y}-05-01&end_date=${isoDay(Date.now() - 6 * S.DAY)}`, 20000);
+    let fc = null; try { fc = await getJSON(`https://api.open-meteo.com/v1/forecast?${q}&past_days=10&forecast_days=16`, 12000); } catch (e) {}
+    const daily = {};
+    for (const src of [hist, recent, fc]) if (src) src.daily.time.forEach((d, i) => { const v = src.daily.precipitation_sum[i]; if (v != null && daily[d] == null) daily[d] = v; });
+    const mon = {}; for (const d in daily) { const k = d.slice(0, 7); mon[k] = (mon[k] || 0) + daily[d]; }
+    const daysIn = (y, m) => new Date(y, m + 1, 0).getDate(), covered = (y, m) => Object.keys(daily).filter(d => d.startsWith(`${y}-${String(m + 1).padStart(2, '0')}`)).length;
+    const T = S.DATA.IDSP_DENGUE_BY_YEAR, years = Object.keys(T).map(Number), shape = S.DATA.IDSP_DENGUE_10Y, shapeTot = shape.reduce((a, b) => a + b, 0);
+    const clim = new Array(12).fill(0); for (const y of years) for (let m = 0; m < 12; m++) clim[m] += (mon[`${y}-${String(m + 1).padStart(2, '0')}`] || 0) / years.length;
+    const xs = [], ys = [];
+    for (const y of years) { const tot = T[y].reduce((a, b) => a + b, 0);
+      for (let m = 6; m <= 11; m++) { const lag = m - 2, rain = mon[`${y}-${String(lag + 1).padStart(2, '0')}`]; if (rain == null) continue;
+        const exp = tot * shape[m] / shapeTot; xs.push(Math.log((rain + 10) / (clim[lag] + 10))); ys.push(Math.log((T[y][m] + 1) / (exp + 1))); } }
+    const n = xs.length, mx = xs.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n;
+    let sxy = 0, sxx = 0, syy = 0; for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; syy += (ys[i] - my) ** 2; }
+    const beta = sxx > 0 ? sxy / sxx : 0, r = sxx > 0 && syy > 0 ? sxy / Math.sqrt(sxx * syy) : 0;
+    const rainY = {}; for (let m = 4; m <= 9; m++) { const k = `${Y}-${String(m + 1).padStart(2, '0')}`; rainY[m] = { mm: mon[k] || 0, normal: clim[m], days: covered(Y, m), of: daysIn(Y, m) }; }
+    const fit = { v: 1, day: today, beta, r, n, clim, rainY };
+    DB.set('dengueFit', fit);
+    applyDengueFit(fit);
+  } catch (e) {
+    A.dengueModel = { error: e.name === 'AbortError' ? 'timed out' : 'blocked or offline' };
+    if (currentView === 'diseases') renderDengueModel();
+  }
+}
+function applyDengueFit(fit) {
+  const months = BASE_DENGUE.map(x => Object.assign({}, x)), drv = m => { const r = fit.rainY[m]; return r ? (r.mm * r.of / Math.max(1, r.days) + 10) / (r.normal + 10) : null; };
+  const sepDrv = drv(6), used = [];
+  for (let m = 9; m <= 11; m++) {
+    const d = drv(m - 2); if (months[m].kind !== 'X' || d == null || sepDrv == null || fit.rainY[m - 2].days < 10) continue;
+    const factor = Math.pow(d / sepDrv, fit.beta), base = months[m].c;
+    months[m] = { c: Math.round(base * factor), kind: 'M', note: `IDSP seasonal projection ${base} × rainfall factor ${factor.toFixed(2)}: rain in ${MON[m - 2]} ${S.DATA.YEAR} was ${Math.round(fit.rainY[m - 2].mm)} mm against a 2009–18 normal of ${Math.round(fit.rainY[m - 2].normal)} mm${fit.rainY[m - 2].days < fit.rainY[m - 2].of ? ' (month partly forecast)' : ''}; elasticity β = ${fit.beta.toFixed(2)} fitted on IDSP 2009–18 dengue × Open-Meteo rainfall (r = ${fit.r.toFixed(2)}, n = ${fit.n}).` };
+    used.push(m);
+  }
+  S.setDiseaseMonths('dengue', months);
+  A.dengueModel = Object.assign({}, fit, { used });
+  if (A.F) { A.netAt = -999; recompute(false); }
+}
+function renderDengueModel() {
+  const el = $('dengueModel'), st = $('dengueStatus'), dm = A.dengueModel; if (!el) return;
+  if (!dm || dm.pending) { st.innerHTML = '<span class="calc">Fitting on Open-Meteo rainfall archive</span>'; el.innerHTML = '<p class="ink2 small">Downloading Mumbai daily rainfall for 2008–2018 and this year to fit the published 2-month rain-to-dengue lag.</p>'; return; }
+  if (dm.error) { st.textContent = 'Rainfall archive unavailable here'; el.innerHTML = `<p class="ink2 small">Open-Meteo could not be reached (${esc(dm.error)}), so October–December dengue uses the IDSP seasonal shape. The model fits automatically when the page runs on a normal web address.</p>`; return; }
+  st.innerHTML = `${kb('M')} fitted ${esc(dm.day)}`;
+  const Y = S.DATA.YEAR, ms = S.SER.dengue.ms;
+  el.innerHTML = `<p class="ink2 small" style="max-width:80ch">Pol et al. (IDSP Mumbai, 2009–18) found dengue tracks rainfall two months earlier (r = 0.912). This model fits that lag on the published month-by-month dengue table and Open-Meteo daily rainfall for the same years, then applies it to ${Y} rain.</p>
+    <div class="stat-row"><span>Elasticity β <b>${dm.beta.toFixed(2)}</b></span><span>Correlation r <b>${dm.r.toFixed(2)}</b></span><span>Month pairs <b>${dm.n}</b></span></div>
+    ${Math.abs(dm.r) < 0.3 ? `<p class="small" style="max-width:80ch"><b>Weak year-to-year signal.</b> The published r = 0.912 compares raw monthly counts, which mostly reflects the shared monsoon season. Once the usual seasonal shape is removed, a wetter or drier month than normal explains little extra dengue in 2009–18 (r = ${dm.r.toFixed(2)}). The forecast therefore stays close to the IDSP seasonal projection.</p>` : ''}
+    <div class="scroll-x"><table class="cmp"><thead><tr><th>Rain month (${Y})</th><th>Rain</th><th>2009–18 normal</th><th>Drives dengue in</th><th>Dengue forecast</th></tr></thead><tbody>${[5, 6, 7, 8, 9].map(lag => { const r = dm.rainY[lag], m = lag + 2; if (!r || m > 11) return ''; const c = ms[m]; return `<tr><td>${MON[lag]}${r.days < r.of ? ` <span class="muted small">(${r.days}/${r.of} days + forecast)</span>` : ''}</td><td class="num">${loc(r.mm)} mm</td><td class="num">${loc(r.normal)} mm</td><td>${MON[m]}</td><td class="num">${loc(c.c)} ${kb(c.kind, c.note)}</td></tr>`; }).join('')}</tbody></table></div>
+    <p class="muted small">Months with published or derived counts keep them; only the projected months (Oct–Dec) are replaced by the rainfall model. Reanalysis rainfall can under-read Mumbai's local gauges, which is why the model works with each month's ratio to its own normal.</p>`;
 }
 
 /* alerts */
@@ -1582,7 +1786,7 @@ function renderAcc() {
 }
 
 /* ---------------- data import ---------------- */
-const COLS = ['timestamp', 'ed_arrivals', 'ed_census', 'ed_waiting_for_bed', 'med_occupied', 'surg_occupied', 'icu_occupied', 'peds_occupied', 'iso_occupied', 'lab_backlog', 'platelet_stock', 'oxygen_stock', 'ambulances_busy'];
+const COLS = ['timestamp', 'ed_arrivals', 'ed_census', 'ed_waiting_for_bed', 'med_occupied', 'surg_occupied', 'icu_occupied', 'peds_occupied', 'iso_occupied', 'lab_backlog', 'platelet_stock', 'oxygen_stock', 'ambulances_busy', 'admissions', 'discharges'];
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) throw new Error('Need a header row and at least one data row.');
@@ -1618,9 +1822,12 @@ function applyImport(parsed) {
   S.setStart(last.t + S.HOUR);
   let act = 0, exp = 0;
   const f = feeds();
+  A.learned = learnFromRows(rows, stepH);
+  A.setup = withLearned(A.setup, A.learned);
   applyConfig(); S.P.arrScale = 1;
   for (const r of rows) if (r.ed_arrivals != null) { act += r.ed_arrivals; for (let i = 0; i < stepH; i++) exp += S.expectedAt(r.t - (stepH - 1 - i) * S.HOUR, f); }
-  A.arrScale = exp > 0 ? Math.max(0.3, Math.min(3, act / exp)) : 1; S.P.arrScale = A.arrScale;
+  // If arrivals per day were learned directly, they already match the data; otherwise scale the published figure to it.
+  A.arrScale = A.learned && A.learned.fields.arrPerDay ? 1 : exp > 0 ? Math.max(0.3, Math.min(3, act / exp)) : 1; S.P.arrScale = A.arrScale;
   A.history = []; let st = null;
   for (const r of rows) {
     st = rowState(r, st);
@@ -1634,9 +1841,64 @@ function applyImport(parsed) {
   addLog(`Imported ${rows.length} rows (${stepH === 24 ? 'daily' : stepH === 1 ? 'hourly' : 'every ' + stepH + ' h'}). ${act ? `Demand calibrated ×${A.arrScale.toFixed(2)} to your ED arrivals.` : 'No ED arrivals column, so demand uses the setup value.'}`);
 }
 function sampleCSV() {
-  const rows = A.history.filter(x => x.occ).slice(-24 * 7).filter((x, i) => i % 6 === 5), r2 = Math.round;
-  return COLS.join(',') + '\n' + rows.map(x => { const arr6 = A.history.filter(y => y.k > x.k - 6 && y.k <= x.k).reduce((a, y) => a + (y.arrivals || 0), 0);
-    return [`${isoDay(x.t)} ${hh(new Date(x.t))}`, r2(arr6), r2(x.edCensus), r2(x.boarders), r2(x.occ.MED), r2(x.occ.SURG), r2(x.occ.ICU), r2(x.occ.PEDS), r2(x.occ.ISO), r2(x.state ? x.state.labQ : 0), r2(x.plt), r2(x.o2), r2(x.ambBusy)].join(','); }).join('\n');
+  const rows = A.history.filter(x => x.occ).slice(-24 * 14), r2 = Math.round, r1 = v => Math.round((v || 0) * 10) / 10;
+  return COLS.join(',') + '\n' + rows.map(x => { const end = new Date(x.t + S.HOUR);
+    return [`${isoDay(end.getTime())} ${hh(end)}`, r2(x.arrivals), r2(x.edCensus), r2(x.boarders), r2(x.occ.MED), r2(x.occ.SURG), r2(x.occ.ICU), r2(x.occ.PEDS), r2(x.occ.ISO), r2(x.state ? x.state.labQ : 0), r2(x.plt), r2(x.o2), r2(x.ambBusy), r1(x.admTot), r1(x.disTot)].join(','); }).join('\n');
+}
+// Learn the hospital's own figures from imported rows (each row's counts cover the period ending at its timestamp).
+function learnFromRows(rows, stepH) {
+  if (rows.length < 2) return null;
+  const days = (rows[rows.length - 1].t - rows[0].t) / S.DAY + stepH / 24, L = { days: +days.toFixed(1), rows: rows.length, stepH, fields: {} };
+  const has = c => rows.filter(r => r[c] != null).length >= rows.length * 0.8;
+  const total = c => rows.reduce((a, r) => a + (r[c] || 0), 0);
+  if (days >= 7 && has('ed_arrivals')) L.fields.arrPerDay = total('ed_arrivals') / days;
+  if (days >= 7 && has('admissions')) L.fields.admissionsPerDay = total('admissions') / days;
+  const wc = ['med_occupied', 'surg_occupied', 'icu_occupied', 'peds_occupied'];
+  if (L.fields.admissionsPerDay && wc.every(has)) {
+    const occ = rows.reduce((a, r) => a + wc.reduce((b, c) => b + (r[c] || 0), 0), 0) / rows.length;
+    L.fields.alos = occ / L.fields.admissionsPerDay;
+    L.fields.bor = occ / (A.setup.beds.MED + A.setup.beds.SURG + A.setup.beds.ICU + A.setup.beds.PEDS);
+  }
+  if (stepH === 1 && days >= 7 && has('ed_arrivals')) {
+    const hs = new Array(24).fill(0);
+    for (const r of rows) hs[(new Date(r.t).getHours() + 23) % 24] += r.ed_arrivals || 0;
+    const tot = hs.reduce((a, b) => a + b, 0); if (tot > 0) L.fields.hourp = hs.map(v => v * 24 / tot);
+  }
+  if (days >= 14) {
+    const byDow = col => { if (!has(col)) return null; const per = new Map(); for (const r of rows) { const d = S.dayStart(r.t - S.HOUR); per.set(d, (per.get(d) || 0) + (r[col] || 0)); }
+      const sum = new Array(7).fill(0), cnt = new Array(7).fill(0);
+      for (const [d, v] of per) { const w = new Date(d).getDay(); sum[w] += v; cnt[w]++; }
+      if (cnt.some(c => c === 0)) return null;
+      const avg = sum.map((v, i) => v / cnt[i]), mean = avg.reduce((a, b) => a + b, 0) / 7; return mean > 0 ? avg.map(v => v / mean) : null; };
+    const dw = byDow('ed_arrivals'); if (dw) L.fields.dow = dw;
+    const dd = byDow('discharges'); if (dd) L.fields.disdow = dd;
+  }
+  return Object.keys(L.fields).length ? L : null;
+}
+function withLearned(setup, L) {
+  if (!L) return setup;
+  const out = Object.assign({}, setup, { prov: Object.assign({}, setup.prov) }), note = `Learned from ${L.days} days (${L.rows} rows) of imported census data`;
+  for (const k of ['arrPerDay', 'admissionsPerDay', 'alos', 'bor']) if (L.fields[k] != null) { out[k] = k === 'bor' ? +L.fields[k].toFixed(3) : +L.fields[k].toFixed(1); out.prov[k] = { kind: 'I', src: null, note }; }
+  if (L.fields.bor != null) out.startOcc = out.bor;
+  if (L.fields.hourp || L.fields.dow || L.fields.disdow) {
+    out.hourp = L.fields.hourp || null; out.dow = L.fields.dow || null; out.disdow = L.fields.disdow || null;
+    out.patterns = [L.fields.hourp && 'hourly arrivals', L.fields.dow && 'weekday arrivals', L.fields.disdow && 'weekday discharges'].filter(Boolean).join(', ');
+    out.prov.patterns = { kind: 'I', src: null, note };
+  }
+  return out;
+}
+function renderLearned() {
+  const L = A.learned, el = $('learnedBox'); if (!el) return;
+  if (!L) { el.innerHTML = 'Nothing learned yet. Import at least 7 days of census rows (hourly for the arrival pattern, 14+ days for weekday patterns).'; return; }
+  const DN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], f = L.fields, rows = [];
+  if (f.arrPerDay != null) rows.push(['Casualty attendances per day', f.arrPerDay.toFixed(1)]);
+  if (f.admissionsPerDay != null) rows.push(['Admissions per day', f.admissionsPerDay.toFixed(1)]);
+  if (f.alos != null) rows.push(['Average length of stay (occupied beds ÷ admissions)', f.alos.toFixed(2) + ' days']);
+  if (f.bor != null) rows.push(['Bed occupancy (modelled wards)', pct(f.bor)]);
+  if (f.hourp) { const pk = f.hourp.indexOf(Math.max(...f.hourp)), lo = f.hourp.indexOf(Math.min(...f.hourp)); rows.push(['Hour-of-day arrivals', `busiest ${String(pk).padStart(2, '0')}:00 (×${f.hourp[pk].toFixed(2)}), quietest ${String(lo).padStart(2, '0')}:00 (×${f.hourp[lo].toFixed(2)})`]); }
+  if (f.dow) rows.push(['Weekday arrivals', f.dow.map((v, i) => `${DN[i]} ×${v.toFixed(2)}`).join(' · ')]);
+  if (f.disdow) rows.push(['Weekday discharges', f.disdow.map((v, i) => `${DN[i]} ×${v.toFixed(2)}`).join(' · ')]);
+  el.innerHTML = `<p>From ${L.days} days (${L.rows} rows, ${L.stepH === 1 ? 'hourly' : 'every ' + L.stepH + ' h'}). These values now drive the forecast and are marked ${kb('I')} in Data sources.</p><div class="scroll-x"><table class="cmp"><tbody>${rows.map(r => `<tr><td>${esc(r[0])}</td><td class="tw mono">${esc(r[1])}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
 /* ---------------- setup form ---------------- */
@@ -1680,22 +1942,23 @@ function advance(hours) {
   }
   updateNowcast(); detect();
   recompute(false);
-  if (hours >= 24 || tOf(A.now).getHours() === 9) { backtest(); renderAcc(); }
+  if (hours >= 24 || tOf(A.now).getHours() === 9) backtest();
 }
 function setLive(on) {
   A.live = on; clearInterval(A.timer); A.timer = null;
   if (on && A.mode === 'fast') A.timer = setInterval(() => advance(1), 2500);
   if (on && A.mode === 'real') {
-    const tick = () => { const due = Math.floor((S.floorHour(Date.now()) - S.START) / S.HOUR) - A.now; if (due > 0) advance(Math.min(due, 48)); if (Date.now() - (A.lastFetch || 0) > 30 * 60e3) fetchFeeds(true); };
+    const tick = () => { const due = Math.floor((S.floorHour(Date.now()) - S.START) / S.HOUR) - A.now; if (due > 0) advance(Math.min(due, 48)); if (Date.now() - (feedClock.t || 0) > 30 * 60e3) fetchFeeds(true); };
     A.timer = setInterval(tick, 30e3);
   }
   renderBar();
 }
 
 /* ---------------- events ---------------- */
-function switchHospital(id) {
+async function switchHospital(id) {
+  clearTimeout(saveT); await DB.set('state:' + A.hospitalId, snapshot());
   store.set('hospital', id); setLive(false);
-  boot({ feedVals: A.feedVals, src: A.src, mode: A.mode, drill: A.drill });
+  await init({ feedVals: A.feedVals, src: A.src, mode: A.mode, drill: A.drill });
   fillSetup(); toast('Now forecasting ' + A.setup.name);
 }
 document.addEventListener('click', e => {
@@ -1708,6 +1971,7 @@ document.addEventListener('click', e => {
   if (t.id === 'liveBtn') return setLive(!A.live);
   if (t.id === 'stepBtn') return advance(1);
   if (t.id === 'dayBtn') return advance(24);
+  if (t.id === 'forgetBtn') { DB.del('state:' + A.hospitalId); A.learned = null; setLive(false); boot({ feedVals: A.feedVals, src: A.src, mode: A.mode }); toast('Saved data for this hospital removed from this device'); return; }
   if (t.id === 'resetBtn') { setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: A.imported, mode: A.mode }); toast('Forecast restarted'); return; }
   if (t.id === 'refetch') { toast('Fetching live Mumbai weather and air quality…'); fetchFeeds(false); return; }
   if (t.id === 'notifyBtn') { try { Notification.requestPermission().then(() => renderAlerts(), () => renderAlerts()); } catch (err) { toast('Notifications are not available here'); } return; }
@@ -1734,18 +1998,19 @@ document.addEventListener('click', e => {
   if (d.copy) { const a = A.alerts.find(x => x.id === d.copy), text = `To: ${a.to.join(', ')}\nSubject: ${a.subject}\n\n${a.body}`;
     const p = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : Promise.reject();
     p.then(() => toast('Email copied'), () => { const box = t.closest('.alert'); box.querySelector('details').open = true; const r = document.createRange(); r.selectNodeContents(box.querySelector('.email')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Text selected — press Ctrl+C to copy'); }); return; }
-  if (d.sent) { const a = A.alerts.find(x => x.id === d.sent); a.status = 'sent'; a.sentBy = store.get('approver', '') || 'reviewer'; addLog(`Alert "${a.subject.replace('[Surge Watch] ', '')}" marked as sent by ${a.sentBy}.`); renderAlerts(); renderLog(); return; }
-  if (d.dismissAlert) { const a = A.alerts.find(x => x.id === d.dismissAlert); a.status = 'dismissed'; addLog('Alert dismissed.'); renderAlerts(); renderLog(); return; }
+  if (d.sent) { const a = A.alerts.find(x => x.id === d.sent); a.status = 'sent'; a.sentBy = store.get('approver', '') || 'reviewer'; addLog(`Alert "${a.subject.replace('[Surge Watch] ', '')}" marked as sent by ${a.sentBy}.`); renderAlerts(); renderLog(); save(); return; }
+  if (d.dismissAlert) { const a = A.alerts.find(x => x.id === d.dismissAlert); a.status = 'dismissed'; addLog('Alert dismissed.'); renderAlerts(); renderLog(); save(); return; }
   if (d.pdel) { A.people.splice(+d.pdel, 1); store.set('people', A.people); renderPeople(); return; }
   if (t.id === 'setupDefaults') { const ov = store.get('overrides', {}); delete ov[A.hospitalId]; store.set('overrides', ov); fillSetup(S.setupFor(S.HOSPITALS.find(h => h.id === A.hospitalId))); toast('Estimates restored; save to apply'); return; }
-  if (t.id === 'csvSample') { $('csvText').value = sampleCSV(); $('csvStatus').textContent = '7 days of example data, one row every 6 hours. Edit it or click Import.'; return; }
-  if (t.id === 'csvClear') { setLive(false); boot({ feedVals: A.feedVals, src: A.src, mode: A.mode }); $('csvStatus').textContent = 'Back to simulated observations.'; return; }
+  if (t.id === 'csvSample') { $('csvText').value = sampleCSV(); $('csvStatus').textContent = `${Math.round(($('csvText').value.split('\n').length - 1) / 24)} days of hourly example rows generated by the model, for trying the import. Not real data.`; return; }
+  if (t.id === 'csvClear') { A.learned = null; setLive(false); boot({ feedVals: A.feedVals, src: A.src, mode: A.mode }); $('csvStatus').textContent = 'Back to simulated observations.'; return; }
   if (t.id === 'csvImport') {
     try { const parsed = parseCSV($('csvText').value); setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: parsed, mode: A.mode });
       $('csvStatus').textContent = `Imported ${parsed.rows.length} rows.` + (parsed.unknown.length ? ` Ignored columns: ${parsed.unknown.join(', ')}.` : ''); toast('Data imported; forecast restarted from your last row'); }
     catch (err) { $('csvStatus').textContent = err.message; }
   }
 });
+document.addEventListener('click', () => { if (LANG !== 'en') setTimeout(() => translateDom(document.body), 0); });
 document.addEventListener('submit', e => {
   e.preventDefault();
   const f = e.target;
@@ -1770,6 +2035,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
+  if (el.id === 'lang') { setLang(el.value); render(); return; }
   if (el.id === 'focusHosp') { switchHospital(el.value); return; }
   if (el.id === 'lv-outbreak') { A.levers.outbreak = el.value; recompute(true); }
   if (el.id === 'lv-flood') { A.levers.flood = el.checked; recompute(true); }
@@ -1792,7 +2058,7 @@ let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTime
 
 /* ---------------- real date, clock and countdowns (IST) ---------------- */
 const IST = 'Asia/Kolkata';
-const fDate = new Intl.DateTimeFormat('en-IN', { timeZone: IST, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const fDateBy = {}; const fDate = { format: d => (fDateBy[LANG] = fDateBy[LANG] || new Intl.DateTimeFormat(LANG === 'en' ? 'en-IN' : LANG + '-IN', { timeZone: IST, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })).format(d) };
 const fTime = new Intl.DateTimeFormat('en-GB', { timeZone: IST, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 const fHM = new Intl.DateTimeFormat('en-GB', { timeZone: IST, hour: '2-digit', minute: '2-digit', hour12: false });
 const fDay = new Intl.DateTimeFormat('en-CA', { timeZone: IST, year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -1810,10 +2076,10 @@ function tick() {
     $('cdForecast').textContent = A.live ? 'Running' : 'Paused';
     $('cdForecastNote').textContent = 'Fast-forward demo: one simulated hour every 2.5 s';
   }
-  if (A.lastFetch) {
-    const next = A.lastFetch + 30 * 60e3, live = A.src.weather.live || A.src.air.live;
+  if (feedClock.t) {
+    const next = feedClock.t + 30 * 60e3, live = A.src.weather.live || A.src.air.live;
     $('cdFeeds').textContent = A.mode === 'real' && A.live ? countdown(next - nowMs) : 'Paused';
-    $('cdFeedsNote').textContent = live ? `Open-Meteo · last fetched ${fHM.format(new Date(A.lastFetch))}` : 'Live data could not be reached from here; will retry';
+    $('cdFeedsNote').textContent = live ? `Open-Meteo · last fetched ${fHM.format(new Date(feedClock.t))}` : 'Live data could not be reached from here; will retry';
   } else { $('cdFeeds').textContent = '…'; $('cdFeedsNote').textContent = 'Fetching Open-Meteo'; }
   const today = new Date(fDay.format(now) + 'T00:00').getTime();
   const nextHol = S.HOLIDAYS.find(([t]) => t >= today);
@@ -1822,14 +2088,20 @@ function tick() {
     $('cdHoliday').textContent = nextHol[1];
     $('cdHolidayNote').textContent = (days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`) + ' · ' + new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(nextHol[0])) + ' · fewer discharges expected';
   } else { $('cdHoliday').textContent = '—'; $('cdHolidayNote').textContent = 'No holiday list beyond 2027'; }
+  if (LANG !== 'en') { translateDom($('bar')); const ns = document.querySelector('.nowstrip'); if (ns) translateDom(ns); }
 }
 
-boot();
-fillSetup();
-route();
-tick();
-setInterval(tick, 1000);
-fetchFeeds(true);
+(async () => {
+  initWorker();
+  setLang(LANG);
+  await init();
+  fillSetup();
+  route();
+  tick();
+  setInterval(tick, 1000);
+  fetchFeeds(true);
+  fitDengueRain();
+})();
 })();
 </script>
 </body>
