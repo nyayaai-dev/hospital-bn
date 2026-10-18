@@ -614,6 +614,40 @@
     }
     return { n, hours, days, p10, p90, first, dayMax };
   }
+  // Rolling-origin validation: restart the model from observed states on past days and compare its forecasts
+  // 1, 3 and 7 days ahead with what was then observed, alongside a naive "no change" forecast.
+  function validate(history, run, opts) {
+    opts = opts || {};
+    const horizons = opts.horizons || [24, 72, 168], n = opts.n || 30, maxOrigins = opts.maxOrigins || 21;
+    const byK = new Map(); for (const r of history) byK.set(r.k, r);
+    const ids = UNITS.map(u => u.id), lastK = history[history.length - 1].k, firstK = history[0].k;
+    const acc = {}; for (const id of ids) { acc[id] = {}; for (const h of horizons) acc[id][h] = { n: 0, err: 0, abs: 0, absNaive: 0, inBand: 0 }; }
+    let used = 0;
+    for (let k = lastK - horizons[0]; k >= firstK && used < maxOrigins; k -= 24) {
+      const o = byK.get(k); if (!o || !o.state || !o.p) continue;
+      const hs = horizons.filter(h => { const t = byK.get(k + h); return t && t.p; }); if (!hs.length) continue;
+      const maxH = Math.max(...hs), vals = {};
+      for (const id of ids) { vals[id] = {}; for (const h of hs) vals[id][h] = []; }
+      for (let i = 0; i < n; i++) {
+        const ser = simulate(o.state, k + 1, maxH, Object.assign({}, run, { rand: mulberry(9001 + k * 31 + i * 7919), lite: true, _sh: null }));
+        for (const id of ids) for (const h of hs) vals[id][h].push(ser[h - 1].p[id]);
+      }
+      let any = false;
+      for (const id of ids) for (const h of hs) {
+        const a = byK.get(k + h).p[id], a0 = o.p[id];
+        if (a == null || a0 == null) continue;
+        const v = vals[id][h].sort((x, y) => x - y), med = v[Math.floor(v.length / 2)], lo = v[Math.floor(0.1 * (v.length - 1))], hi = v[Math.ceil(0.9 * (v.length - 1))];
+        const c = acc[id][h]; c.n++; c.err += med - a; c.abs += Math.abs(med - a); c.absNaive += Math.abs(a0 - a); if (a >= lo - 0.005 && a <= hi + 0.005) c.inBand++;
+        any = true;
+      }
+      if (any) used++;
+    }
+    const units = {};
+    for (const id of ids) { const r = {}; let has = false;
+      for (const h of horizons) { const c = acc[id][h]; if (!c.n) continue; has = true; r[h] = { n: c.n, mae: c.abs / c.n * 100, bias: c.err / c.n * 100, maeNaive: c.absNaive / c.n * 100, coverage: c.inBand / c.n }; }
+      if (has) units[id] = r; }
+    return { origins: used, horizons, units, firstK, lastK, runs: n };
+  }
   function setDiseaseMonths(id, months) {
     const tot = months.reduce((a, x) => a + x.c, 0);
     SER[id] = { ms: months, mean: tot / 365, peak: Math.max(...months.map((x, i) => x.c / dim(i))), total: tot };
@@ -693,7 +727,7 @@
     HOUR, DAY, MUMBAI, HOSPITALS, ISOLATION_RESERVE, UPCOMING, UNITS, WARDS, R, DISEASES, PATHOGENS, SYNDROMES, SYN_TO_PATHOGEN, LEVELS,
     DEFAULT_SETUP, ACTIONS, ACTION_BY_ID, OUTBREAKS, THRESH, HOLIDAYS, DIWALI,
     setupFor, configure, setStart, floorHour, dayStart, seasonRaw, dayOfYear, holidayOn, indianAQI, aqiBand, rainClass, floodFactor, feedFactors, expectedCases,
-    defaultLevers, initialState, cloneState, step, simulate, ensemble, detectEvents, detectOutbreak, mulberry, cfgAt, expectedAt, rateAt, SER, NOT_MODELLED, CITY_BEDS, DATA, ensembleSummary, setDiseaseMonths, HOURP, DOW, DISDOW
+    defaultLevers, initialState, cloneState, step, simulate, ensemble, detectEvents, detectOutbreak, mulberry, cfgAt, expectedAt, rateAt, SER, NOT_MODELLED, CITY_BEDS, DATA, ensembleSummary, setDiseaseMonths, validate, HOURP, DOW, DISDOW
   };
   Object.defineProperty(api, 'START', { get: () => START, enumerable: true });
   api.SEASONS = DISEASES;

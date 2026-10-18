@@ -53,6 +53,44 @@ Then open http://localhost:8000. Live weather needs a real web origin, not `file
 
 Public copy on GitHub Pages: https://nyayaai-dev.github.io/hospital-bn/
 
+## Team server (optional)
+
+The public site runs entirely in the browser. For a hospital team, run the **Surge Watch team server**. It serves the same website and adds shared data, sign-in, an audit trail, alert sending, a news collector and privacy controls. It uses only Python 3.9+ and its standard library.
+
+```bash
+py server/app.py
+```
+
+Open http://127.0.0.1:8000. On first use the site asks you to create the **administrator** account; this only works on the server computer itself. The administrator then adds team members in **Setup & import → Team, accounts and security**.
+
+| Role | Can |
+|---|---|
+| Viewer | See everything |
+| Staff | Also import census data, edit setup and the checklist, add BMC reports and stakeholders, draft alerts |
+| Approver | Also approve preventive actions, send alerts, accept collected news figures |
+| Administrator | Also manage accounts and read the audit trail |
+
+What the server adds:
+- **Shared data:** approvals, alert drafts and their status, stakeholders, BMC reports, setup answers, census data and validation runs are stored in SQLite (`server/data/surgewatch.db`). Every browser syncs every 30 seconds. Approvals carry the signed-in name and role.
+- **Audit trail:** every sign-in, approval, alert, upload and change is recorded. Each entry includes the SHA-256 of the previous one, so any edit or deletion shows up as a broken chain; the admin panel verifies it.
+- **Sending alerts:** approvers can send an alert by email, SMS or WhatsApp to the stakeholders whose rules match it. The message goes out in the chosen language with the English version included, and a delivery log records each message. Nothing is sent automatically. Configure the channels with environment variables:
+  - Email: `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `SMTP_SECURITY` (`starttls`, `ssl` or `none`)
+  - SMS and WhatsApp (Twilio): `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_SMS_FROM`, `TWILIO_WHATSAPP_FROM`. In India, bulk SMS also needs DLT registration with your operator.
+  - Without configuration, alerts are recorded as "not configured" and can still be copied or opened in a mail app.
+- **News collector:** once a day the server searches Google News for Mumbai BMC disease reports from the last 60 days. It pulls out case counts stated in headlines (ignoring percentages, years and breeding-site counts) and queues each article. An approver reads it, sets the period and accepts it as a BMC report; nothing is used automatically. Set `SURGEWATCH_COLLECTOR=0` to turn it off.
+- **Model validation** (also in the browser-only site): **Data sources → Model validation** restarts the model from up to 21 past observed days. It scores the forecasts 1, 3 and 7 days ahead against what happened and against a naive "no change" forecast, and reports how often outcomes fell inside the 80% range. With simulated or example data it says it is only a self-consistency check.
+
+Privacy and security:
+- Only aggregate counts are accepted. Files with columns such as name, patient ID, UHID, MRD number, phone, address, Aadhaar, ABHA, date of birth, age or sex are refused in the browser and on the server. The server also accepts only the known census columns, and only numbers.
+- **Encryption at rest:** run `py -m pip install cryptography` to store census data with AES-256-GCM. The key comes from `SURGEWATCH_DATA_KEY` (32 bytes, base64) or is generated in `server/data/data.key`; in production keep it in a secret store, not next to the database. Without the package, the admin panel shows encryption as off.
+- **Retention:** census rows older than `SURGEWATCH_RETENTION_DAYS` (default 180) are deleted daily, along with expired sessions.
+- **Accounts:** passwords are stored as salted PBKDF2-SHA256 hashes (310,000 iterations) and must be 10+ characters, not common. Sessions use an HttpOnly, SameSite=Strict cookie and expire after `SURGEWATCH_SESSION_HOURS` (12). An account is locked for 15 minutes after 5 failed sign-ins.
+- **Requests:** changes need a custom header and a same-site origin (CSRF protection). Every response carries a strict Content-Security-Policy, `X-Frame-Options: DENY`, `nosniff` and `no-referrer`. Only the four site files are served.
+- **Network use:** the server listens on 127.0.0.1 by default. To share it on the hospital network use `--host 0.0.0.0` behind an HTTPS reverse proxy, or pass `--cert`/`--key` to serve HTTPS directly; the cookie is then marked Secure.
+- This follows the data-minimisation and security principles of India's Digital Personal Data Protection Act, 2023. Each hospital remains responsible for its own compliance and approvals.
+
+Tests: `py -m unittest discover -s server/tests -v` (13 end-to-end tests). They cover accounts, lockout, CSRF, roles, the audit tamper check, privacy checks, encryption round trip, alert sending through stand-in SMTP and Twilio servers, the collector, retention and setup conflicts.
+
 ## Features
 
 - **Forecasts:** a 7/14/30-day forecast per unit, with 100 Monte Carlo runs (60 for 30 days) giving breach probabilities and 80% ranges. The runs happen in a background Web Worker so the page never freezes.
@@ -76,3 +114,4 @@ Public copy on GitHub Pages: https://nyayaai-dev.github.io/hospital-bn/
 - `model.js`: the simulation model.
 - `worker.js`: runs the Monte Carlo ensemble in the background.
 - `index.html`: the interface.
+- `server/`: the optional team server (`app.py` routes and HTTP, `core.py` database, accounts, audit, encryption and privacy, `notify.py` email/SMS/WhatsApp, `collector.py` news collector, `tests/`).

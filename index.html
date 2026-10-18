@@ -300,6 +300,17 @@ textarea.drop { outline: 2px dashed var(--accent); outline-offset: 2px; }
 .brief h3 { margin: 0 0 8px; }
 .brief .sign { display: flex; gap: 32px; flex-wrap: wrap; font-size: .9rem; color: var(--ink-2); padding-top: 8px; }
 .print-only { display: none; }
+.overlay { position: fixed; inset: 0; z-index: 100; background: rgba(6, 12, 11, .78); display: grid; place-items: center; padding: 16px; }
+.overlay[hidden] { display: none; }
+.login { width: min(420px, 100%); display: grid; gap: 12px; box-shadow: var(--shadow); }
+.userchip { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--ink-2); }
+.userchip[hidden] { display: none; }
+.userchip b { color: var(--ink); }
+.good-txt { color: var(--good); font-weight: 700; } .bad-txt { color: var(--crit); font-weight: 700; }
+.cand { display: grid; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+.cand .form { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
+.kvgrid { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: .9rem; }
+@media (max-width: 600px) { .kvgrid { grid-template-columns: 1fr; } }
 .about { display: grid; gap: 18px; max-width: 980px; }
 .about .panel { display: grid; gap: 10px; }
 .about p, .about li { line-height: 1.55; max-width: 80ch; }
@@ -378,6 +389,7 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
     <div class="ctrls">
       <label class="sr" for="focusHosp">Hospital</label>
       <select class="in" id="focusHosp" aria-label="Hospital to forecast"></select>
+      <span class="userchip" id="userChip" hidden></span>
       <select class="in" id="lang" aria-label="Language"><option value="en">English</option><option value="hi">हिन्दी</option><option value="mr">मराठी</option></select>
       <select class="in" id="mode" aria-label="Clock mode"><option value="real">Real time</option><option value="fast">Fast-forward demo</option></select>
       <button class="btn" id="liveBtn" type="button"><span class="live-dot"></span><span id="liveLbl">Run</span></button>
@@ -504,6 +516,10 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
       </form>
       <div class="scroll-x"><table class="cmp" id="bulTable"></table></div>
     </div>
+    <div class="panel sec" style="background:var(--surface-2)" id="collectorBox">
+      <div class="sec-head"><h3>Collected from the news</h3><span class="small muted" id="colStatus"></span></div>
+      <div id="colBody"></div>
+    </div>
   </section>
 
   <section class="panel sec" aria-labelledby="h-epi" id="epidemic" data-view="outbreak">
@@ -579,13 +595,14 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><button class="btn small" type="button" id="notifyBtn">Turn on desktop notifications</button><span class="small muted" id="notifyStatus"></span></div>
         <div class="alerts" id="alerts"></div>
+        <div id="msgLog"></div>
       </div>
       <div class="panel sec">
         <h3>Stakeholders</h3>
         <div class="scroll-x"><table class="people" id="people"></table></div>
         <form class="addrow" id="addPerson" autocomplete="off">
           <input class="in" id="pRole" placeholder="Role" required>
-          <input class="in" id="pEmail" placeholder="Email" type="email" required>
+          <input class="in" id="pEmail" placeholder="Email" type="email"><input class="in" id="pPhone" placeholder="Mobile, +91…" type="tel">
           <select class="in" id="pUnits"><option value="ALL">All units</option><option value="EPI">Outbreaks only</option></select>
           <button class="btn" type="submit">Add stakeholder</button>
         </form>
@@ -600,6 +617,12 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
     <div class="scroll-x"><table class="cmp" id="acc"></table></div>
   </section>
 
+  <section class="panel sec" aria-labelledby="h-val" data-view="data" id="validation">
+    <div class="sec-head"><h2 id="h-val">Model validation</h2><button class="btn small primary" type="button" id="valRun">Run validation</button></div>
+    <p class="ink2 small" style="max-width:85ch">Restarts the model from the observed state on up to 21 past days and compares its forecasts 1, 3 and 7 days ahead with what was then observed. It is scored against a naive forecast that assumes nothing changes: a useful model should beat it. Each forecast uses 30 simulated futures; "in range" is how often the real outcome fell inside the 80% range.</p>
+    <div id="valBody"></div>
+  </section>
+
   <section class="panel sec" aria-labelledby="h-data" id="datasrc" data-view="data">
     <div class="sec-head"><div style="display:grid;gap:4px"><span class="eyebrow">Where every number comes from</span><h2 id="h-data">Data sources and completeness</h2></div>
       <p>Every input to the forecast for this hospital, with its source. Forecasts, free beds and waiting times are model outputs calculated from these inputs. Mumbai hospitals do not publish live occupancy, so the current state is simulated until census data is imported.</p></div>
@@ -612,7 +635,7 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
   </section>
 
   <section class="about" id="aboutPage" data-view="about" aria-label="About Surge Watch">
-    <nav class="toc" aria-label="On this page"><a href="#ab-what">What it is</a><a href="#ab-bar">Top bar</a><a href="#ab-side">Sidebar</a><a href="#ab-monitor">Monitor</a><a href="#ab-plan">Plan</a><a href="#ab-data">Data</a><a href="#ab-try">Try it in 5 minutes</a></nav>
+    <nav class="toc" aria-label="On this page"><a href="#ab-what">What it is</a><a href="#ab-bar">Top bar</a><a href="#ab-side">Sidebar</a><a href="#ab-monitor">Monitor</a><a href="#ab-plan">Plan</a><a href="#ab-data">Data</a><a href="#ab-team">Team &amp; privacy</a><a href="#ab-try">Try it in 5 minutes</a></nav>
 
     <div class="panel" id="ab-what">
       <h2>What Surge Watch is</h2>
@@ -721,6 +744,26 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
       </ul>
     </div>
 
+    <div class="panel" id="ab-team">
+      <h2>Team server, privacy and security</h2>
+      <p>The public copy runs entirely in your browser. A hospital can also run the <b>Surge Watch team server</b> on its own computer (<span class="mono">py server/app.py</span>). When the site is opened from that server, it switches to team mode:</p>
+      <ul>
+        <li><b>Sign-in with roles.</b> Viewers see everything. Staff can also import data and edit setup. Approvers can also approve actions and send alerts. Administrators also manage accounts. An approval carries the signed-in person's name and role.</li>
+        <li><b>One shared picture.</b> Approvals, alert drafts, stakeholders, BMC reports, setup answers and census data are stored on the server. Everyone sees the same thing, and the page updates every 30 seconds.</li>
+        <li><b>Sending alerts.</b> An approver can send an alert by email, SMS or WhatsApp to the stakeholders whose rules match it, in the chosen language with an English copy. Nothing is sent automatically. A delivery log shows what went out.</li>
+        <li><b>Audit trail.</b> Every sign-in, approval, alert, upload and setting change is recorded with a fingerprint chain, so later tampering is detectable.</li>
+        <li><b>News collector.</b> Once a day the server searches the news for BMC disease figures and queues them for an approver to check and accept.</li>
+        <li><b>Model validation.</b> In <a href="#validation">Data sources</a>, the model can be scored against your own past days, compared with a naive "no change" forecast.</li>
+      </ul>
+      <h3>Privacy</h3>
+      <ul>
+        <li>Surge Watch needs only <b>aggregate counts</b> (beds occupied, arrivals, admissions). Files with columns such as name, UHID, MRD number, phone, Aadhaar or date of birth are <b>refused</b>, both in the browser and on the server.</li>
+        <li>On the server, census data is encrypted at rest (AES-256-GCM) when the encryption package is installed. It is deleted automatically after the retention period (180 days by default).</li>
+        <li>Passwords are stored only as salted PBKDF2 hashes. Sessions expire after 12 hours, and an account is locked for 15 minutes after 5 failed sign-ins.</li>
+        <li>This follows the data-minimisation and security principles of India's Digital Personal Data Protection Act, 2023. Hospitals remain responsible for their own compliance.</li>
+      </ul>
+    </div>
+
     <div class="panel" id="ab-try">
       <h2>Try it in 5 minutes</h2>
       <ol>
@@ -737,6 +780,11 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
   </section>
 
   <section class="sec brief" id="briefing" data-view="briefing" aria-label="Morning briefing"><div id="briefBody" class="brief"></div></section>
+
+  <section class="panel sec" id="teamBox" data-view="setup" aria-labelledby="h-team">
+    <div class="sec-head"><h2 id="h-team">Team, accounts and security</h2><span class="small muted" id="teamStatus"></span></div>
+    <div id="teamBody"></div>
+  </section>
 
   <section class="panel sec" id="checklistBox" data-view="setup" aria-labelledby="h-chk">
     <div class="sec-head"><h2 id="h-chk">Figures only the hospital can give</h2><span class="small muted" id="chkProgress"></span></div>
@@ -823,10 +871,22 @@ main.wrap { max-width: none; margin: 0; padding-block: 18px 64px; min-width: 0; 
   <p class="foot" id="sources"></p>
 </main>
 </div>
+<div class="overlay" id="loginOverlay" hidden>
+  <form class="panel login" id="loginForm" autocomplete="on">
+    <h2 id="loginTitle">Sign in to Surge Watch</h2>
+    <p class="ink2 small" id="loginSub">This Surge Watch server is shared by your team. Sign in with the account your administrator gave you.</p>
+    <label class="field" id="lfName" hidden><span>Your name and role</span><input class="in" id="lName" autocomplete="name" placeholder="Dr A. Patil, Medical Superintendent"></label>
+    <label class="field"><span>Username</span><input class="in" id="lUser" autocomplete="username" required autocapitalize="none" spellcheck="false"></label>
+    <label class="field"><span>Password</span><input class="in" id="lPass" type="password" autocomplete="current-password" required></label>
+    <label class="field" id="lfPass2" hidden><span>Repeat password</span><input class="in" id="lPass2" type="password" autocomplete="new-password"></label>
+    <p class="small bad-txt" id="loginErr" role="alert"></p>
+    <button class="btn primary" type="submit" id="loginBtn">Sign in</button>
+  </form>
+</div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="data.js?v=7"></script>
-<script src="model.js?v=7"></script>
+<script src="data.js?v=8"></script>
+<script src="model.js?v=8"></script>
 <script>
 (function () {
 'use strict';
@@ -1004,7 +1064,7 @@ function makeEns(res) {
 }
 let worker = null, ensJob = 0;
 function initWorker() {
-  try { worker = new Worker('worker.js?v=7'); worker.onmessage = e => onEnsemble(e.data); worker.onerror = ev => { if (ev && ev.preventDefault) ev.preventDefault(); worker = null; requestEnsemble(); }; }
+  try { worker = new Worker('worker.js?v=8'); worker.onmessage = e => (typeof e.data.id === 'string' ? onValidate(e.data) : onEnsemble(e.data)); worker.onerror = ev => { if (ev && ev.preventDefault) ev.preventDefault(); worker = null; requestEnsemble(); }; }
   catch (e) { worker = null; }
 }
 function ensembleSize() { return A.horizonDays > 14 ? 60 : 100; }
@@ -1164,6 +1224,7 @@ Object.assign(I18N, {"Monday arrival peak": {"hi": "सोमवार को �
 Object.assign(I18N, {"BMC disease reports": {"hi": "बीएमसी बीमारी रिपोर्ट", "mr": "बीएमसी आजार अहवाल"}, "When BMC releases monsoon illness figures (a press note, ward report or IDSP weekly report), enter the period and the counts. A report that ended in the last 21 days and covers up to 5 weeks rescales each disease's current rate to match it. Longer or older reports are kept as a record. Reports are shared by every hospital on this device.": {"hi": "जब बीएमसी मानसून बीमारियों के आँकड़े जारी करे (प्रेस नोट, वार्ड रिपोर्ट या IDSP साप्ताहिक रिपोर्ट), तो अवधि और संख्याएँ दर्ज करें। पिछले 21 दिनों में समाप्त हुई और 5 सप्ताह तक की रिपोर्ट हर बीमारी की मौजूदा दर को उसके अनुसार समायोजित करती है। लंबी या पुरानी रिपोर्टें रिकॉर्ड के रूप में रखी जाती हैं। ये रिपोर्टें इस डिवाइस के सभी अस्पतालों में साझा होती हैं।", "mr": "बीएमसीने पावसाळी आजारांचे आकडे जाहीर केल्यावर (प्रसिद्धीपत्रक, वॉर्ड अहवाल किंवा IDSP साप्ताहिक अहवाल) कालावधी व संख्या नोंदवा. गेल्या 21 दिवसांत संपलेला व 5 आठवड्यांपर्यंतचा अहवाल प्रत्येक आजाराचा सध्याचा दर त्यानुसार समायोजित करतो. मोठे किंवा जुने अहवाल नोंद म्हणून ठेवले जातात. हे अहवाल या उपकरणावरील सर्व रुग्णालयांसाठी सामायिक आहेत."}, "First day": {"hi": "पहला दिन", "mr": "पहिला दिवस"}, "Last day": {"hi": "अंतिम दिन", "mr": "शेवटचा दिवस"}, "Source (link or title)": {"hi": "स्रोत (लिंक या शीर्षक)", "mr": "स्रोत (लिंक किंवा शीर्षक)"}, "Add report": {"hi": "रिपोर्ट जोड़ें", "mr": "अहवाल जोडा"}});
 Object.assign(I18N, {"Morning briefing": {"hi": "सुबह की ब्रीफ़िंग", "mr": "सकाळची माहिती"}, "One page for the morning meeting: what is tight, what is coming and what needs a decision.": {"hi": "सुबह की बैठक के लिए एक पेज: क्या कम है, क्या आने वाला है और किस पर निर्णय चाहिए।", "mr": "सकाळच्या बैठकीसाठी एक पान: काय कमी आहे, काय येणार आहे आणि कशावर निर्णय हवा."}, "Figures only the hospital can give": {"hi": "आँकड़े जो केवल अस्पताल दे सकता है", "mr": "फक्त रुग्णालयच देऊ शकेल असे आकडे"}, "Save answers": {"hi": "उत्तर सहेजें", "mr": "उत्तरे जतन करा"}, "Print checklist": {"hi": "सूची प्रिंट करें", "mr": "यादी प्रिंट करा"}, "Ask the hospital for its data": {"hi": "अस्पताल से उसका डेटा माँगें", "mr": "रुग्णालयाकडे त्याचा डेटा मागा"}, "Copy letter": {"hi": "पत्र कॉपी करें", "mr": "पत्र कॉपी करा"}, "Download blank CSV template": {"hi": "खाली CSV टेम्पलेट डाउनलोड करें", "mr": "रिकामा CSV नमुना डाउनलोड करा"}, "Real census data can only come from the hospital's own records; it is not published. This letter asks the Medical Superintendent and Medical Records for an anonymised export and the figures above. It is written in English for official correspondence.": {"hi": "असली रोगी-संख्या डेटा केवल अस्पताल के अपने रिकॉर्ड से आ सकता है; यह प्रकाशित नहीं होता। यह पत्र चिकित्सा अधीक्षक और मेडिकल रिकॉर्ड्स से गुमनाम निर्यात और ऊपर के आँकड़े माँगता है। आधिकारिक पत्राचार के लिए यह अंग्रेज़ी में है।", "mr": "खरा रुग्णसंख्या डेटा फक्त रुग्णालयाच्या स्वतःच्या नोंदींमधूनच मिळू शकतो; तो प्रकाशित होत नाही. हे पत्र वैद्यकीय अधीक्षक व वैद्यकीय नोंदी विभागाकडे निनावी डेटा व वरील आकडे मागते. अधिकृत पत्रव्यवहारासाठी ते इंग्रजीत आहे."}});
 Object.assign(I18N, {"About us": {"hi": "हमारे बारे में", "mr": "आमच्याबद्दल"}, "Help": {"hi": "सहायता", "mr": "मदत"}, "What Surge Watch is and how to read every part of it.": {"hi": "Surge Watch क्या है और इसके हर हिस्से को कैसे पढ़ें (यह पेज अंग्रेज़ी में है)।", "mr": "Surge Watch काय आहे आणि त्याचा प्रत्येक भाग कसा वाचावा (हे पान इंग्रजीत आहे)."}});
+Object.assign(I18N, {"Collected from the news": {"hi": "समाचारों से संग्रहित", "mr": "बातम्यांमधून संकलित"}, "Model validation": {"hi": "मॉडल सत्यापन", "mr": "मॉडेल पडताळणी"}, "Run validation": {"hi": "सत्यापन चलाएँ", "mr": "पडताळणी चालवा"}, "Team, accounts and security": {"hi": "टीम, खाते और सुरक्षा", "mr": "टीम, खाती व सुरक्षा"}, "Restarts the model from the observed state on up to 21 past days and compares its forecasts 1, 3 and 7 days ahead with what was then observed. It is scored against a naive forecast that assumes nothing changes: a useful model should beat it. Each forecast uses 30 simulated futures; \"in range\" is how often the real outcome fell inside the 80% range.": {"hi": "मॉडल को पिछले 21 दिनों तक की दर्ज स्थिति से दोबारा चलाकर 1, 3 और 7 दिन आगे के पूर्वानुमान की तुलना असल नतीजों से करता है। इसे \"कोई बदलाव नहीं\" वाले साधारण पूर्वानुमान से मापा जाता है: उपयोगी मॉडल को इससे बेहतर होना चाहिए। हर पूर्वानुमान में 30 सिमुलेटेड भविष्य; \"सीमा में\" बताता है कि असल नतीजा कितनी बार 80% सीमा के भीतर रहा।", "mr": "मॉडेल गेल्या 21 दिवसांपर्यंतच्या नोंदवलेल्या स्थितीतून पुन्हा चालवून 1, 3 व 7 दिवस पुढील अंदाजांची तुलना प्रत्यक्ष निकालांशी करते. \"बदल नाही\" या साध्या अंदाजाशी तुलना केली जाते: उपयुक्त मॉडेल त्यापेक्षा चांगले असावे. प्रत्येक अंदाजात 30 अनुकरणित भविष्ये; \"मर्यादेत\" म्हणजे प्रत्यक्ष निकाल किती वेळा 80% मर्यादेत राहिला."}});
 const ORIG = new WeakMap();
 const tl = (en, hi, mr, lg) => { lg = lg || LANG; return lg === 'hi' ? hi : lg === 'mr' ? mr : en; };
 function tx(str, lg) {
@@ -1249,11 +1310,12 @@ function snapshot() {
 }
 let saveT;
 function save() {
-  if (!A || !A.F) return;
+  if (!A || !A.F || Team.on) return;
   clearTimeout(saveT);
   saveT = setTimeout(async () => { const ok = await DB.set('state:' + A.hospitalId, snapshot()); A.savedAt = ok ? Date.now() : null; A.saveFailed = !ok; renderNav(); }, 500);
 }
 async function init(keep) {
+  if (Team.on) { await Team.boot(keep); return; }
   REPORTS = await loadReports();
   const saved = await DB.get('state:' + store.get('hospital', 'kem'));
   if (saved && saved.v === SAVE_VER) { try { if (restore(saved, keep)) return; } catch (e) { console.warn('Saved session could not be restored', e); } }
@@ -1326,7 +1388,7 @@ function renderNav() {
   set('scenarios', leversChanged() ? 'on' : '', leversChanged() ? 'warn' : '');
   const pv = A.setup.prov || {}, u = Object.values(pv).filter(x => x.kind === 'U').length; set('data', u ? u + ' U' : '', '');
   const full = (A.net || []).filter(x => x.peak >= S.THRESH.crit).length; set('city', full || '', full ? 'warn' : '');
-  $('sideMeta').innerHTML = `<span>${esc(A.setup.name)}</span><span>${A.savedAt ? '<span class="srcdot live"></span>Saved on this device ' + hh(new Date(A.savedAt)).slice(0, 2) + ':' + String(new Date(A.savedAt).getMinutes()).padStart(2, '0') : A.saveFailed ? '<span class="srcdot"></span>Not saved: browser storage unavailable' : ''}</span><span>${A.src.weather.live ? '<span class="srcdot live"></span>Live weather' : '<span class="srcdot"></span>Weather not live'} · ${A.src.air.live ? 'live AQI' : 'AQI not live'}</span><span>Forecast ${hh(tOf(A.now))}, ${fmtD(A.now)}</span>`;
+  $('sideMeta').innerHTML = `<span>${esc(A.setup.name)}</span><span>${Team.on ? Team.meta() : A.savedAt ? '<span class="srcdot live"></span>Saved on this device ' + hh(new Date(A.savedAt)).slice(0, 2) + ':' + String(new Date(A.savedAt).getMinutes()).padStart(2, '0') : A.saveFailed ? '<span class="srcdot"></span>Not saved: browser storage unavailable' : ''}</span><span>${A.src.weather.live ? '<span class="srcdot live"></span>Live weather' : '<span class="srcdot"></span>Weather not live'} · ${A.src.air.live ? 'live AQI' : 'AQI not live'}</span><span>Forecast ${hh(tOf(A.now))}, ${fmtD(A.now)}</span>`;
 }
 
 /* ---------------- provenance ---------------- */
@@ -1364,13 +1426,13 @@ const VIEW_RENDER = {
   overview: () => { renderTiles(); renderHeadline(); renderCards(); renderTabs(); renderChart(); renderWhy(); },
   forecast: () => { renderHeat(); renderCascade(); },
   city: () => renderNetwork(),
-  diseases: () => { renderDiseases(); renderSeason(); renderFeeds(); renderDengueModel(); renderBulletins(); },
+  diseases: () => { renderDiseases(); renderSeason(); renderFeeds(); renderDengueModel(); renderBulletins(); renderCollector(); },
   outbreak: () => renderEpidemic(),
   scenarios: () => { renderLevers(); renderCompare(); },
   actions: () => renderActions(),
-  alerts: () => { renderAlerts(); renderPeople(); renderLog(); },
-  data: () => { renderData(); renderAcc(); },
-  setup: () => { markSetup(); renderLearned(); renderChecklist(); renderRequest(); },
+  alerts: () => { renderAlerts(); renderMsgLog(); renderPeople(); renderLog(); },
+  data: () => { renderData(); renderAcc(); renderValidation(); },
+  setup: () => { renderTeam(); markSetup(); renderLearned(); renderChecklist(); renderRequest(); },
   briefing: () => renderBriefing(),
   about: () => {}
 };
@@ -1805,7 +1867,7 @@ function renderActions() {
     html += `<div class="act" id="act-${a.id}"><div style="display:grid;gap:6px"><h3>${esc(a.title)}</h3><p>${esc(a.detail)}</p>
       <div style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center"><span class="impact">${imp || tl('Protects against the worst case', 'सबसे बुरी स्थिति से बचाव', 'सर्वात वाईट स्थितीपासून संरक्षण')}${x.critSaved > 0 ? tl(` · ${x.critSaved} fewer unit-hours at critical`, ` · गंभीर स्तर पर ${x.critSaved} इकाई-घंटे कम`, ` · गंभीर पातळीवर ${x.critSaved} विभाग-तास कमी`) : ''}</span><span class="muted" style="font-size:.8rem">${tl(`Owner: ${esc(a.owner)} · lead time ${a.lead ? a.lead + ' h' : 'none'}`, `ज़िम्मेदार: ${esc(tx(a.owner))} · तैयारी समय ${a.lead ? a.lead + ' घंटे' : 'नहीं'}`, `जबाबदार: ${esc(tx(a.owner))} · पूर्वतयारी वेळ ${a.lead ? a.lead + ' तास' : 'नाही'}`)}</span></div></div>
       <div class="btns"><button class="btn small primary" type="button" data-approve="${a.id}">Approve…</button><button class="btn small" type="button" data-try="${a.id}">Preview</button><button class="btn small ghost" type="button" data-dismiss="${a.id}">Dismiss</button></div>
-      ${conf ? `<form class="confirm" data-confirm="${a.id}"><label for="by-${a.id}">Approved by</label><input class="in" id="by-${a.id}" placeholder="Name and role" required value="${esc(store.get('approver', ''))}"><button class="btn small primary" type="submit">Confirm approval</button><button class="btn small ghost" type="button" data-cancel>Cancel</button><span class="muted" style="font-size:.8rem">${tl(`Adds this action to the plan from ${fmtT(A.now + a.lead)}.`, `यह कदम ${fmtL(A.now + a.lead)} से योजना में जुड़ेगा।`, `हा उपाय ${fmtL(A.now + a.lead)} पासून नियोजनात जोडला जाईल.`)}</span></form>` : ''}</div>`;
+      ${conf ? `<form class="confirm" data-confirm="${a.id}"><label for="by-${a.id}">Approved by</label><input class="in" id="by-${a.id}" placeholder="Name and role" required value="${esc(Team.on && Team.user ? Team.user.name + ' (' + Team.user.role + ')' : store.get('approver', ''))}"${Team.on ? ' readonly' : ''}><button class="btn small primary" type="submit">Confirm approval</button><button class="btn small ghost" type="button" data-cancel>Cancel</button><span class="muted" style="font-size:.8rem">${tl(`Adds this action to the plan from ${fmtT(A.now + a.lead)}.`, `यह कदम ${fmtL(A.now + a.lead)} से योजना में जुड़ेगा।`, `हा उपाय ${fmtL(A.now + a.lead)} पासून नियोजनात जोडला जाईल.`)}</span></form>` : ''}</div>`;
   }
   const nd = Object.keys(A.dismissed).length;
   if (nd) html += `<p class="muted small">${tl(`${nd} suggestion${nd > 1 ? 's' : ''} dismissed.`, `${nd} सुझाव खारिज।`, `${nd} सूचना नाकारल्या.`)} <button class="btn small ghost" type="button" data-undismiss>Show again</button></p>`;
@@ -2061,6 +2123,296 @@ function renderBriefing() {
     <div class="sign"><span>${tl('Reviewed by', 'समीक्षक', 'पुनरावलोकनकर्ता')}: ______________________</span><span>${tl('Signature', 'हस्ताक्षर', 'स्वाक्षरी')}: ______________</span><span>${tl('Time', 'समय', 'वेळ')}: ________</span></div>`;
 }
 
+function readBulForm() {
+  const from = Date.parse($('b-from').value + 'T00:00'), to = Date.parse($('b-to').value + 'T00:00');
+  if (!isFinite(from) || !isFinite(to) || to < from) { toast(tl('Check the dates: the last day must be on or after the first day.', 'तारीखें जाँचें: अंतिम दिन पहले दिन के बाद होना चाहिए।', 'तारखा तपासा: शेवटचा दिवस पहिल्या दिवसानंतर असावा.')); return null; }
+  const counts = {};
+  for (const x of S.DISEASES) { const v = $('b-' + x.id).value; if (v === '') continue; const n = +v; if (!isFinite(n) || n < 0) { toast(tl('Counts must be zero or more', 'संख्या शून्य या अधिक होनी चाहिए', 'संख्या शून्य किंवा अधिक असावी')); return null; } counts[x.id] = Math.round(n); }
+  if (!Object.keys(counts).length) { toast(tl('Enter at least one count', 'कम से कम एक संख्या दर्ज करें', 'किमान एक संख्या नोंदवा')); return null; }
+  return { from, to, counts, src: $('b-src').value.trim() };
+}
+
+/* ---------------- model validation (rolling-origin backtest in the worker) ---------------- */
+let valJob = 0;
+function runValidation() {
+  const hist = A.history.filter(r => r.state && r.p).map(r => ({ k: r.k, p: r.p, state: r.state }));
+  if (hist.length < 26) { toast(tl('Needs at least 2 days of history', 'कम से कम 2 दिन का इतिहास चाहिए', 'किमान 2 दिवसांचा इतिहास हवा')); return; }
+  const id = 'v' + (++valJob), run = { levers: S.defaultLevers(), actions: [], feeds: feeds(), flags: {}, epi: A.drill }, opts = { horizons: [24, 72, 168], n: 30, maxOrigins: 21 };
+  A.validation = { pending: true }; renderValidation();
+  const msg = { type: 'validate', id, start: S.START, setup: A.setup, arrScale: A.arrScale, dengueMonths: S.SER.dengue.ms, history: hist, run, opts };
+  if (worker) { try { worker.postMessage(msg); return; } catch (e) { worker = null; } }
+  setTimeout(() => onValidate({ id, res: S.validate(hist, run, opts) }), 30);
+}
+function onValidate(m) {
+  if (m.id !== 'v' + valJob) return;
+  if (m.error) { A.validation = { error: m.error }; renderValidation(); return; }
+  const res = Object.assign(m.res, { realData: !!A.imported && !A.imported.sample, at: Date.now(), hospital: A.hospitalId, hospitalName: A.setup.name, days: Math.round((m.res.lastK - m.res.firstK) / 24) });
+  A.validation = res; renderValidation();
+  if (Team.on && Team.can('staff')) Team.api('POST', 'validations', { hospital: A.hospitalId, result: res }).then(() => Team.loadValidations()).catch(() => {});
+}
+function valVerdict(v) {
+  const H = v.horizons.filter(h => Object.values(v.units).some(u => u[h])), h = H.includes(72) ? 72 : H[H.length - 1];
+  const rows = Object.values(v.units).map(u => u[h]).filter(c => c && c.n >= 3 && c.maeNaive > 0.05);
+  const beat = rows.filter(c => c.mae < c.maeNaive).length;
+  return { h, beat, of: rows.length };
+}
+function renderValidation() {
+  const el = $('valBody'); if (!el) return;
+  const v = A.validation, hist = (A.valHistory || []).filter(x => x.hospital === A.hospitalId);
+  const histHtml = Team.on && hist.length ? `<details style="margin-top:10px"><summary class="small" style="cursor:pointer">${tl('Saved validation runs', 'सहेजे गए सत्यापन', 'जतन केलेली पडताळणी')} (${hist.length})</summary><ul class="small">${hist.map(x => { const vv = valVerdict(x); return `<li>${esc(new Date(x.at).toLocaleString('en-IN'))} · ${esc(x.by || '')} · ${x.realData ? tl('real data', 'असली डेटा', 'खरा डेटा') : tl('simulated', 'सिमुलेटेड', 'अनुकरणित')} · ${x.origins} ${tl('days', 'दिन', 'दिवस')} · ${tl(`beats naive for ${vv.beat} of ${vv.of} units`, `${vv.of} में से ${vv.beat} इकाइयों में साधारण से बेहतर`, `${vv.of} पैकी ${vv.beat} विभागांत साध्या अंदाजापेक्षा चांगले`)}</li>`; }).join('')}</ul></details>` : '';
+  if (!v) { el.innerHTML = `<p class="muted small">${tl('Not run yet for this forecast.', 'इस पूर्वानुमान के लिए अभी नहीं चलाया गया।', 'या अंदाजासाठी अद्याप चालवलेले नाही.')} ${A.imported && !A.imported.sample ? '' : tl('With simulated observations this is only a self-consistency check; import at least 4 weeks of census data to validate against real outcomes.', 'सिमुलेटेड अवलोकनों के साथ यह केवल आंतरिक जाँच है; असली परिणामों से जाँचने के लिए कम से कम 4 सप्ताह का रोगी-संख्या डेटा आयात करें।', 'अनुकरणित निरीक्षणांसह ही फक्त अंतर्गत तपासणी आहे; खऱ्या निकालांशी पडताळण्यासाठी किमान 4 आठवड्यांचा रुग्णसंख्या डेटा आयात करा.')}</p>` + histHtml; return; }
+  if (v.pending) { el.innerHTML = `<span class="calc">${tl('Running validation in the background', 'पृष्ठभूमि में सत्यापन चल रहा है', 'पार्श्वभूमीवर पडताळणी सुरू आहे')}</span>`; return; }
+  if (v.error) { el.innerHTML = `<p class="bad-txt small">${esc(v.error)}</p>`; return; }
+  if (!v.origins) { el.innerHTML = `<p class="small">${tl('Not enough history: each test day needs observations 1 day later at the same hour.', 'पर्याप्त इतिहास नहीं।', 'पुरेसा इतिहास नाही.')}</p>` + histHtml; return; }
+  const vd = valVerdict(v), H = v.horizons;
+  const head = `<thead><tr><th>${tl('Unit', 'इकाई', 'विभाग')}</th>${H.map(h => `<th>${h / 24} ${tl(h === 24 ? 'day ahead' : 'days ahead', 'दिन आगे', 'दिवस पुढे')}</th>`).join('')}</tr></thead>`;
+  const cell = c => { if (!c) return '<td class="muted">—</td>'; const skill = c.maeNaive > 0.05 ? 1 - c.mae / c.maeNaive : null;
+    return `<td><b class="num">${c.mae.toFixed(1)} ${tl('pts', 'अंक', 'गुण')}</b> <span class="${skill == null ? 'muted' : skill > 0 ? 'good-txt' : 'bad-txt'} small">${skill == null ? '' : (skill > 0 ? '+' : '') + Math.round(skill * 100) + '%'}</span><div class="muted small">${tl('naive', 'साधारण', 'साधा')} ${c.maeNaive.toFixed(1)} · ${tl('bias', 'झुकाव', 'कल')} ${c.bias > 0 ? '+' : ''}${c.bias.toFixed(1)} · ${tl('in range', 'सीमा में', 'मर्यादेत')} ${Math.round(c.coverage * 100)}% · n=${c.n}</div></td>`; };
+  const body = Object.entries(v.units).map(([id, u]) => `<tr><td>${esc(uL(id))}</td>${H.map(h => cell(u[h])).join('')}</tr>`).join('');
+  const verdict = !v.realData
+    ? tl('Self-consistency check only: these observations were simulated by the same model, so this cannot show real-world accuracy. Import at least 4 weeks of census data to validate for real.', 'केवल आंतरिक जाँच: ये अवलोकन इसी मॉडल से सिमुलेट किए गए हैं, इसलिए यह असली सटीकता नहीं दिखा सकता। असली सत्यापन के लिए कम से कम 4 सप्ताह का रोगी-संख्या डेटा आयात करें।', 'फक्त अंतर्गत तपासणी: ही निरीक्षणे याच मॉडेलने अनुकरणित केली आहेत, त्यामुळे खरी अचूकता दिसू शकत नाही. खऱ्या पडताळणीसाठी किमान 4 आठवड्यांचा रुग्णसंख्या डेटा आयात करा.')
+    : v.origins < 7 ? tl(`Only ${v.origins} test days: too few to judge. Import more history.`, `केवल ${v.origins} परीक्षण दिन: निर्णय के लिए बहुत कम।`, `फक्त ${v.origins} चाचणी दिवस: निर्णयासाठी खूप कमी.`)
+    : vd.beat * 2 > vd.of ? tl(`On your data, the model beats the naive "no change" forecast for ${vd.beat} of ${vd.of} units at ${vd.h / 24} days ahead.`, `आपके डेटा पर, ${vd.h / 24} दिन आगे ${vd.of} में से ${vd.beat} इकाइयों में मॉडल साधारण "कोई बदलाव नहीं" पूर्वानुमान से बेहतर है।`, `तुमच्या डेटावर, ${vd.h / 24} दिवस पुढे ${vd.of} पैकी ${vd.beat} विभागांत मॉडेल साध्या "बदल नाही" अंदाजापेक्षा चांगले आहे.`)
+    : tl(`On your data, the model beats the naive "no change" forecast for only ${vd.beat} of ${vd.of} units at ${vd.h / 24} days ahead. Use it with caution and replace the inputs marked U.`, `आपके डेटा पर, ${vd.h / 24} दिन आगे मॉडल केवल ${vd.of} में से ${vd.beat} इकाइयों में साधारण पूर्वानुमान से बेहतर है। सावधानी से उपयोग करें और U वाले इनपुट बदलें।`, `तुमच्या डेटावर, ${vd.h / 24} दिवस पुढे मॉडेल फक्त ${vd.of} पैकी ${vd.beat} विभागांत साध्या अंदाजापेक्षा चांगले आहे. सावधगिरीने वापरा आणि U असलेली माहिती बदला.`);
+  el.innerHTML = `<p class="brief-note">${esc(verdict)}</p><p class="small muted">${tl(`${v.origins} test days over ${v.days} days of ${v.realData ? 'imported' : 'simulated'} history · ${v.runs} futures each · error in percentage points of capacity · coloured % = improvement over naive`, `${v.days} दिनों के इतिहास पर ${v.origins} परीक्षण दिन · हर एक में ${v.runs} भविष्य · त्रुटि क्षमता के प्रतिशत अंकों में · रंगीन % = साधारण से सुधार`, `${v.days} दिवसांच्या इतिहासावर ${v.origins} चाचणी दिवस · प्रत्येकी ${v.runs} भविष्ये · त्रुटी क्षमतेच्या टक्के गुणांत · रंगीत % = साध्या अंदाजापेक्षा सुधारणा`)}</p><div class="scroll-x"><table class="cmp">${head}<tbody>${body}</tbody></table></div>` + histHtml;
+}
+
+/* ---------------- team mode: shared data on the Surge Watch server ---------------- */
+const ROLE_RANK = { viewer: 0, staff: 1, approver: 2, admin: 3 };
+const ROLE_NAME = { viewer: ['Viewer', 'दर्शक', 'पाहणारे'], staff: ['Staff', 'स्टाफ', 'कर्मचारी'], approver: ['Approver', 'अनुमोदक', 'मंजूरकर्ता'], admin: ['Administrator', 'प्रशासक', 'प्रशासक'] };
+const Team = {
+  on: false, user: null, health: null, sync: null, setupRev: 0, censusRev: 0, lastSync: 0, timer: null, users: null, audit: null, collector: null, colAt: 0, offline: false, _login: null,
+  async detect() {
+    try { const r = await fetch('api/health', { cache: 'no-store', credentials: 'same-origin' }); if (!r.ok) return false; const j = await r.json(); if (!j || !j.team) return false; this.health = j; }
+    catch (e) { return false; }
+    this.on = true; document.body.classList.add('team'); return true;
+  },
+  async api(method, path, body) {
+    const opt = { method, credentials: 'same-origin', cache: 'no-store', headers: { 'X-Surge-Watch': '1' } };
+    if (body !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+    let r;
+    try { r = await fetch('api/' + path, opt); } catch (e) { if (!this.offline) { this.offline = true; toast('Team server unreachable: changes are not being shared'); } throw new Error('Team server unreachable'); }
+    this.offline = false;
+    let j = null; try { j = await r.json(); } catch (e) {}
+    if (r.status === 401 && !['login', 'setup', 'me'].includes(path)) { this.user = null; this.showLogin(false).then(() => location.reload()); }
+    if (!r.ok) { const err = new Error((j && j.error) || `Server error ${r.status}`); err.status = r.status; throw err; }
+    return j;
+  },
+  can(role) { return !!this.user && ROLE_RANK[this.user.role] >= ROLE_RANK[role]; },
+  hour(ms) { return Math.floor((ms - S.START) / S.HOUR + 1e-6); },
+  meta() { const t = this.lastSync ? new Date(this.lastSync) : null; return `<span class="srcdot ${this.offline ? '' : 'live'}"></span>${this.offline ? 'Team server unreachable' : 'Shared via team server'}${t ? ' · synced ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') : ''}`; },
+  async ensureLogin() {
+    const me = await this.api('GET', 'me');
+    if (me.user) { this.user = me.user; this.renderChip(); return; }
+    await this.showLogin(me.setup_needed);
+  },
+  showLogin(setupMode) {
+    const o = $('loginOverlay'); o.hidden = false;
+    $('lfName').hidden = !setupMode; $('lfPass2').hidden = !setupMode;
+    $('loginTitle').textContent = setupMode ? 'Create the administrator account' : 'Sign in to Surge Watch';
+    $('loginSub').textContent = setupMode ? 'No accounts exist yet on this server. The first account is the administrator, who then adds the rest of the team. This can only be done on the server computer itself.' : 'This Surge Watch server is shared by your team. Sign in with the account your administrator gave you.';
+    $('loginBtn').textContent = setupMode ? 'Create account and sign in' : 'Sign in';
+    $('lPass').autocomplete = setupMode ? 'new-password' : 'current-password';
+    $('loginForm').dataset.setup = setupMode ? '1' : '';
+    setTimeout(() => (setupMode ? $('lName') : $('lUser')).focus(), 50);
+    return new Promise(res => { this._login = res; });
+  },
+  async submitLogin() {
+    const setupMode = $('loginForm').dataset.setup === '1', err = $('loginErr'); err.textContent = '';
+    const body = { username: $('lUser').value.trim().toLowerCase(), password: $('lPass').value };
+    try {
+      if (setupMode) { if (body.password !== $('lPass2').value) { err.textContent = 'The passwords do not match.'; return; } body.name = $('lName').value.trim(); }
+      const out = await this.api('POST', setupMode ? 'setup' : 'login', body);
+      this.user = out.user; $('loginOverlay').hidden = true; $('lPass').value = ''; $('lPass2').value = ''; this.renderChip();
+      if (this._login) { const r = this._login; this._login = null; r(); }
+    } catch (e) { err.textContent = e.message; }
+  },
+  renderChip() {
+    const c = $('userChip'); if (!this.user) { c.hidden = true; return; }
+    c.hidden = false; c.innerHTML = `<b>${esc(this.user.name)}</b><span>${esc(L3(ROLE_NAME[this.user.role]))}</span><button class="btn small ghost" type="button" id="teamLogout">${tl('Sign out', 'साइन आउट', 'बाहेर पडा')}</button>`;
+  },
+  async logout() { try { await this.api('POST', 'logout'); } catch (e) {} location.reload(); },
+  async pull() { const s = await this.api('GET', 'sync/' + A.hospitalId); this.lastSync = Date.now(); return s; },
+  applySetup(s) { const ov = store.get('overrides', {}); if (s.setup) ov[A ? A.hospitalId : store.get('hospital', 'kem')] = s.setup.data; else delete ov[A ? A.hospitalId : store.get('hospital', 'kem')]; store.set('overrides', ov); this.setupRev = s.setup ? s.setup.rev : 0; },
+  apply(s) {
+    this.sync = s;
+    REPORTS = s.reports;
+    A.people = s.people.map(p => ({ sid: p.id, role: p.role, email: p.email || '', phone: p.phone || '', units: p.units, minSev: p.min_sev }));
+    A.approved = s.approvals.map(a => ({ id: a.action_id, by: `${a.by_name} (${a.by_role})`, at: this.hour(a.at_ms), sid: a.id }));
+    A.alerts = s.alerts.map(a => ({ id: a.id, unit: a.unit, sev: a.sev, epi: !!a.epi, created: this.hour(a.created_ms), startAbs: this.hour(a.start_ms), subject: a.subject, body: a.body, tr: a.tr || null,
+      to: recipientsFor(a.epi ? 'EPI' : a.unit, a.sev).map(p => p.email || p.phone), status: a.status, sentBy: a.updated_by }));
+  },
+  async boot(keep) {
+    const hid = store.get('hospital', 'kem');
+    const s = await this.api('GET', 'sync/' + hid); this.lastSync = Date.now();
+    const ov = store.get('overrides', {}); if (s.setup) ov[hid] = s.setup.data; else delete ov[hid]; store.set('overrides', ov); this.setupRev = s.setup ? s.setup.rev : 0;
+    let imported = null;
+    if (s.census) { try { const c = await this.api('GET', 'census/' + hid); imported = { rows: c.rows, head: c.head || [], unknown: [], mapped: [], daily: !!c.daily, sample: !!c.sample, rev: c.rev, fromServer: true }; } catch (e) { toast('Could not load the shared census data: ' + e.message); } }
+    this.censusRev = s.census ? s.census.rev : 0;
+    REPORTS = s.reports;
+    boot(Object.assign({}, keep || {}, { imported }));
+    this.apply(s); recompute(false);
+    this.loadValidations();
+  },
+  async reboot(msg) { setLive(false); await this.boot({ feedVals: A.feedVals, src: A.src, mode: A.mode, drill: A.drill }); fillSetup(); if (msg) toast(msg); },
+  startSync() { clearInterval(this.timer); this.timer = setInterval(() => this.refresh(true), 30000); },
+  async refresh(fromTimer) {
+    let s; try { s = await this.pull(); } catch (e) { renderNav(); return; }
+    const setupRev = s.setup ? s.setup.rev : 0, censusRev = s.census ? s.census.rev : 0;
+    if (setupRev !== this.setupRev || censusRev !== this.censusRev) { const who = (censusRev !== this.censusRev ? s.census && s.census.uploaded_by : s.setup && s.setup.by) || 'a colleague'; return this.reboot(`Shared ${censusRev !== this.censusRev ? 'census data' : 'setup'} updated by ${who}; forecast restarted`); }
+    const before = JSON.stringify(A.approved.map(a => a.id).sort()) + REPORTS.length;
+    this.apply(s);
+    if (before !== JSON.stringify(A.approved.map(a => a.id).sort()) + REPORTS.length) { A.netAt = -999; recompute(false); } else render();
+  },
+  async run(promise, okMsg, mode) {
+    try { const out = await promise; if (okMsg) toast(okMsg); if (mode === 'reboot') await this.reboot(); else await this.refresh(); return out; }
+    catch (e) { toast(e.message); return null; }
+  },
+  async postAlert(a) {
+    try {
+      const out = await this.api('POST', 'alerts', { hospital: A.hospitalId, alert: { unit: a.unit, sev: a.sev, epi: !!a.epi, created_ms: S.START + a.created * S.HOUR, start_ms: S.START + a.startAbs * S.HOUR, subject: a.subject, body: a.body, tr: a.tr || null } });
+      if (!out.existing) notify(a.subject.replace('[Surge Watch] ', ''), 'Alert draft waiting for review.');
+      clearTimeout(this._pa); this._pa = setTimeout(() => this.refresh(), 800);
+    } catch (e) {}
+  },
+  sendButtons(a) {
+    if (!this.on) return '';
+    if (a.status === 'dismissed' || !this.can('approver')) return '';
+    const ch = (this.health && this.health.channels) || {}, lbl = { email: tl('Send email', 'ईमेल भेजें', 'ईमेल पाठवा'), sms: tl('Send SMS', 'SMS भेजें', 'SMS पाठवा'), whatsapp: tl('Send WhatsApp', 'WhatsApp भेजें', 'WhatsApp पाठवा') };
+    const btns = ['email', 'sms', 'whatsapp'].filter(c => ch[c]).map(c => `<button class="btn small primary" type="button" data-send-alert="${a.id}" data-ch="${c}">${lbl[c]}</button>`).join('');
+    return btns || `<span class="muted small" style="align-self:center">${tl('Sending is not set up on the server yet (see README: email and SMS settings).', 'सर्वर पर भेजना अभी सेट नहीं है।', 'सर्व्हरवर पाठवणे अद्याप सेट केलेले नाही.')}</span>`;
+  },
+  async sendAlert(id, ch) {
+    const a = A.alerts.find(x => x.id === id); if (!a) return;
+    const field = ch === 'email' ? 'email' : 'phone', rec = recipientsFor(a.epi ? 'EPI' : a.unit, a.sev).filter(p => p[field]);
+    if (!rec.length) { toast(ch === 'email' ? 'No matching stakeholder has an email address' : 'No matching stakeholder has a mobile number'); return; }
+    if (!confirm(`Send this alert by ${ch} to ${rec.length} stakeholder${rec.length > 1 ? 's' : ''} (${rec.map(p => p.role).join(', ')})?${LANG !== 'en' ? ' It is sent in the selected language with the English version included.' : ''}`)) return;
+    const out = await this.run(this.api('POST', `alerts/${id}/send`, { channels: [ch], lang: LANG }));
+    if (out) { const bad = out.results.filter(r => r.status !== 'sent'); toast(`${out.sent} sent${bad.length ? `, ${bad.length} not sent (${[...new Set(bad.map(r => r.status.replace('_', ' ')))].join(', ')})` : ''}`); }
+  },
+  async uploadCensus(parsed) {
+    const rows = parsed.rows.map(r => { const o = {}; for (const k in r) if (!k.startsWith('_')) o[k] = r[k]; return o; });
+    $('csvStatus').textContent = 'Uploading to the team server…';
+    try {
+      const out = await this.api('PUT', 'census/' + A.hospitalId, { rows, head: parsed.head, daily: !!parsed.daily, sample: !!parsed.sample });
+      this.censusRev = out.rev; setLive(false);
+      boot({ feedVals: A.feedVals, src: A.src, imported: Object.assign(parsed, { rev: out.rev }), mode: A.mode });
+      const s = await this.pull(); this.apply(s); recompute(false);
+      $('csvStatus').textContent = `Imported ${parsed.rows.length} rows and shared with the team${out.encrypted ? ' (encrypted on the server)' : ''}.` + (parsed.mapped.length ? ` Recognised: ${parsed.mapped.map(x => `${x[0]} → ${x[1]}`).join(', ')}.` : '') + (parsed.unknown.length ? ` Ignored columns: ${parsed.unknown.join(', ')}.` : '');
+      toast('Data imported and shared; forecast restarted from your last row');
+    } catch (e) { $('csvStatus').textContent = e.message; }
+  },
+  async loadValidations() { if (!this.on) return; try { A.valHistory = (await this.api('GET', 'validations/' + A.hospitalId)).validations.map(v => Object.assign(v, { at: (v.at || 0) * 1000 > 1e12 ? v.at * 1000 : v.at })); if (currentView === 'data') renderValidation(); } catch (e) {} },
+  async loadCollector(force) {
+    if (!this.on || (!force && Date.now() - this.colAt < 60000)) return;
+    this.colAt = Date.now();
+    try { this.collector = await this.api('GET', 'collector'); if (currentView === 'diseases') renderCollector(); } catch (e) {}
+  },
+  async loadAdmin() {
+    if (!this.can('admin')) return;
+    try { const [u, a] = await Promise.all([this.api('GET', 'users'), this.api('GET', 'audit')]); this.users = u.users; this.audit = a; if (currentView === 'setup') renderTeam(); } catch (e) { toast(e.message); }
+  },
+  handleClick(t, d) {
+    if (t.id === 'teamLogout') { this.logout(); return true; }
+    if (d.revoke) { const a = A.approved.find(x => x.id === d.revoke); if (a && a.sid) this.run(this.api('DELETE', `approvals/${a.sid}`), 'Action withdrawn for everyone'); return true; }
+    if (d.bdel) { this.run(this.api('DELETE', `reports/${d.bdel}`), 'Report removed'); return true; }
+    if (d.sent) { this.run(this.api('PATCH', `alerts/${d.sent}`, { status: 'sent' }), 'Marked as sent'); return true; }
+    if (d.dismissAlert) { this.run(this.api('PATCH', `alerts/${d.dismissAlert}`, { status: 'dismissed' }), 'Alert dismissed'); return true; }
+    if (d.pdel) { const pp = A.people[+d.pdel]; if (pp && pp.sid) this.run(this.api('DELETE', `people/${pp.sid}`), 'Stakeholder removed'); return true; }
+    if (d.sendAlert) { this.sendAlert(d.sendAlert, d.ch); return true; }
+    if (t.id === 'csvImport') { try { this.uploadCensus(parseCSV($('csvText').value)); } catch (err) { $('csvStatus').textContent = err.message; } return true; }
+    if (t.id === 'csvClear') { if (confirm('Remove the shared census data for this hospital for everyone?')) { A.learned = null; this.run(this.api('DELETE', 'census/' + A.hospitalId), 'Census data removed', 'reboot'); } return true; }
+    if (t.id === 'setupDefaults') { if (confirm('Reset this hospital’s shared setup to the published estimates for everyone?')) this.run(this.api('DELETE', 'setup/' + A.hospitalId), 'Estimates restored for everyone', 'reboot'); return true; }
+    if (t.id === 'colRun') { $('colStatus').innerHTML = '<span class="calc">Checking the news</span>'; this.api('POST', 'collector/run').then(o => { toast(`${o.new} new article${o.new === 1 ? '' : 's'} found`); this.loadCollector(true); }, e => toast(e.message)); return true; }
+    if (d.cDismiss) { this.api('POST', `collector/${d.cDismiss}/dismiss`).then(() => this.loadCollector(true), e => toast(e.message)); return true; }
+    if (d.uToggle) { const u = (this.users || []).find(x => String(x.id) === d.uToggle); if (u) this.api('PATCH', `users/${u.id}`, { disabled: !u.disabled }).then(() => this.loadAdmin(), e => toast(e.message)); return true; }
+    if (t.id === 'auditRefresh') { this.loadAdmin(); return true; }
+    return false;
+  },
+  handleSubmit(f) {
+    if (f.dataset.confirm) { const id = f.dataset.confirm; this.run(this.api('POST', 'approvals', { hospital: A.hospitalId, action_id: id, title: S.ACTION_BY_ID[id].title, at_ms: S.START + A.now * S.HOUR }), 'Approved and added to the plan for everyone').then(() => { A.confirming = null; render(); }); return true; }
+    if (f.id === 'addPerson') { this.run(this.api('POST', 'people', { role: $('pRole').value.trim(), email: $('pEmail').value.trim(), phone: $('pPhone').value.trim(), units: $('pUnits').value, min_sev: 'warning' }), 'Stakeholder added').then(o => { if (o) f.reset(); }); return true; }
+    if (f.id === 'bulForm') { const rb = readBulForm(); if (rb) this.run(this.api('POST', 'reports', rb), tl('Report added; forecast updated', 'रिपोर्ट जुड़ी; पूर्वानुमान अपडेट हुआ', 'अहवाल जोडला; अंदाज अद्ययावत झाला')).then(o => { if (o) f.reset(); }); return true; }
+    if (f.id === 'setupForm') {
+      let data; try { data = readSetup(); } catch (err) { toast(err.message); return true; }
+      this.api('PUT', 'setup/' + A.hospitalId, { rev: this.setupRev, data }).then(o => { this.setupRev = o.rev; const ov = store.get('overrides', {}); ov[A.hospitalId] = data; store.set('overrides', ov); this.reboot('Setup saved for everyone; forecast restarted'); },
+        e => { toast(e.message); if (e.status === 409) this.reboot(); });
+      return true;
+    }
+    if (f.dataset.cAccept) {
+      const id = f.dataset.cAccept, from = Date.parse(f.querySelector('[name=from]').value + 'T00:00'), to = Date.parse(f.querySelector('[name=to]').value + 'T00:00'), counts = {};
+      f.querySelectorAll('[data-dis]').forEach(i => { if (i.value !== '') counts[i.dataset.dis] = +i.value; });
+      if (!isFinite(from) || !isFinite(to) || to < from || !Object.keys(counts).length) { toast('Set the period and at least one count'); return true; }
+      this.run(this.api('POST', `collector/${id}/accept`, { from, to, counts }), 'Accepted as a BMC report').then(() => this.loadCollector(true));
+      return true;
+    }
+    if (f.id === 'userForm') { const g = n => f.querySelector(`[name=${n}]`).value.trim(); this.api('POST', 'users', { username: g('username').toLowerCase(), name: g('name'), role: g('role'), email: g('email'), phone: g('phone'), password: f.querySelector('[name=password]').value }).then(() => { toast('Account created'); f.reset(); this.loadAdmin(); }, e => toast(e.message)); return true; }
+    if (f.id === 'pwForm') { this.api('POST', 'password', { current: f.querySelector('[name=current]').value, new: f.querySelector('[name=new]').value }).then(() => { toast('Password changed'); f.reset(); }, e => toast(e.message)); return true; }
+    return false;
+  },
+  handleChange(el) {
+    if (el.dataset.psev) { const pp = A.people[+el.dataset.psev]; if (pp && pp.sid) this.run(this.api('PATCH', `people/${pp.sid}`, { min_sev: el.value })); return true; }
+    if (el.dataset.uRole) { this.api('PATCH', `users/${el.dataset.uRole}`, { role: el.value }).then(() => { toast('Role changed'); this.loadAdmin(); }, e => { toast(e.message); this.loadAdmin(); }); return true; }
+    return false;
+  }
+};
+function renderMsgLog() {
+  const el = $('msgLog'); if (!el) return;
+  const m = Team.on && Team.sync ? Team.sync.messages : [];
+  if (!m.length) { el.innerHTML = ''; return; }
+  const st = x => x === 'sent' ? `<span class="good-txt">${tl('sent', 'भेजा', 'पाठवले')}</span>` : `<span class="bad-txt">${esc(x.replace('_', ' '))}</span>`;
+  el.innerHTML = `<h3 style="margin-top:10px">${tl('Delivery log', 'भेजे गए संदेश', 'पाठवलेले संदेश')}</h3><div class="scroll-x"><table class="cmp"><thead><tr><th>${tl('When', 'कब', 'केव्हा')}</th><th>${tl('Channel', 'माध्यम', 'माध्यम')}</th><th>${tl('To', 'प्रति', 'प्रति')}</th><th>${tl('Status', 'स्थिति', 'स्थिती')}</th><th>${tl('By', 'द्वारा', 'कडून')}</th></tr></thead><tbody>${m.map(x => `<tr><td class="small">${esc(new Date(x.at * 1000).toLocaleString('en-IN'))}</td><td>${esc(x.channel)}</td><td class="mono small">${esc(x.recipient)}</td><td>${st(x.status)}${x.error ? `<div class="muted small">${esc(x.error)}</div>` : ''}</td><td class="small">${esc(x.sent_by)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function renderCollector() {
+  const box = $('collectorBox'), el = $('colBody'); if (!el) return;
+  if (!Team.on) { $('colStatus').textContent = ''; el.innerHTML = `<p class="ink2 small" style="max-width:80ch">${tl('On the Surge Watch team server, a daily job searches the news for BMC disease figures, pulls out the case counts stated in each headline and queues them here. An approver checks each article and accepts it as a BMC report; nothing is used automatically. This public copy runs without the server, so the queue is empty.', 'Surge Watch टीम सर्वर पर एक दैनिक कार्य समाचारों में बीएमसी आँकड़े खोजता है और उन्हें यहाँ समीक्षा के लिए रखता है। अनुमोदक हर लेख जाँचकर स्वीकार करता है; कुछ भी अपने आप उपयोग नहीं होता। यह सार्वजनिक प्रति बिना सर्वर के चलती है।', 'Surge Watch टीम सर्व्हरवर एक दैनिक काम बातम्यांमध्ये बीएमसी आकडे शोधते आणि ते येथे पुनरावलोकनासाठी ठेवते. मंजूरकर्ता प्रत्येक लेख तपासून स्वीकारतो; काहीही आपोआप वापरले जात नाही. ही सार्वजनिक प्रत सर्व्हरशिवाय चालते.')}</p>`; return; }
+  Team.loadCollector();
+  const c = Team.collector; if (!c) { el.innerHTML = '<span class="calc">Loading</span>'; return; }
+  const last = c.last ? `${tl('Last checked', 'अंतिम जाँच', 'शेवटची तपासणी')} ${new Date(c.last.at * 1000).toLocaleString('en-IN')}${c.last.errors && c.last.errors.length ? ` · ${c.last.errors.length} ${tl('sources failed', 'स्रोत विफल', 'स्रोत अयशस्वी')}` : ''}` : tl('Not checked yet', 'अभी जाँच नहीं हुई', 'अद्याप तपासले नाही');
+  $('colStatus').innerHTML = `${esc(last)} ${Team.can('approver') ? `<button class="btn small" type="button" id="colRun">${tl('Check now', 'अभी जाँचें', 'आत्ता तपासा')}</button>` : ''}`;
+  if (!c.candidates.length) { el.innerHTML = `<p class="muted small">${tl('No new articles waiting for review.', 'समीक्षा के लिए कोई नया लेख नहीं।', 'पुनरावलोकनासाठी नवीन लेख नाही.')}</p>`; return; }
+  const iso = ms => isoDay(ms);
+  el.innerHTML = `<p class="ink2 small">${tl('Read each article, set the period its figures cover, correct the counts and accept. Counts are pulled from the headline only, so check them against the article.', 'हर लेख पढ़ें, अवधि तय करें, संख्याएँ सुधारें और स्वीकार करें।', 'प्रत्येक लेख वाचा, कालावधी ठरवा, संख्या दुरुस्त करा आणि स्वीकारा.')}</p>` + c.candidates.map(x => {
+    const pub = x.published * 1000, dis = S.DISEASES.map(dd => `<label class="field"><span>${esc(tx(dd.name))}</span><input class="in num" type="number" min="0" data-dis="${dd.id}" value="${x.counts[dd.id] ?? ''}"></label>`).join('');
+    return `<div class="cand"><div><a href="${esc(x.url)}" target="_blank" rel="noopener"><b>${esc(x.title)}</b></a><div class="muted small">${esc(x.source || '')} · ${esc(new Date(pub).toLocaleDateString('en-IN'))} · ${Object.keys(x.counts).length ? tl('counts found in headline', 'शीर्षक में संख्याएँ मिलीं', 'शीर्षकात संख्या सापडल्या') : tl('no counts in headline: read the article', 'शीर्षक में संख्या नहीं: लेख पढ़ें', 'शीर्षकात संख्या नाही: लेख वाचा')}</div></div>
+      ${Team.can('approver') ? `<form class="form" data-c-accept="${x.id}"><label class="field"><span>${tx('First day')}</span><input class="in" type="date" name="from" value="${iso(pub - 30 * S.DAY)}"></label><label class="field"><span>${tx('Last day')}</span><input class="in" type="date" name="to" value="${iso(pub - S.DAY)}"></label>${dis}<div style="display:flex;gap:6px;align-items:end"><button class="btn small primary" type="submit">${tl('Accept', 'स्वीकार करें', 'स्वीकारा')}</button><button class="btn small ghost" type="button" data-c-dismiss="${x.id}">${tx('Dismiss')}</button></div></form>` : ''}</div>`;
+  }).join('');
+}
+function renderTeam() {
+  const el = $('teamBody'); if (!el) return;
+  if (!Team.on) {
+    $('teamStatus').textContent = tl('Not connected', 'जुड़ा नहीं', 'जोडलेले नाही');
+    el.innerHTML = `<p class="ink2 small" style="max-width:85ch">${tl('This copy runs entirely in your browser, so your work stays on this device. Run the Surge Watch team server (<span class="mono">py server/app.py</span>, see the README) to get:', 'यह प्रति पूरी तरह आपके ब्राउज़र में चलती है। Surge Watch टीम सर्वर (<span class="mono">py server/app.py</span>) चलाने पर मिलता है:', 'ही प्रत पूर्णपणे तुमच्या ब्राउझरमध्ये चालते. Surge Watch टीम सर्व्हर (<span class="mono">py server/app.py</span>) चालवल्यास मिळते:')}</p><ul class="small" style="max-width:85ch"><li>${tl('one shared picture for the whole team: approvals, alerts, stakeholders, BMC reports, setup and census data', 'पूरी टीम के लिए एक साझा तस्वीर', 'संपूर्ण टीमसाठी एकच सामायिक चित्र')}</li><li>${tl('sign-in with roles (viewer, staff, approver, administrator); approvals carry the signed-in name', 'भूमिकाओं के साथ साइन-इन', 'भूमिकांसह साइन-इन')}</li><li>${tl('a tamper-evident audit trail of every change', 'हर बदलाव का छेड़छाड़-रोधी रिकॉर्ड', 'प्रत्येक बदलाचा छेडछाड-रोधी नोंद')}</li><li>${tl('sending approved alerts by email, SMS and WhatsApp', 'स्वीकृत चेतावनियाँ ईमेल, SMS और WhatsApp से भेजना', 'मंजूर इशारे ईमेल, SMS व WhatsApp ने पाठवणे')}</li><li>${tl('a daily collector of BMC disease figures from the news, with human review', 'समाचारों से बीएमसी आँकड़ों का दैनिक संग्रह', 'बातम्यांमधून बीएमसी आकड्यांचे दैनिक संकलन')}</li><li>${tl('privacy controls: identifier columns refused, encryption at rest, automatic deletion after the retention period', 'गोपनीयता नियंत्रण', 'गोपनीयता नियंत्रणे')}</li></ul>`;
+    return;
+  }
+  const h = Team.health || {}, u = Team.user, ch = h.channels || {};
+  $('teamStatus').innerHTML = `<span class="srcdot live"></span>${tl('Connected to the team server', 'टीम सर्वर से जुड़ा', 'टीम सर्व्हरशी जोडलेले')}`;
+  const yes = (ok, on, off) => ok ? `<span class="good-txt">${on}</span>` : `<span class="bad-txt">${off}</span>`;
+  let html = `<div class="grid2"><div class="panel sec" style="background:var(--surface-2)"><h3>${tl('Your account', 'आपका खाता', 'तुमचे खाते')}</h3><div class="kvgrid"><span>${tl('Name', 'नाम', 'नाव')}</span><b>${esc(u.name)}</b><span>${tl('Username', 'यूज़रनेम', 'वापरकर्ता नाव')}</span><span class="mono">${esc(u.username)}</span><span>${tl('Role', 'भूमिका', 'भूमिका')}</span><span>${esc(L3(ROLE_NAME[u.role]))}</span></div>
+    <form id="pwForm" class="form" autocomplete="off"><label class="field"><span>${tl('Current password', 'मौजूदा पासवर्ड', 'सध्याचा पासवर्ड')}</span><input class="in" name="current" type="password" autocomplete="current-password" required></label><label class="field"><span>${tl('New password (10+ characters)', 'नया पासवर्ड (10+ अक्षर)', 'नवीन पासवर्ड (10+ अक्षरे)')}</span><input class="in" name="new" type="password" autocomplete="new-password" minlength="10" required></label><div style="align-self:end"><button class="btn small" type="submit">${tl('Change password', 'पासवर्ड बदलें', 'पासवर्ड बदला')}</button></div></form></div>
+    <div class="panel sec" style="background:var(--surface-2)"><h3>${tl('Security and privacy status', 'सुरक्षा और गोपनीयता स्थिति', 'सुरक्षा व गोपनीयता स्थिती')}</h3><div class="kvgrid">
+      <span>${tl('Encryption at rest', 'संग्रहीत डेटा एन्क्रिप्शन', 'साठवलेल्या डेटाचे एन्क्रिप्शन')}</span>${yes(h.encryption, 'On (AES-256-GCM)', 'Off: install the cryptography package')}
+      <span>HTTPS</span>${yes(h.https, tl('On', 'चालू', 'सुरू'), tl('Off: use only on this computer or behind an HTTPS proxy', 'बंद', 'बंद'))}
+      <span>${tl('Sign-in sessions', 'साइन-इन सत्र', 'साइन-इन सत्र')}</span><span>${h.session_hours} h · ${tl('locked after 5 failed attempts', '5 असफल प्रयासों के बाद बंद', '5 अयशस्वी प्रयत्नांनंतर बंद')}</span>
+      <span>${tl('Census data kept for', 'रोगी-संख्या डेटा रखा जाता है', 'रुग्णसंख्या डेटा ठेवला जातो')}</span><span>${h.retention_days} ${tl('days, then deleted automatically', 'दिन, फिर अपने आप हटता है', 'दिवस, नंतर आपोआप काढला जातो')}</span>
+      <span>${tl('Patient identifiers', 'मरीज़ पहचानकर्ता', 'रुग्ण ओळख माहिती')}</span><span>${tl('Refused: files with name, UHID, MRD, phone, Aadhaar or similar columns are rejected', 'अस्वीकृत', 'नाकारली जाते')}</span>
+      <span>${tl('Email', 'ईमेल', 'ईमेल')} / SMS / WhatsApp</span><span>${yes(ch.email, 'email ready', 'email not set up')} · ${yes(ch.sms, 'SMS ready', 'SMS not set up')} · ${yes(ch.whatsapp, 'WhatsApp ready', 'WhatsApp not set up')}</span>
+      <span>${tl('News collector', 'समाचार संग्राहक', 'बातमी संकलक')}</span>${yes(h.collector, tl('Daily', 'दैनिक', 'दैनिक'), tl('Off', 'बंद', 'बंद'))}
+    </div></div></div>`;
+  if (Team.can('admin')) {
+    if (!Team.users) Team.loadAdmin();
+    const us = Team.users || [], au = Team.audit;
+    const roleSel = x => `<select class="in" data-u-role="${x.id}" aria-label="Role for ${esc(x.username)}">${['viewer', 'staff', 'approver', 'admin'].map(r => `<option value="${r}"${x.role === r ? ' selected' : ''}>${esc(L3(ROLE_NAME[r]))}</option>`).join('')}</select>`;
+    html += `<h3>${tl('Team members', 'टीम सदस्य', 'टीम सदस्य')}</h3><p class="muted small">${tl('Viewer: sees everything. Staff: also imports data, edits setup, adds reports and stakeholders. Approver: also approves actions, sends alerts and accepts collected figures. Administrator: also manages accounts and reads the audit trail.', 'दर्शक: सब देखता है। स्टाफ: डेटा आयात, सेटअप, रिपोर्ट भी। अनुमोदक: कदम स्वीकृत करना, चेतावनी भेजना भी। प्रशासक: खाते और ऑडिट भी।', 'पाहणारे: सर्व पाहतात. कर्मचारी: डेटा आयात, सेटअप, अहवालही. मंजूरकर्ता: उपाय मंजूर करणे, इशारे पाठवणेही. प्रशासक: खाती व ऑडिटही.')}</p>
+      <div class="scroll-x"><table class="cmp"><thead><tr><th>${tl('Name', 'नाम', 'नाव')}</th><th>${tl('Username', 'यूज़रनेम', 'वापरकर्ता नाव')}</th><th>${tl('Role', 'भूमिका', 'भूमिका')}</th><th>${tl('Status', 'स्थिति', 'स्थिती')}</th><th></th></tr></thead><tbody>${us.map(x => `<tr><td>${esc(x.name)}</td><td class="mono small">${esc(x.username)}</td><td>${roleSel(x)}</td><td>${x.disabled ? `<span class="bad-txt">${tl('disabled', 'निष्क्रिय', 'निष्क्रिय')}</span>` : tl('active', 'सक्रिय', 'सक्रिय')}</td><td><button class="btn small ghost" type="button" data-u-toggle="${x.id}">${x.disabled ? tl('Enable', 'सक्रिय करें', 'सक्रिय करा') : tl('Disable', 'निष्क्रिय करें', 'निष्क्रिय करा')}</button></td></tr>`).join('')}</tbody></table></div>
+      <form id="userForm" class="form" autocomplete="off"><label class="field"><span>${tl('Name and job', 'नाम और पद', 'नाव व पद')}</span><input class="in" name="name" required></label><label class="field"><span>${tl('Username', 'यूज़रनेम', 'वापरकर्ता नाव')}</span><input class="in" name="username" required pattern="[a-zA-Z0-9._-]{3,40}"></label><label class="field"><span>${tl('Role', 'भूमिका', 'भूमिका')}</span><select class="in" name="role">${['viewer', 'staff', 'approver', 'admin'].map(r => `<option value="${r}"${r === 'staff' ? ' selected' : ''}>${esc(L3(ROLE_NAME[r]))}</option>`).join('')}</select></label><label class="field"><span>${tl('Email (optional)', 'ईमेल (वैकल्पिक)', 'ईमेल (ऐच्छिक)')}</span><input class="in" name="email" type="email"></label><label class="field"><span>${tl('Mobile (optional)', 'मोबाइल (वैकल्पिक)', 'मोबाइल (ऐच्छिक)')}</span><input class="in" name="phone" placeholder="+91…"></label><label class="field"><span>${tl('Temporary password', 'अस्थायी पासवर्ड', 'तात्पुरता पासवर्ड')}</span><input class="in" name="password" type="password" autocomplete="new-password" minlength="10" required></label><div style="align-self:end"><button class="btn primary" type="submit">${tl('Add team member', 'सदस्य जोड़ें', 'सदस्य जोडा')}</button></div></form>
+      <div class="sec-head" style="margin-top:8px"><h3>${tl('Audit trail', 'ऑडिट रिकॉर्ड', 'ऑडिट नोंद')}</h3><span class="small">${au ? (au.verify.ok ? `<span class="good-txt">${tl(`Chain intact: ${au.verify.entries} entries, none altered`, `श्रृंखला सही: ${au.verify.entries} प्रविष्टियाँ, कोई बदलाव नहीं`, `साखळी अखंड: ${au.verify.entries} नोंदी, कोणताही बदल नाही`)}</span>` : `<span class="bad-txt">${tl(`Chain BROKEN at entry ${au.verify.broken_at}: the record was altered`, `श्रृंखला टूटी: प्रविष्टि ${au.verify.broken_at}`, `साखळी तुटली: नोंद ${au.verify.broken_at}`)}</span>`) : ''} <button class="btn small ghost" type="button" id="auditRefresh">${tl('Refresh', 'रीफ़्रेश', 'रिफ्रेश')}</button></span></div>
+      <p class="muted small">${tl('Every sign-in, approval, alert, upload and setting change is recorded. Each entry includes a fingerprint of the one before it, so any later edit or deletion shows up as a broken chain.', 'हर साइन-इन, स्वीकृति, चेतावनी, अपलोड और बदलाव दर्ज होता है। हर प्रविष्टि में पिछली का फ़िंगरप्रिंट होता है, इसलिए बाद का कोई भी बदलाव टूटी श्रृंखला के रूप में दिखता है।', 'प्रत्येक साइन-इन, मंजुरी, इशारा, अपलोड व बदल नोंदवला जातो. प्रत्येक नोंदीत आधीच्या नोंदीचा ठसा असतो, त्यामुळे नंतरचा कोणताही बदल तुटलेल्या साखळीच्या रूपात दिसतो.')}</p>
+      <div class="scroll-x" style="max-height:340px;overflow:auto"><table class="cmp"><thead><tr><th>${tl('When', 'कब', 'केव्हा')}</th><th>${tl('Who', 'कौन', 'कोण')}</th><th>${tl('What', 'क्या', 'काय')}</th><th>${tl('Hospital', 'अस्पताल', 'रुग्णालय')}</th><th>${tl('Details', 'विवरण', 'तपशील')}</th></tr></thead><tbody>${au ? au.entries.slice(0, 120).map(x => `<tr><td class="small">${esc(new Date(x.at * 1000).toLocaleString('en-IN'))}</td><td class="small">${esc(x.username || '')}</td><td class="mono small">${esc(x.action)}</td><td class="small">${esc(x.hospital || '')}</td><td class="tw small mono">${esc((x.detail || '').slice(0, 160))}</td></tr>`).join('') : ''}</tbody></table></div>`;
+  }
+  el.innerHTML = html;
+}
+
 /* BMC disease reports (shared by all hospitals on this device) */
 const SEED_REPORTS = [
   { id: 'seed-mitkat', seed: true, from: new Date(2026, 5, 1).getTime(), to: new Date(2026, 8, 30).getTime(), counts: { malaria: 7422, flu: 504, dengue: 2941, gastro: 2194 }, src: 'BMC Public Health Department, via Mitkat Advisory (8 Oct 2026): https://mitkatadvisory.com/rising-malaria-and-swine-flu-cases-reported-in-mumbai/' },
@@ -2178,7 +2530,7 @@ Please confirm the cluster with laboratory testing and notify the BMC Epidemiolo
 Data: ${A.imported ? 'imported census data' : 'SIMULATED observations' + (A.drill ? ' including an OUTBREAK DRILL' : '')}. No action has been taken automatically; decisions rest with hospital staff.`;
   return { subject, body };
 }
-function pushAlert(a) { A.alerts.unshift(a); if (!a.epi) notify(a.subject.replace('[Surge Watch] ', ''), 'Alert draft waiting for review.'); }
+function pushAlert(a) { if (Team.on) { A.alerts.unshift(a); if (Team.can('staff')) Team.postAlert(a); return; } A.alerts.unshift(a); if (!a.epi) notify(a.subject.replace('[Surge Watch] ', ''), 'Alert draft waiting for review.'); }
 function makeAlert(s, e) {
   const x = explain(s.unit), en = alertText(s, e, x, 'en');
   return { id: 'a' + Date.now() + Math.random().toString(36).slice(2, 6), unit: s.unit, sev: s.sev, created: A.now, startAbs: A.now + e.start, subject: en.subject, body: en.body, tr: { hi: alertText(s, e, x, 'hi'), mr: alertText(s, e, x, 'mr') }, to: recipientsFor(s.unit, s.sev).map(p => p.email), status: 'review' };
@@ -2277,11 +2629,11 @@ function renderAlerts() {
     <div><span class="eyebrow">Subject</span> <span style="font-size:.9rem">${esc(V(a).subject)}</span></div>
     <details ${a.epi ? 'open' : ''}><summary style="cursor:pointer;font-size:.88rem">Email text</summary><div class="email" tabindex="0">${esc(V(a).body)}</div></details>
     ${V(a) !== a ? `<details><summary style="cursor:pointer;font-size:.88rem">English version</summary><div class="email" tabindex="0">${esc(a.subject + '\n\n' + a.body)}</div></details>` : ''}
-    <div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn small primary" type="button" data-copy="${a.id}">Copy email</button><a class="btn small" href="mailto:${encodeURIComponent(a.to.join(','))}?subject=${encodeURIComponent(V(a).subject)}&body=${encodeURIComponent(V(a).body)}" target="_blank" rel="noopener">Open in mail app</a>${a.status !== 'sent' ? `<button class="btn small" type="button" data-sent="${a.id}">Mark as sent</button>` : ''}<button class="btn small ghost" type="button" data-dismiss-alert="${a.id}">Dismiss</button></div></div>`).join('');
+    <div style="display:flex;flex-wrap:wrap;gap:6px">${Team.sendButtons(a)}<button class="btn small${Team.on ? '' : ' primary'}" type="button" data-copy="${a.id}">Copy email</button><a class="btn small" href="mailto:${encodeURIComponent(a.to.join(','))}?subject=${encodeURIComponent(V(a).subject)}&body=${encodeURIComponent(V(a).body)}" target="_blank" rel="noopener">Open in mail app</a>${a.status !== 'sent' ? `<button class="btn small" type="button" data-sent="${a.id}">Mark as sent</button>` : ''}<button class="btn small ghost" type="button" data-dismiss-alert="${a.id}">Dismiss</button></div></div>`).join('');
 }
 function renderPeople() {
   const un = u => u === 'ALL' ? 'All' : u.split(',').map(x => x === 'EPI' ? 'Outbreaks' : UID[x] ? UID[x].name : x).join(', ');
-  $('people').innerHTML = `<thead><tr><th>Role</th><th>Email</th><th>Covers</th><th>Notify on</th><th></th></tr></thead><tbody>` + A.people.map((p, i) => `<tr><td>${esc(p.role)}</td><td class="mono" style="font-size:.8rem;overflow-wrap:anywhere">${esc(p.email)}</td><td>${esc(un(p.units))}</td><td><select class="in" data-psev="${i}" aria-label="Severity for ${esc(p.role)}"><option value="warning"${p.minSev === 'warning' ? ' selected' : ''}>Warning+</option><option value="critical"${p.minSev === 'critical' ? ' selected' : ''}>Critical</option></select></td><td><button class="btn small ghost" type="button" data-pdel="${i}" aria-label="Remove ${esc(p.role)}">Remove</button></td></tr>`).join('') + '</tbody>';
+  $('people').innerHTML = `<thead><tr><th>Role</th><th>Email</th><th>Mobile</th><th>Covers</th><th>Notify on</th><th></th></tr></thead><tbody>` + A.people.map((p, i) => `<tr><td>${esc(p.role)}</td><td class="mono" style="font-size:.8rem;overflow-wrap:anywhere">${esc(p.email || '—')}</td><td class=\"mono\" style=\"font-size:.8rem\">${esc(p.phone || '—')}</td><td>${esc(un(p.units))}</td><td><select class="in" data-psev="${i}" aria-label="Severity for ${esc(p.role)}"><option value="warning"${p.minSev === 'warning' ? ' selected' : ''}>Warning+</option><option value="critical"${p.minSev === 'critical' ? ' selected' : ''}>Critical</option></select></td><td><button class="btn small ghost" type="button" data-pdel="${i}" aria-label="Remove ${esc(p.role)}">Remove</button></td></tr>`).join('') + '</tbody>';
   const sel = $('pUnits'); if (sel.options.length === 2) sel.innerHTML += U.map(u => `<option value="${u.id}">${esc(u.long)}</option>`).join('');
 }
 function renderLog() { $('log').innerHTML = A.log.map(l => `<div><span class="num">${fmtT(l.at).replace(',', '')}</span><span>${l.sev && l.sev !== 'ok' ? pill(l.sev) + ' ' : ''}${esc(l.text)}</span></div>`).join(''); }
@@ -2335,6 +2687,9 @@ const ALIAS = {
   admissions: ['admissions', 'ipd_admissions', 'new_admissions', 'admitted', 'total_admissions'],
   discharges: ['discharges', 'ipd_discharges', 'discharged', 'total_discharges']
 };
+let SAMPLE_TEXT = null; // example rows generated by the model, so validation can tell them apart from real data
+// Column names that suggest patient-level identifiers; such files are refused (privacy by design).
+const PII_RX = /(^|_)(name|patient_name|patient_id|mrd|mrd_no|mrn|uhid|ip_no|ipd_no|registration_no|reg_no|phone|mobile|contact_no|address|aadhar|aadhaar|abha|email|dob|date_of_birth|age|gender|sex|bed_no)($|_)/;
 const normH = h => String(h).toLowerCase().replace(/^﻿/, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 const ALIAS_MAP = (() => { const m = {}; for (const c in ALIAS) for (const a of ALIAS[c]) m[a] = c; return m; })();
 function splitLine(line, sep) {
@@ -2367,6 +2722,8 @@ function parseCSV(text) {
   if (lines.length < 2) throw new Error('Need a header row and at least one data row.');
   const sep = ['\t', ';', ','].map(c => [c, lines[0].split(c).length]).sort((a, b) => b[1] - a[1])[0][0];
   const raw = splitLine(lines[0], sep), canon = raw.map(h => ALIAS_MAP[normH(h)] || null);
+  const pii = raw.filter(h => PII_RX.test(normH(h)));
+  if (pii.length) throw new Error(`This file has columns that look like patient identifiers (${pii.join(', ')}). Remove them and import again: Surge Watch needs only aggregate counts, never patient details.`);
   canon.forEach((c, i) => { if (c && canon.indexOf(c) !== i) canon[i] = null; });
   if (!canon.includes('timestamp') && canon.includes('_time')) canon[canon.indexOf('_time')] = 'timestamp';
   if (!canon.includes('timestamp')) throw new Error('No date column found. Name one column "timestamp" or "date", with values like 14/10/2026 08:00 or 2026-10-14 08:00.');
@@ -2391,7 +2748,7 @@ function parseCSV(text) {
   rows.sort((a, b) => a.t - b.t);
   const head = [...new Set(canon.filter(c => c && c !== '_time'))];
   const mapped = raw.map((h, i) => [h, canon[i]]).filter(x => x[1] && x[1] !== '_time' && normH(x[0]) !== x[1]);
-  return { rows, head, unknown: raw.filter((h, i) => !canon[i]), mapped, daily: dateOnlyAll };
+  return { rows, head, unknown: raw.filter((h, i) => !canon[i]), mapped, daily: dateOnlyAll, sample: text === SAMPLE_TEXT };
 }
 const WCOL = [['med_occupied', 'MED'], ['surg_occupied', 'SURG'], ['icu_occupied', 'ICU'], ['peds_occupied', 'PEDS'], ['iso_occupied', 'ISO']];
 function rowState(r, prev) {
@@ -2569,6 +2926,8 @@ document.addEventListener('click', e => {
   if (t.id === 'liveBtn') return setLive(!A.live);
   if (t.id === 'stepBtn') return advance(1);
   if (t.id === 'dayBtn') return advance(24);
+  if (Team.on && Team.handleClick(t, d)) return;
+  if (t.id === 'valRun') { runValidation(); return; }
   if (t.id === 'chkSave') { saveChecklist(); return; }
   if (t.id === 'chkPrint') { document.body.classList.add('print-chk'); try { window.print(); } catch (e) { toast('Use your browser\'s Print command (Ctrl+P)'); } return; }
   if (t.id === 'briefPrint') { try { window.print(); } catch (e) { toast('Use your browser\'s Print command (Ctrl+P)'); } return; }
@@ -2606,7 +2965,7 @@ document.addEventListener('click', e => {
   if (d.dismissAlert) { const a = A.alerts.find(x => x.id === d.dismissAlert); a.status = 'dismissed'; addLog('Alert dismissed.'); renderAlerts(); renderLog(); save(); return; }
   if (d.pdel) { A.people.splice(+d.pdel, 1); store.set('people', A.people); renderPeople(); return; }
   if (t.id === 'setupDefaults') { const ov = store.get('overrides', {}); delete ov[A.hospitalId]; store.set('overrides', ov); setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: A.imported, mode: A.mode, drill: A.drill }); fillSetup(); toast('Estimates restored and forecast restarted'); return; }
-  if (t.id === 'csvSample') { $('csvText').value = sampleCSV(); $('csvStatus').textContent = `${Math.round(($('csvText').value.split('\n').length - 1) / 24)} days of hourly example rows generated by the model, for trying the import. Not real data.`; return; }
+  if (t.id === 'csvSample') { $('csvText').value = sampleCSV(); SAMPLE_TEXT = $('csvText').value; $('csvStatus').textContent = `${Math.round(($('csvText').value.split('\n').length - 1) / 24)} days of hourly example rows generated by the model, for trying the import. Not real data.`; return; }
   if (t.id === 'csvClear') { A.learned = null; setLive(false); boot({ feedVals: A.feedVals, src: A.src, mode: A.mode }); $('csvStatus').textContent = 'Back to simulated observations.'; return; }
   if (t.id === 'csvImport') {
     try { const parsed = parseCSV($('csvText').value); setLive(false); boot({ feedVals: A.feedVals, src: A.src, imported: parsed, mode: A.mode });
@@ -2630,12 +2989,10 @@ document.addEventListener('click', () => { if (LANG !== 'en') setTimeout(() => t
 document.addEventListener('submit', e => {
   e.preventDefault();
   const f = e.target;
+  if (f.id === 'loginForm') { Team.submitLogin(); return; }
+  if (Team.on && Team.handleSubmit(f)) return;
   if (f.id === 'bulForm') {
-    const from = Date.parse($('b-from').value + 'T00:00'), to = Date.parse($('b-to').value + 'T00:00');
-    if (!isFinite(from) || !isFinite(to) || to < from) { toast(tl('Check the dates: the last day must be on or after the first day.', 'तारीखें जाँचें: अंतिम दिन पहले दिन के बाद होना चाहिए।', 'तारखा तपासा: शेवटचा दिवस पहिल्या दिवसानंतर असावा.')); return; }
-    const counts = {};
-    for (const x of S.DISEASES) { const v = $('b-' + x.id).value; if (v === '') continue; const n = +v; if (!isFinite(n) || n < 0) { toast(tl('Counts must be zero or more', 'संख्या शून्य या अधिक होनी चाहिए', 'संख्या शून्य किंवा अधिक असावी')); return; } counts[x.id] = Math.round(n); }
-    if (!Object.keys(counts).length) { toast(tl('Enter at least one count', 'कम से कम एक संख्या दर्ज करें', 'किमान एक संख्या नोंदवा')); return; }
+    const rb = readBulForm(); if (!rb) return; const { from, to, counts } = rb;
     REPORTS.push({ id: 'r' + Date.now(), from, to, counts, src: $('b-src').value.trim(), added: Date.now() }); saveReports(); f.reset();
     addLog(`BMC report added for ${isoDay(from)} to ${isoDay(to)}: ${Object.entries(counts).map(([k, v]) => `${disName(k)} ${v}`).join(', ')}.`);
     A.netAt = -999; recompute(false); toast(tl('Report added; forecast updated', 'रिपोर्ट जुड़ी; पूर्वानुमान अपडेट हुआ', 'अहवाल जोडला; अंदाज अद्ययावत झाला')); return;
@@ -2648,7 +3005,7 @@ document.addEventListener('submit', e => {
     addLog(`Approved: ${S.ACTION_BY_ID[id].title}, by ${by}.`);
     recompute(false); toast('Approved and added to the plan'); return;
   }
-  if (f.id === 'addPerson') { A.people.push({ role: $('pRole').value.trim(), email: $('pEmail').value.trim(), units: $('pUnits').value, minSev: 'warning' }); store.set('people', A.people); f.reset(); renderPeople(); toast('Stakeholder added'); return; }
+  if (f.id === 'addPerson') { if (!$('pEmail').value.trim() && !$('pPhone').value.trim()) { toast('Give an email or a mobile number'); return; } A.people.push({ role: $('pRole').value.trim(), email: $('pEmail').value.trim(), phone: $('pPhone').value.trim(), units: $('pUnits').value, minSev: 'warning' }); store.set('people', A.people); f.reset(); renderPeople(); toast('Stakeholder added'); return; }
   if (f.id === 'setupForm') {
     try { const s = readSetup(), ov = store.get('overrides', {}); ov[A.hospitalId] = s; store.set('overrides', ov); setLive(false);
       boot({ feedVals: A.feedVals, src: A.src, imported: A.imported, mode: A.mode, drill: A.drill }); fillSetup(); toast('Setup saved; forecast restarted'); }
@@ -2661,7 +3018,8 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
-  if (el.id === 'lang') { setLang(el.value); render(); return; }
+  if (el.id === 'lang') { setLang(el.value); Team.renderChip(); render(); return; }
+  if (Team.on && Team.handleChange(el)) return;
   if (el.id === 'focusHosp') { switchHospital(el.value); return; }
   if (el.id === 'lv-outbreak') { A.levers.outbreak = el.value; recompute(true); }
   if (el.id === 'lv-flood') { A.levers.flood = el.checked; recompute(true); }
@@ -2720,6 +3078,7 @@ function tick() {
 (async () => {
   initWorker();
   setLang(LANG);
+  if (await Team.detect()) await Team.ensureLogin();
   await init();
   fillSetup();
   route();
@@ -2727,6 +3086,7 @@ function tick() {
   setInterval(tick, 1000);
   fetchFeeds(true);
   fitDengueRain();
+  if (Team.on) Team.startSync();
 })();
 })();
 </script>

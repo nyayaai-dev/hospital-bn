@@ -1,0 +1,2 @@
+# Optional: enables AES-256-GCM encryption at rest for census data
+cryptography>=42
